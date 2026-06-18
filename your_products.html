@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -382,10 +382,10 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : [];
 }
 
-// تم تعديل الـ Endpoint هنا ليتعامل مباشرة مع جدول الـ products الصحيح الخاص بالمورد
+// تعديل الـ Endpoint هنا بالكامل ليتوجّه ويتطابق مع اسم جدول الـ شيت المحدث Marketer_Products
 async function api(action, data = {}) {
   try {
-    const tableEndpoint = 'products'; 
+    const tableEndpoint = 'Marketer_Products'; 
     switch(action) {
       case 'getSupplierProducts': return await supabaseApi(`${tableEndpoint}?username=eq.${encodeURIComponent(username)}&select=*`);
       case 'getProductDetails': return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}&select=*`);
@@ -489,7 +489,6 @@ function renderProducts(products){
   });
 }
 
-// تحديث الإحصائيات بناءً على المخزون المتوفر بدلاً من كلاس الحالة المحذوف
 function updateStats(products){
   const total = products.length; 
   const active = products.filter(p => (parseInt(p.stock) || 0) > 0).length;
