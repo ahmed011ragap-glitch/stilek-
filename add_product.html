@@ -95,7 +95,6 @@ body {
   border-right: 4px solid var(--green);
 }
 
-/* زر الدعم الفني عبر واتساب */
 .whatsapp-chat-btn {
   display: flex;
   align-items: center;
@@ -107,19 +106,9 @@ body {
   margin: 20px 15px 5px !important;
   box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
 }
-.whatsapp-chat-btn:hover {
-  background: #20ba5a !important;
-  transform: translateY(-2px);
-}
-
-.logout-btn {
-  color: var(--red) !important;
-  border-right: 4px solid transparent;
-}
-.logout-btn:hover {
-  background: #2a080c !important;
-  color: #ff4444 !important;
-}
+.whatsapp-chat-btn:hover { background: #20ba5a !important; transform: translateY(-2px); }
+.logout-btn { color: var(--red) !important; border-right: 4px solid transparent; }
+.logout-btn:hover { background: #2a080c !important; color: #ff4444 !important; }
 
 .overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -127,7 +116,6 @@ body {
 }
 .overlay.active { display: block; }
 
-/* ===== الهيدر ومحتوى الصفحة ===== */
 .header { text-align: center; margin-bottom: 25px; margin-top: 10px; }
 .header h1 {
   font-size: 26px;
@@ -146,20 +134,9 @@ body {
   border-radius: 20px;
   padding: 30px;
 }
-h2 {
-  text-align: center;
-  font-size: 22px;
-  color: var(--text);
-  margin-bottom: 25px;
-}
+h2 { text-align: center; font-size: 22px; color: var(--text); margin-bottom: 25px; }
 .form-group { margin-bottom: 18px; }
-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 500;
-}
+label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 14px; font-weight: 500; }
 input, textarea, select {
   width: 100%;
   padding: 14px;
@@ -178,12 +155,7 @@ input:focus, textarea:focus {
 }
 textarea { resize: vertical; min-height: 100px; }
 .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.btn-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 25px;
-}
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px; }
 button.submit {
   padding: 16px;
   background: linear-gradient(90deg,var(--green),#00cc66);
@@ -220,33 +192,14 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .error { text-align: center; color: var(--red); margin-top: 15px; font-weight: 600; }
 
 .loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  flex-direction: column;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column;
 }
 .loading-overlay.active { display: flex; }
 .loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 5px solid #333;
-  border-top-color: #00ff88;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  width: 60px; height: 60px; border: 5px solid #333; border-top-color: #00ff88; border-radius: 50%; animation: spin 1s linear infinite;
 }
-.loading-overlay p {
-  margin-top: 20px;
-  color: #00ff88;
-  font-size: 18px;
-  font-weight: 600;
-}
+.loading-overlay p { margin-top: 20px; color: #00ff88; font-size: 18px; font-weight: 600; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
@@ -264,11 +217,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     <a href="#" onclick="goToPage('my_wallet_supplier')">💼 المحفظة والسحوبات</a>
     <a href="#" class="active">➕ إضافة منتج جديد</a>
     <a href="#" onclick="goToPage('my_products_supplier')">📦 منتجاتي المعروضة</a>
-    
-    <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">
-      💬 تواصل مع الدعم الفني
-    </a>
-    
+    <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -350,11 +299,27 @@ const urlParams = new URLSearchParams(window.location.search);
 let SUPPLIER_CODE = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
 localStorage.setItem('username', SUPPLIER_CODE);
 
-// وضع كود المورد تلقائياً في خانة كود المورد وجعله للقراءة فقط لعدم التلاعب
 document.getElementById('supplierCode').value = SUPPLIER_CODE;
 
 function goToPage(pageName) {
-  window.location.href = `${pageName}.html?user=${encodeURIComponent(SUPPLIER_CODE)}&type=supplier`;
+  let lowerPage = pageName.toLowerCase();
+  let correctPageName = pageName + '.html';
+
+  if (lowerPage.includes("supplier_dashboard") || lowerPage.includes("dashboard")) {
+    correctPageName = "Data_Page.html";
+  } else if (lowerPage.includes("my_wallet") || lowerPage.includes("wallet")) {
+    correctPageName = "my_wallet.html";
+  } else if (lowerPage.includes("add_product")) {
+    correctPageName = "add_product.html";
+  } else if (lowerPage.includes("my_products") || lowerPage.includes("your_products")) {
+    correctPageName = "your_products.html";
+  } else if (lowerPage.includes("displayed_products")) {
+    correctPageName = "Displayed_Products.html";
+  } else if (lowerPage.includes("manage_orders")) {
+    correctPageName = "manage_orders.html";
+  }
+
+  window.location.href = `${correctPageName}?user=${encodeURIComponent(SUPPLIER_CODE)}&type=supplier`;
 }
 
 function logout() {
@@ -448,7 +413,7 @@ document.getElementById('addBtn').onclick = async function() {
   const supplierCode = document.getElementById('supplierCode').value.trim();
   const supplierPhone = document.getElementById('supplierPhone').value.trim();
   const galleryLink = document.getElementById('galleryLink').value.trim();
-  const desc = document.getElementById('productDesc').value.trim();
+  let desc = document.getElementById('productDesc').value.trim();
   const fileInput = document.getElementById('coverImg');
 
   const errorDiv = document.getElementById('error'), successDiv = document.getElementById('success');
@@ -466,7 +431,10 @@ document.getElementById('addBtn').onclick = async function() {
 
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
-    const combinedUsername = `${supplierCode} - 📞 ${supplierPhone}`;
+
+    // لضمان عدم ضياع رقم الهاتف للأدمن، نقوم بدمجه مع الوصف بالتفصيل
+    const extraDescInfo = `\n\n📞 هاتف المورد: ${supplierPhone}`;
+    const finalDesc = desc ? (desc + extraDescInfo) : `تواصل مع المورد: ${supplierPhone}`;
 
     const productData = {
       product_id: productCode,
@@ -474,10 +442,10 @@ document.getElementById('addBtn').onclick = async function() {
       base_price: parseFloat(price),
       stock: parseInt(stock),
       image_url: imageUrl,
-      description: desc,
+      description: finalDesc,
       sizes: '',
       colors: '',
-      username: combinedUsername, 
+      username: supplierCode, // تم التعديل لحفظ كود المورد النظيف فقط ليتوافق مع صفحة العرض
       gallery_link: galleryLink || null,
       slider: []
     };
@@ -488,7 +456,7 @@ document.getElementById('addBtn').onclick = async function() {
     });
 
     hideLoading();
-    successDiv.innerHTML = `✅ تم الحفظ بنجاح! سيظهر في لوحة الأدمن كالتالي: <br> <b>المورد: ${combinedUsername}</b>`;
+    successDiv.innerHTML = `✅ تم الحفظ بنجاح! تم ربط المنتج بكود حسابك النظيف ليعرض فوراً.`;
     resetForm();
     
   } catch(err) {
