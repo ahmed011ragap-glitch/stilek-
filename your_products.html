@@ -382,26 +382,29 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : [];
 }
 
-// تعديل الـ Endpoint هنا بالكامل ليتوجّه ويتطابق مع اسم جدول الـ شيت المحدث Marketer_Products
 async function api(action, data = {}) {
   try {
     const tableEndpoint = 'Marketer_Products'; 
     switch(action) {
-      case 'getSupplierProducts': return await supabaseApi(`${tableEndpoint}?username=eq.${encodeURIComponent(username)}&select=*`);
-      case 'getProductDetails': return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}&select=*`);
+      case 'getSupplierProducts': 
+        return await supabaseApi(`${tableEndpoint}?username=eq.${encodeURIComponent(username)}&select=*`);
+      case 'getProductDetails': 
+        return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}&select=*`);
       case 'updateProduct':
         return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}`, {
           method: 'PATCH',
           body: JSON.stringify({
-            base_price: parseFloat(data.price) || 0,
+            base_price: parseFloat(data.base_price) || 0,
             stock: parseInt(data.stock) || 0,
-            description: data.desc || '',
+            description: data.description || '',
             sizes: data.sizes || '',
             colors: data.colors || ''
           })
         });
-      case 'deleteProduct': return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}`, { method: 'DELETE' });
-      default: return { status: 'error', message: 'العملية غير مدعومة' };
+      case 'deleteProduct': 
+        return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}`, { method: 'DELETE' });
+      default: 
+        return { status: 'error', message: 'العملية غير مدعومة' };
     }
   } catch(err) { console.error(err); return { status: 'error', message: err.message }; }
 }
@@ -415,11 +418,16 @@ async function openProduct(productId){
     document.getElementById('detailsModal').classList.add('active');
     currentImages = [];
     if(product.image_url) currentImages.push(product.image_url);
+    
     if(product.slider) {
-      try {
-        const sliderArr = typeof product.slider === 'string' ? JSON.parse(product.slider) : product.slider;
-        if(Array.isArray(sliderArr)) currentImages = currentImages.concat(sliderArr);
-      } catch(e) {}
+      if(Array.isArray(product.slider)) {
+        currentImages = currentImages.concat(product.slider);
+      } else {
+        try {
+          const sliderArr = typeof product.slider === 'string' ? JSON.parse(product.slider) : product.slider;
+          if(Array.isArray(sliderArr)) currentImages = currentImages.concat(sliderArr);
+        } catch(e) {}
+      }
     }
     if(currentImages.length === 0) currentImages = ['https://via.placeholder.com/350x350/2a2a2a/888?text=No+Image'];
     showSlide(0);
@@ -440,8 +448,12 @@ async function openProduct(productId){
 async function saveProduct(){
   const btn = document.querySelector('.btn-save'); btn.disabled = true; btn.textContent = 'جاري الحفظ...';
   const result = await api('updateProduct', {
-    product_id: currentProductId, price: document.getElementById('editBasePrice').value, stock: document.getElementById('editStock').value,
-    desc: document.getElementById('editDescription').value, sizes: document.getElementById('editSizes').value, colors: document.getElementById('editColors').value
+    product_id: currentProductId, 
+    base_price: document.getElementById('editBasePrice').value, 
+    stock: document.getElementById('editStock').value,
+    description: document.getElementById('editDescription').value, 
+    sizes: document.getElementById('editSizes').value, 
+    colors: document.getElementById('editColors').value
   });
   if(!result.status || result.status !== 'error'){ alert('تم حفظ التعديلات بنجاح ✅'); closeModal(); loadProducts(); }
   else { alert('خطأ أثناء الحفظ: ' + result.message); }
