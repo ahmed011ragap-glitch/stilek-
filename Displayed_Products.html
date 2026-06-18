@@ -697,13 +697,14 @@ async function supabaseApi(endpoint, options = {}) {
   return JSON.parse(textData);
 }
 
-// تعديل العمليات لجلب وعرض كافة المنتجات من الجدول الموحد دون قيود
+// ===== التعديل الأساسي: جلب المنتجات من جدول products بدلاً من Marketer_Products =====
 async function callApi(action, data = {}) {
   try {
-    const tableEndpoint = 'Marketer_Products';
+    // ✅ تم التعديل هنا: استخدام جدول products
+    const tableEndpoint = 'products';
     switch(action) {
       case 'get_products':
-        // تم إلغاء أي فلترة مسبقة هنا ليعرض الشيت كامل المنتجات
+        // جلب كل المنتجات من جدول products
         return await supabaseApi(`${tableEndpoint}?select=*`);
       case 'get_product':
         return await supabaseApi(`${tableEndpoint}?product_id=eq.${data.product_id}&select=*`);
