@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -62,7 +62,7 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
 .stat-box .num { font-size: 18px; font-weight: 800; color: var(--green); }
 .stat-box .label { font-size: 11px; color: #aaa; margin-top: 2px; }
 
-/* ===== شبكة المربعات الصغيرة والاحترافية جنب بعضها ===== */
+/* ===== شبكة المربعات ===== */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -70,7 +70,7 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
   margin-bottom: 20px;
 }
 @media(max-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-@media(max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } } /* مربعين جنب بعض في الهواتف */
+@media(max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 
 .card {
   background: var(--card-bg);
@@ -93,7 +93,7 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
 .badge.active { background: #112a1a; color: #4caf50; border: 1px solid #1b5e20; }
 .badge.inactive { background: #2a1111; color: #f44336; border: 1px solid #5e1b1b; }
 
-/* ===== السليدر الجانبي المطور للمورد ===== */
+/* ===== السليدر الجانبي ===== */
 .menu-btn {
   position: fixed;
   top: 15px;
@@ -179,7 +179,7 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
 .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 1000; }
 .overlay.active { display: block; }
 
-/* ===== باقي العناصر والمودال الأصلي ===== */
+/* ===== المودال والعناصر الأخرى ===== */
 .empty { text-align: center; padding: 60px 20px; color: #666; }
 .empty h3 { color: var(--green); margin-bottom: 10px; }
 .empty-btn { background: var(--green); color: #000; border: none; padding: 12px 25px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; }
@@ -274,7 +274,7 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
     <h3 id="detailName" style="text-align:center;color:var(--green);margin-bottom:10px; font-size: 16px;"></h3>
 
     <div class="price-box">
-      <div style="color:#aaa;font-size:11px">السعر النهائي بعد الخصم</div>
+      <div style="color:#aaa;font-size:11px">السعر الأساسي للمنتج</div>
       <div class="price" id="detailFinalPrice">0 ج.م</div>
     </div>
 
@@ -284,33 +284,13 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
     </div>
 
     <div class="row">
-      <span class="label">الحالة</span>
-      <span class="value" id="detailStatusBadge"></span>
-    </div>
-
-    <div class="row">
       <span class="label">السعر الأساسي</span>
       <span class="value"><input type="number" id="editBasePrice"></span>
     </div>
 
     <div class="row">
-      <span class="label">نسبة الخصم %</span>
-      <span class="value"><input type="number" id="editDiscount" min="0" max="100"></span>
-    </div>
-
-    <div class="row">
       <span class="label">المخزون/القطع</span>
       <span class="value"><input type="number" id="editStock"></span>
-    </div>
-
-    <div class="row">
-      <span class="label">تغيير الحالة</span>
-      <span class="value">
-        <select id="editStatus">
-          <option value="active">نشط</option>
-          <option value="inactive">متوقف</option>
-        </select>
-      </span>
     </div>
 
     <div class="row">
@@ -355,7 +335,24 @@ function toggleSidebar() {
 }
 
 function goToPage(pageName){
-  window.location.href = pageName + '.html?user=' + encodeURIComponent(username) + '&type=supplier';
+  let lowerPage = pageName.toLowerCase();
+  let correctPageName = pageName + '.html';
+
+  if (lowerPage.includes("supplier_dashboard") || lowerPage.includes("dashboard")) {
+    correctPageName = "Data_Page.html";
+  } else if (lowerPage.includes("my_wallet")) {
+    correctPageName = "my_wallet.html";
+  } else if (lowerPage.includes("add_product")) {
+    correctPageName = "add_product.html";
+  } else if (lowerPage.includes("my_products") || lowerPage.includes("your_products")) {
+    correctPageName = "your_products.html";
+  } else if (lowerPage.includes("displayed_products")) {
+    correctPageName = "Displayed_Products.html";
+  } else if (lowerPage.includes("manage_orders")) {
+    correctPageName = "manage_orders.html";
+  }
+
+  window.location.href = correctPageName + '?user=' + encodeURIComponent(username) + '&type=supplier';
 }
 
 function logout() {
@@ -385,9 +382,10 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : [];
 }
 
+// تم تعديل الـ Endpoint هنا ليتعامل مباشرة مع جدول الـ products الصحيح الخاص بالمورد
 async function api(action, data = {}) {
   try {
-    const tableEndpoint = `%22Marketer_Products%22`; 
+    const tableEndpoint = 'products'; 
     switch(action) {
       case 'getSupplierProducts': return await supabaseApi(`${tableEndpoint}?username=eq.${encodeURIComponent(username)}&select=*`);
       case 'getProductDetails': return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}&select=*`);
@@ -397,11 +395,9 @@ async function api(action, data = {}) {
           body: JSON.stringify({
             base_price: parseFloat(data.price) || 0,
             stock: parseInt(data.stock) || 0,
-            status: data.status || 'active',
             description: data.desc || '',
             sizes: data.sizes || '',
-            colors: data.colors || '',
-            discount_percent: parseFloat(data.discount) || 0
+            colors: data.colors || ''
           })
         });
       case 'deleteProduct': return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}`, { method: 'DELETE' });
@@ -432,16 +428,12 @@ async function openProduct(productId){
     document.getElementById('detailCode').innerText = product.product_id || '-';
     document.getElementById('editBasePrice').value = product.base_price || 0;
     document.getElementById('editStock').value = product.stock || 0;
-    document.getElementById('editStatus').value = product.status || 'active';
     document.getElementById('editDescription').value = product.description || '';
     document.getElementById('editSizes').value = product.sizes || '';
     document.getElementById('editColors').value = product.colors || '';
-    document.getElementById('editDiscount').value = product.discount_percent || 0;
 
     const basePrice = parseFloat(product.base_price) || 0;
-    const discount = parseFloat(product.discount_percent) || 0;
-    document.getElementById('detailFinalPrice').innerText = (basePrice - (basePrice * discount / 100)).toFixed(2) + ' ج.م';
-    document.getElementById('detailStatusBadge').innerHTML = `<span class="badge ${product.status === 'active' ? 'active' : 'inactive'}">${product.status === 'active' ? 'نشط' : 'متوقف'}</span>`;
+    document.getElementById('detailFinalPrice').innerText = basePrice.toFixed(2) + ' ج.م';
   }
 }
 
@@ -449,8 +441,7 @@ async function saveProduct(){
   const btn = document.querySelector('.btn-save'); btn.disabled = true; btn.textContent = 'جاري الحفظ...';
   const result = await api('updateProduct', {
     product_id: currentProductId, price: document.getElementById('editBasePrice').value, stock: document.getElementById('editStock').value,
-    status: document.getElementById('editStatus').value, desc: document.getElementById('editDescription').value,
-    sizes: document.getElementById('editSizes').value, colors: document.getElementById('editColors').value, discount: document.getElementById('editDiscount').value
+    desc: document.getElementById('editDescription').value, sizes: document.getElementById('editSizes').value, colors: document.getElementById('editColors').value
   });
   if(!result.status || result.status !== 'error'){ alert('تم حفظ التعديلات بنجاح ✅'); closeModal(); loadProducts(); }
   else { alert('خطأ أثناء الحفظ: ' + result.message); }
@@ -485,23 +476,23 @@ function renderProducts(products){
   const grid = document.getElementById('grid'); grid.innerHTML = '';
   products.forEach(p => {
     const basePrice = parseFloat(p.base_price) || 0;
-    const discount = parseFloat(p.discount_percent) || 0;
     grid.innerHTML += `
       <div class="card" onclick="openProduct('${p.product_id}')">
         <img src="${p.image_url || 'https://via.placeholder.com/200x200/2a2a2a/888?text=No+Image'}" onerror="this.src='https://via.placeholder.com/200x200/2a2a2a/888?text=No+Image'">
         <div class="info">
           <div class="name">${p.name || 'بدون اسم'}</div>
-          <div class="price">${(basePrice - (basePrice * discount / 100)).toFixed(2)} ج.م</div>
+          <div class="price">${basePrice.toFixed(2)} ج.م</div>
           <div class="stock">المخزون: ${p.stock || 0} قطعة</div>
-          <span class="badge ${p.status === 'active' ? 'active' : 'inactive'}">${p.status === 'active' ? 'نشط' : 'متوقف'}</span>
         </div>
       </div>
     `;
   });
 }
 
+// تحديث الإحصائيات بناءً على المخزون المتوفر بدلاً من كلاس الحالة المحذوف
 function updateStats(products){
-  const total = products.length; const active = products.filter(p => p.status === 'active').length;
+  const total = products.length; 
+  const active = products.filter(p => (parseInt(p.stock) || 0) > 0).length;
   document.getElementById('totalProducts').innerText = total;
   document.getElementById('activeProducts').innerText = active;
   document.getElementById('inactiveProducts').innerText = total - active;
