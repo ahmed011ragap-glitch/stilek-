@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>المحفظة والسحوبات - Stylek Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --card-bg: #111;
+  --card-border: #222;
+  --text: #ffffff;
+  --muted: #888;
+  --green: #00ff88;
+  --red: #ff3366;
+  --blue: #00aaff;
+  --orange: #ff9900;
+  --purple: #aa44ff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Tajawal", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 15px;
+  min-height: 100vh;
+}
+.container { max-width: 1000px; margin: 0 auto; }
+
+/* ===== السليدر الجانبي المطور للمورد ===== */
+.menu-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  font-size: 24px;
+  color: var(--green);
+  cursor: pointer;
+  z-index: 1001;
+  background: #151515;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  transition: 0.3s;
+}
+.menu-btn:hover { background: var(--green); color: #000; }
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100%;
+  background: #0a0a0a;
+  border-left: 2px solid var(--green);
+  transition: right 0.3s ease;
+  z-index: 1002;
+  overflow-y: auto;
+  box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+}
+.sidebar.active { right: 0; }
+.sidebar-header {
+  padding: 20px;
+  background: #151515;
+  border-bottom: 2px solid var(--green);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 900;
+}
+.sidebar-header button {
+  background: none; border: none; color: var(--red); font-size: 32px; cursor: pointer;
+}
+.sidebar-menu { padding: 15px 0; }
+.sidebar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 10px;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+.sidebar-menu a:hover, .sidebar-menu a.active {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+}
+
+.whatsapp-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25d366;
+  color: #fff !important;
+  font-weight: 700 !important;
+  margin: 20px 15px 5px !important;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+.whatsapp-chat-btn:hover { background: #20ba5a !important; transform: translateY(-2px); }
+
+.logout-btn { color: var(--red) !important; border-right: 4px solid transparent; }
+.logout-btn:hover { background: #2a080c !important; color: #ff4444 !important; }
+
+.overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); display: none; z-index: 1000;
+}
+.overlay.active { display: block; }
+
+/* ===== الهيدر ومحتوى الصفحة ===== */
+.header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
+.header h1 {
+  font-size: 24px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #00ff88, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  border-right: 3px solid var(--green);
+  padding-right: 10px;
+}
+
+.search-bar { margin-bottom: 15px; }
+.search-bar input {
+  width: 100%;
+  padding: 10px 15px;
+  background: #111;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-family: "Tajawal", sans-serif;
+  transition: 0.3s;
+}
+.search-bar input:focus { outline: none; border-color: var(--green); }
+
+/* ===== شبكة المربعات الصغيرة والاحترافية بجانب بعضها ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+@media(max-width: 600px) {
+  .grid { grid-template-columns: repeat(2, 1fr); } /* مربعين جنب بعض على الشاشات الصغيرة جداً */
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s;
+}
+.card.active {
+  border: 1px solid var(--green);
+  background: #111a15;
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.card-icon { font-size: 16px; }
+.orange { color: var(--orange); }
+.yellow { color: #ffdd00; }
+.green { color: var(--green); }
+.blue { color: var(--blue); }
+.purple { color: var(--purple); }
+
+.card-label {
+  font-size: 11px;
+  color: #aaa;
+  font-weight: 500;
+}
+.card-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+}
+.card-value.highlight { color: var(--green); }
+
+.btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.btn {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: "Tajawal", sans-serif;
+  transition: 0.3s;
+}
+.btn-purple { background: #1a1a1a; border: 1px solid #333; color: #fff; }
+.btn-green { background: var(--green); color: #000; }
+.btn-green:hover { transform: translateY(-1px); }
+
+.alert {
+  background: #15110a;
+  border: 1px solid #251f11;
+  color: var(--orange);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* المودال ولوحة الأدمن */
+.modal {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; padding: 15px;
+}
+.modal-content { background: #111; border-radius: 14px; max-width: 400px; width: 100%; border: 1px solid #222; }
+
+.admin-panel { display: none; background: #111; border: 1px solid var(--orange); border-radius: 12px; padding: 15px; margin-top: 15px; }
+.admin-panel h3 { color: var(--orange); text-align: center; font-size: 16px; margin-bottom: 10px; }
+.admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; }
+.stat-card { background: #1a1a1a; padding: 8px; border-radius: 6px; text-align: center; }
+.stat-value { font-size: 14px; font-weight: 900; }
+.stat-label { font-size: 10px; color: #aaa; }
+.admin-table { width: 100%; font-size: 11px; overflow-x: auto; }
+.admin-table table { width: 100%; border-collapse: collapse; min-width: 650px; }
+.admin-table th { background: #1a1a1a; color: var(--green); padding: 8px 4px; border-bottom: 1px solid var(--green); }
+.admin-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #222; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <span>🏬 لوحة تحكم المورد</span>
+    <button onclick="toggleSidebar()">×</button>
+  </div>
+  <div class="sidebar-menu">
+    <a href="#" onclick="goToPage('supplier_dashboard')">🏠 لوحة البيانات الرئيسية</a>
+    <a href="#" class="active">💼 المحفظة والسحوبات</a>
+    <a href="#" onclick="goToPage('add_product_supplier')">➕ إضافة منتج جديد</a>
+    <a href="#" onclick="goToPage('my_products_supplier')">📦 منتجاتي المعروضة</a>
+    <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
+    <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
+  </div>
+</div>
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<div class="header">
+  <h1>Stylek Store</h1>
+</div>
+
+<div class="container">
+  <h2>💼 المحفظة والملخص المالي</h2>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="🔍 بحث أو تفعيل وضع الإدارة...">
+  </div>
+
+  <div id="userMode">
+    <div class="grid">
+      <div class="card active">
+        <div class="card-header-row">
+          <span class="card-icon green">✓</span>
+          <div class="card-label">رصيد متاح للسحب</div>
+        </div>
+        <div class="card-value highlight" id="available">0.00</div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon yellow">⏳</span>
+          <div class="card-label">سحوبات معلقة</div>
+        </div>
+        <div class="card-value" id="pending">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon green">💵</span>
+          <div class="card-label">مسحوبة سابقاً</div>
+        </div>
+        <div class="card-value" id="withdrawn">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon orange">📦</span>
+          <div class="card-label">قيد التحضير</div>
+        </div>
+        <div class="card-value" id="preparing">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon purple">🚚</span>
+          <div class="card-label">قيد الشحن</div>
+        </div>
+        <div class="card-value" id="shipping">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon blue">✅</span>
+          <div class="card-label">طلبات مكتملة</div>
+        </div>
+        <div class="card-value" id="delivered">0</div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="btn btn-purple" onclick="openHistory()">🕐 السجل</button>
+      <button class="btn btn-green" onclick="openWithdrawModal()">💵 طلب سحب</button>
+    </div>
+
+    <div class="alert">
+      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط.
+    </div>
+  </div>
+
+  <div class="admin-panel" id="adminPanel">
+    <h3>🔐 طلبات سحب الموردين (الأدمن)</h3>
+    <div class="admin-stats">
+      <div class="stat-card"><div class="stat-value" style="color:var(--orange);" id="pendingCount">0</div><div class="stat-label">معلق</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--green);" id="approvedCount">0</div><div class="stat-label">تم</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--red);" id="rejectedCount">0</div><div class="stat-label">مرفوض</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--blue);" id="totalCount">0</div><div class="stat-label">الإجمالي</div></div>
+    </div>
+    <div class="admin-table">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>المورد</th><th>رقم السحب</th><th>الهاتف</th><th>المبلغ</th><th>الطريقة</th><th>الملاحظات</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+          <tr><td colspan="10">جاري التحميل...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="withdrawModal">
+  <div class="modal-content">
+    <div style="padding: 12px; text-align: center; position: relative; border-bottom: 1px solid #222;">
+      <h3 style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
+      <button type="button" onclick="closeWithdrawModal()" style="position: absolute; top: 8px; left: 15px; background: none; border: none; font-size: 24px; color: #fff; cursor: pointer;">×</button>
+    </div>
+    <form id="withdrawForm" style="padding: 15px;">
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">رقم هاتف المحفظة *</label>
+        <input type="tel" id="w_phone" required placeholder="01012345678" style="width:100%; padding:8px; background:#000; border:1px solid var(--green); border-radius:8px; color:#fff; text-align:center;" maxlength="11">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">وسيلة الاستلام *</label>
+        <select id="w_account" required style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#fff;">
+          <option value="">اختر الوسيلة</option>
+          <option value="فودافون كاش">فودافون كاش</option>
+          <option value="انستاباي">إنستا باي (InstaPay)</option>
+          <option value="اتصالات كاش">اتصالات كاش</option>
+          <option value="اورانج كاش">أورانج كاش</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">المبلغ المراد سحبه *</label>
+        <input type="number" id="w_amount" min="1" step="0.01" required placeholder="أدخل القيمة ج.م" style="width:100%; padding:8px; background:#000; border:1px solid var(--orange); border-radius:8px; color:var(--green); font-weight:700; text-align:center;">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <textarea id="w_notes" rows="2" maxlength="30" placeholder="ملاحظات إضافية أو اسم الحساب..." style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#aaa; resize:none; font-family:'Tajawal'; font-size:12px;"></textarea>
+      </div>
+      <button type="submit" style="width:100%; padding:10px; background:var(--green); border:none; color:#000; font-weight:700; border-radius:8px; cursor:pointer; font-size:14px;">تأكيد وإرسال الطلب</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+
+const urlParams = new URLSearchParams(window.location.search);
+let currentUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+localStorage.setItem('username', currentUser);
+
+function goToPage(pageName) {
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=supplier`;
+}
+
+function logout() {
+  if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+    localStorage.removeItem('username');
+    localStorage.removeItem('userType');
+    window.location.href = 'index.html';
+  }
+}
+
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+let isAdmin = false;
+const ADMIN_CODE = 'Ahmed**##$$1';
+
+async function supabaseApi(endpoint, options = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...options.headers };
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(await response.text());
+  return await response.json();
+}
+
+let globalAvailableBalance = 0;
+
+async function loadDashboard() {
+  try {
+    const allOrders = await supabaseApi(`orders?select=order_status,product_cost,supplier_username`);
+    const supplierOrders = allOrders.filter(o => o.supplier_username === currentUser);
+
+    let deliveredCostTotal = 0, shippingCostTotal = 0, preparingCostTotal = 0, deliveredCount = 0;
+
+    supplierOrders.forEach(o => {
+      const cost = parseFloat(o.product_cost) || 0;
+      if (o.order_status === 'تم التسليم' || o.order_status === 'delivered') { deliveredCostTotal += cost; deliveredCount++; }
+      else if (o.order_status === 'جديد' || o.order_status === 'توصيل' || o.order_status === 'شحن') { shippingCostTotal += cost; }
+      else if (o.order_status === 'تغليف') { preparingCostTotal += cost; }
+    });
+
+    const withdrawals = await supabaseApi(`withdrawals?username=eq.${encodeURIComponent(currentUser)}&select=status,amount`);
+    let pending = 0, withdrawn = 0;
+
+    withdrawals.forEach(w => {
+      const amount = parseFloat(w.amount) || 0;
+      if (w.status === 'قيد المراجعة') pending += amount;
+      else if (w.status === 'تم' || w.status === 'تم الدفع') withdrawn += amount;
+    });
+
+    globalAvailableBalance = deliveredCostTotal - (pending + withdrawn);
+    if(globalAvailableBalance < 0) globalAvailableBalance = 0;
+
+    document.getElementById('available').textContent = globalAvailableBalance.toFixed(2);
+    document.getElementById('pending').textContent = pending.toFixed(2);
+    document.getElementById('withdrawn').textContent = withdrawn.toFixed(2);
+    document.getElementById('preparing').textContent = preparingCostTotal.toFixed(2);
+    document.getElementById('delivered').textContent = deliveredCount;
+    document.getElementById('shipping').textContent = shippingCostTotal.toFixed(2);
+
+  } catch(err) { console.error(err); }
+}
+
+document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone = document.getElementById('w_phone').value.trim();
+  const requestedAmount = parseFloat(document.getElementById('w_amount').value) || 0;
+
+  const phoneRegex = /^01[0125][0-9]{8}$/;
+  if (!phoneRegex.test(phone)) {
+    alert('❌ عذراً، رقم هاتف مصري غير صحيح');
+    return;
+  }
+
+  if (requestedAmount > globalAvailableBalance) {
+    alert(`❌ خطأ: الرصيد المتاح غير كافٍ.`);
+    return;
+  }
+
+  try {
+    await supabaseApi('withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: currentUser,
+        amount: requestedAmount,
+        account: document.getElementById('w_account').value,
+        notes: `رقم تليفون تحويل المورد: ${phone} | ${document.getElementById('w_notes').value}`,
+        order_id: 'SUP-WD-' + Math.floor(1000 + Math.random() * 9000),
+        customer: 'مورد',
+        status: 'قيد المراجعة',
+        due: requestedAmount,
+        paid: 0,
+        remaining: requestedAmount
+      })
+    });
+
+    alert('✅ تم إرسال طلب السحب بنجاح!');
+    closeWithdrawModal();
+    document.getElementById('withdrawForm').reset();
+    await loadDashboard(); 
+    if(isAdmin) loadAdminPanel();
+  } catch(err) { alert('❌ خطأ: ' + err.message); }
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  const val = e.target.value;
+  if(val === ADMIN_CODE && !isAdmin) {
+    isAdmin = true;
+    document.getElementById('userMode').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    loadAdminPanel();
+    alert('✅ تم تفعيل لوحة الأدمن');
+  }
+  if(val !== ADMIN_CODE && isAdmin) {
+    isAdmin = false;
+    document.getElementById('userMode').style.display = 'block';
+    document.getElementById('adminPanel').style.display = 'none';
+  }
+});
+
+async function loadAdminPanel() {
+  try {
+    const data = await supabaseApi('withdrawals?select=*');
+    const tbody = document.getElementById('adminTableBody');
+    if(!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10">لا توجد طلبات سحب</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map((w, i) => {
+      let displayPhone = '-';
+      let cleanNotes = w.notes || '';
+      if(cleanNotes.includes('رقم تليفون تحويل المورد:')) {
+        const parts = cleanNotes.split('|');
+        displayPhone = parts[0].replace('رقم تليفون تحويل المورد:', '').trim();
+        cleanNotes = parts[1] || '';
+      }
+
+      return `
+        <tr>
+          <td>${i+1}</td>
+          <td>${w.username || '-'}</td>
+          <td style="color:var(--green); font-weight:700;">${w.order_id || '-'}</td>
+          <td style="color:var(--blue); font-weight:bold;">${displayPhone}</td>
+          <td style="color:var(--orange); font-weight:900;">${w.amount || 0}</td>
+          <td>${w.account || '-'}</td>
+          <td>${cleanNotes}</td>
+          <td>${w.created_at ? new Date(w.created_at).toLocaleDateString('ar-EG') : '-'}</td>
+          <td style="color:${w.status === 'قيد المراجعة'? 'var(--orange)' : w.status === 'تم'? 'var(--green)' : 'var(--red)'}; font-weight:700;">${w.status || 'قيد المراجعة'}</td>
+          <td>
+            ${w.status === 'قيد المراجعة'? `
+              <button style="background:var(--green); color:#000; border:none; padding:2px 6px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="approveWithdrawal(${w.id}, ${w.amount})">دفع</button>
+              <button style="background:var(--red); color:#fff; border:none; padding:2px 6px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="rejectWithdrawal(${w.id})">رفض</button>
+            ` : '-'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    document.getElementById('pendingCount').textContent = data.filter(w => w.status === 'قيد المراجعة').length;
+    document.getElementById('approvedCount').textContent = data.filter(w => w.status === 'تم' || w.status === 'تم الدفع').length;
+    document.getElementById('rejectedCount').textContent = data.filter(w => w.status === 'مرفوض').length;
+    document.getElementById('totalCount').textContent = data.length;
+  } catch(err) { console.error(err); }
+}
+
+async function approveWithdrawal(id, amount) {
+  if(!confirm('تأكيد الدفع؟')) return;
+  try {
+    await supabaseApi(`withdrawals?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'تم', paid: amount, due: 0, remaining: 0, date2: new Date().toISOString() })
+    });
+    alert('✅ تم الاعتماد');
+    loadAdminPanel();
+    loadDashboard();
+  } catch(err) { alert(err.message); }
+}
+
+async function rejectWithdrawal(id) {
+  const reason = prompt('سبب الرفض:');
+  if(reason === null || reason.trim() === '') return;
+  try {
+    await supabaseApi(`withdrawals?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'مرفوض', due: 0, remaining: 0, notes: `سبب الرفض: ${reason}`, date2: new Date().toISOString() })
+    });
+    alert('❌ تم الرفض');
+    loadAdminPanel();
+    loadDashboard();
+  } catch(err) { alert(err.message); }
+}
+
+function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'flex'; }
+function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
+function openHistory() { alert('السجل المالي يظهر للأدمن تلقائياً عند البحث بكود الإدارة.'); }
+
+loadDashboard();
+setInterval(loadDashboard, 15000);
+</script>
+</body>
+</html>

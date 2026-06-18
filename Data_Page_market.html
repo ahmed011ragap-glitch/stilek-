@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>لوحة تحكم المسوق - Stylek Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --card-bg: #151515;
+  --card-border: #2a2a2a;
+  --text: #ffffff;
+  --muted: #888;
+  --green: #00ff88;
+  --red: #ff3366;
+  --blue: #00aaff;
+  --orange: #ff9900;
+  --gold: #ffd700;
+  --purple: #aa44ff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Tajawal", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.container { max-width: 1200px; margin: 0 auto; }
+
+/* ===== السليدر الجانبي (Sidebar) ===== */
+.menu-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  font-size: 28px;
+  color: var(--green);
+  cursor: pointer;
+  z-index: 1001;
+  background: #151515;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+.menu-btn:hover {
+  background: var(--green);
+  color: #000;
+  transform: scale(1.05);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100%;
+  background: #0a0a0a;
+  border-left: 2px solid var(--green);
+  transition: right 0.3s ease;
+  z-index: 1002;
+  overflow-y: auto;
+  direction: rtl;
+  box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+}
+.sidebar.active { right: 0; }
+.sidebar-header {
+  padding: 20px;
+  background: #151515;
+  border-bottom: 2px solid var(--green);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--green);
+  font-size: 20px;
+  font-weight: 900;
+}
+.sidebar-header button {
+  background: none;
+  border: none;
+  color: #ff4444;
+  font-size: 32px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.sidebar-header button:hover { transform: scale(1.1); }
+.sidebar-menu { padding: 15px 0; }
+.sidebar-menu a {
+  display: block;
+  padding: 15px 20px;
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 10px;
+  border-radius: 10px;
+  transition: 0.2s;
+  border-right: 4px solid transparent;
+}
+.sidebar-menu a:hover {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+  padding-right: 30px;
+}
+.sidebar-menu a.active {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  z-index: 1001;
+}
+.overlay.active { display: block; }
+
+/* ===== الهيدر الرئيسي ===== */
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  margin-top: 10px;
+}
+.header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #00ff88, #00c6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.header p { color: var(--muted); font-size: 14px; }
+
+/* ===== بطاقة معلومات المسوق الكبرى ===== */
+.user-card {
+  background: linear-gradient(135deg, #0a2a0a, #0a1a0a);
+  border: 1px solid var(--green);
+  border-radius: 20px;
+  padding: 20px 25px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.user-info h3 { color: var(--green); font-size: 20px; }
+.user-info .username { font-size: 14px; color: #aaa; margin-top: 4px; }
+.share-link {
+  background: #1a1a1a;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--green);
+  transition: 0.2s;
+}
+.share-link:hover { background: #2a2a2a; transform: translateY(-1px); }
+
+/* ===== شبكة الإحصائيات الذكية ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 30px;
+}
+@media(max-width: 992px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width: 576px) { .stats-grid { grid-template-columns: 1fr; } }
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 18px 16px;
+  transition: 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--green);
+  border-radius: 0 4px 4px 0;
+}
+.stat-card:hover {
+  border-color: var(--green);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0,255,136,0.08);
+}
+.stat-card .label {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.stat-card .value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+.stat-card .value.green { color: var(--green); }
+.stat-card .value.orange { color: var(--orange); }
+.stat-card .value.blue { color: var(--blue); }
+.stat-card .value.purple { color: var(--purple); }
+.stat-card .value.gold { color: var(--gold); }
+.stat-card .sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* ===== قسم قائمة الطلبات الحديثة ===== */
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 30px 0 15px;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+  padding-right: 14px;
+}
+
+.orders-list {
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+}
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.order-item:last-child { border-bottom: none; }
+.order-item:hover { background: #1a1a1a; }
+.order-info { flex: 1; }
+.order-customer { font-weight: 700; font-size: 15px; }
+.order-details {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.order-status {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.status-completed { background: #0a3a0a; color: var(--green); }
+.status-pending { background: #3a2a0a; color: var(--orange); }
+.status-delivery { background: #0a2a3a; color: var(--blue); }
+.status-returned { background: #3a0a0a; color: var(--red); }
+
+/* ===== أزرار التحديث والمؤشرات ===== */
+.btn-refresh {
+  background: var(--green);
+  border: none;
+  padding: 14px 32px;
+  border-radius: 12px;
+  color: #000;
+  cursor: pointer;
+  margin: 25px auto 0;
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: "Tajawal";
+  transition: 0.3s;
+}
+.btn-refresh:hover {
+  background: #00cc66;
+  transform: scale(1.02);
+}
+
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+}
+</style>
+</head>
+<body>
+
+<div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <span>📋 القائمة</span>
+    <button onclick="toggleSidebar()">×</button>
+  </div>
+  <div class="sidebar-menu">
+    <a href="#" onclick="goToPage('Data_Page')" class="active">🏠 لوحة البيانات</a>
+    <a href="#" onclick="goToPage('Displayed_Products')">🛍️ المنتجات المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders')">📋 طلباتي</a>
+    <a href="#" onclick="goToPage('my_wallet')">💰 المحفظة</a>
+  </div>
+</div>
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>🏆 لوحة تحكم المسوق</h1>
+    <p>إحصائياتك وأداء مبيعاتك الفعلي والمباشر من السيرفر</p>
+  </div>
+
+  <div class="user-card">
+    <div class="user-info">
+      <h3 id="userName">مرحباً بك</h3>
+      <div class="username" id="userCode">...</div>
+    </div>
+    <div class="share-link" onclick="copyProfileLink()">🔗 رابط صفحتك الشخصية - اضغط للنسخ</div>
+  </div>
+
+  <div class="stats-grid" id="stats">
+    <div class="stat-card"><div class="label">⏳ جاري تحميل البيانات...</div></div>
+  </div>
+
+  <div class="section-title">📋 آخر 5 طلبات مسجلة باسمك</div>
+  <div id="recentOrders" class="orders-list">
+    <div class="empty-state">⏳ جاري قراءة شيت الأوردرات...</div>
+  </div>
+
+  <button class="btn-refresh" onclick="loadAllData()">🔄 تحديث البيانات</button>
+</div>
+
+<script>
+// التحكم في السايد بار فتح / إغلاق
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+
+// التوجيه الذكي بين الصفحات مع الحفاظ على كود ونوع المستخدم بالـ URL
+function goToPage(pageName) {
+  const currentUser = localStorage.getItem('username') || USER_CODE;
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
+}
+
+// ===== إعدادات اتصال قاعدة بيانات Supabase الرسمية لـ Stylek Store =====
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+const urlParams = new URLSearchParams(window.location.search);
+let USER_CODE = urlParams.get('user') || localStorage.getItem('username') || '';
+let USER_NAME = localStorage.getItem('userName') || 'مسوق';
+
+if(!USER_CODE) {
+  USER_CODE = 'marketer_' + Math.random().toString(36).substr(2, 6);
+  localStorage.setItem('username', USER_CODE);
+}
+
+localStorage.setItem('username', USER_CODE);
+document.getElementById('userCode').innerText = `كود المسوق: ${USER_CODE}`;
+document.getElementById('userName').innerHTML = `👋 مرحباً، ${USER_NAME}`;
+
+// نسخ رابط الصفحة الشخصية للمسوق لمشاركته
+function copyProfileLink() {
+  const link = `${window.location.origin}${window.location.pathname}?user=${encodeURIComponent(USER_CODE)}`;
+  navigator.clipboard.writeText(link);
+  alert('✅ تم نسخ رابط صفحتك الشخصية بنجاح');
+}
+
+// دالة وسيطة للاتصال بـ Supabase API وجلب الجداول
+async function supabaseApi(endpoint) {
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json'
+  };
+  const response = await fetch(url, { headers });
+  if (!response.ok) throw new Error(await response.text());
+  return await response.json();
+}
+
+let dashboardData = {
+  totalOrders: 0,
+  completedOrders: 0,
+  pendingOrders: 0,
+  totalCommission: 0,
+  withdrawnCommission: 0,
+  remainingCommission: 0,
+  recentOrders: []
+};
+
+// جلب وحساب كافة العمليات والبيانات الحية من جداول السيرفر
+async function loadAllData() {
+  const refreshBtn = document.querySelector('.btn-refresh');
+  if(refreshBtn) refreshBtn.innerHTML = '<span class="loading"></span> جاري جلب الأرقام...';
+  
+  try {
+    // 1. جلب الطلبات المطابقة لكود المسوق الحالي من جدول orders
+    const orders = await supabaseApi(`orders?marketer_id=eq.${USER_CODE}&select=*`) || [];
+    
+    // 2. جلب مسحوبات الأرباح المؤكدة من جدول withdrawals
+    const withdrawals = await supabaseApi(`withdrawals?username=eq.${USER_CODE}&select=*`) || [];
+    
+    let totalOrders = 0;
+    let completedOrders = 0;
+    let pendingOrders = 0;
+    let totalCommission = 0;
+    let recentOrders = [];
+    
+    orders.forEach(order => {
+      const commission = parseFloat(order.commission) || 0;
+      totalOrders++;
+      
+      // فحص وتوزيع حالة الأوردر بناء على قواعد الإدارة
+      if (order.order_status === 'تم التسليم' || order.order_status === 'delivered' || order.order_status === 'تم التوصيل') {
+        completedOrders++;
+        totalCommission += commission; // إضافة العمولات للأوردرات المستلمة والمكتملة فقط
+      } else if (order.order_status === 'مرتجع' || order.order_status === 'مرفوض') {
+        // لا تحتسب في العمولات أو في الطلبات المعلقة
+      } else {
+        pendingOrders++;
+      }
+      
+      recentOrders.push({
+        order_id: order.order_id,
+        customer_name: order.customer_name,
+        phone: order.phone,
+        total_price: order.total_price,
+        commission: commission,
+        status: order.order_status,
+        created_at: order.created_at
+      });
+    });
+    
+    // ترتيب الأوردرات ليكون الأحدث دائمًا في البداية وعرض آخر 5 فقط
+    recentOrders = recentOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+    
+    // 3. حساب الأرباح المسحوبة الفردية والنهائية التي تمت الموافقة عليها (تم)
+    let withdrawnCommission = 0;
+    withdrawals.forEach(w => {
+      if(w.status === 'تم') {
+        withdrawnCommission += parseFloat(w.amount) || 0;
+      }
+    });
+    
+    // صافي المحفظة الحالي المتاح للسحب
+    const remainingCommission = totalCommission - withdrawnCommission;
+    
+    dashboardData = {
+      totalOrders,
+      completedOrders,
+      pendingOrders,
+      totalCommission,
+      withdrawnCommission,
+      remainingCommission,
+      recentOrders
+    };
+    
+    renderStats();
+    renderRecentOrders();
+    
+  } catch(err) {
+    console.error('Error handling marketer dashboard data:', err);
+  }
+  
+  if(refreshBtn) refreshBtn.innerHTML = '🔄 تحديث البيانات';
+}
+
+// رندرة وبناء كروت الإحصائيات الـ 6 في الواجهة بشكل منسق وعصري
+function renderStats() {
+  const statsHtml = `
+    <div class="stat-card">
+      <div class="label">📦 إجمالي الطلبات</div>
+      <div class="value green">${dashboardData.totalOrders}</div>
+      <div class="sub">جميع الطلبات المقدمة من خلالك</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="label">✅ الطلبات المكتملة</div>
+      <div class="value gold">${dashboardData.completedOrders}</div>
+      <div class="sub">تم توصيلها للعميل بنجاح وتم تأكيدها</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="label">⏳ قيد التنفيذ بالشحن</div>
+      <div class="value orange">${dashboardData.pendingOrders}</div>
+      <div class="sub">طلبات جاري معالجتها وشحنها حالياً</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="label">💰 إجمالي الأرباح المستلمة</div>
+      <div class="value green">${dashboardData.totalCommission.toFixed(2)} <small style="font-size:14px">ج.م</small></div>
+      <div class="sub">مجموع العمولات المعتمدة للأوردرات المكتملة</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="label">💸 الأرباح المسحوبة سابقاً</div>
+      <div class="value blue">${dashboardData.withdrawnCommission.toFixed(2)} <small style="font-size:14px">ج.م</small></div>
+      <div class="sub">إجمالي المبالغ التي تم تحويلها لكاش</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="label">📈 رصيد المحفظة المتاح حالياً</div>
+      <div class="value purple">${dashboardData.remainingCommission.toFixed(2)} <small style="font-size:14px">ج.م</small></div>
+      <div class="sub">جاهز لتقديم طلب سحب فوري من محفظتك</div>
+    </div>
+  `;
+  
+  document.getElementById('stats').innerHTML = statsHtml;
+}
+
+// عرض قائمة الطلبات الأخيرة المسجلة بالتفاصيل وحالتها الملونة الذكية
+function renderRecentOrders() {
+  const container = document.getElementById('recentOrders');
+  
+  if(dashboardData.recentOrders.length === 0) {
+    container.innerHTML = '<div class="empty-state">📭 لا توجد طلبات مسجلة باسمك حتى الآن</div>';
+    return;
+  }
+  
+  let html = '';
+  dashboardData.recentOrders.forEach(order => {
+    let statusClass = 'status-pending';
+    let statusText = order.status || 'قيد الانتظار';
+    
+    if(order.status === 'تم التسليم' || order.status === 'تم التوصيل' || order.status === 'delivered') {
+      statusClass = 'status-completed';
+      statusText = '✅ مكتمل بالتوصيل';
+    } else if(order.status === 'مرتجع') {
+      statusClass = 'status-returned';
+      statusText = '↩️ أوردر مرتجع';
+    } else if(order.status === 'مرفوض') {
+      statusClass = 'status-returned';
+      statusText = '❌ أوردر مرفوض';
+    } else {
+      statusClass = 'status-delivery';
+      statusText = '🚚 جاري المعالجة والشحن';
+    }
+    
+    html += `
+      <div class="order-item" onclick="window.location.href='manage_orders.html?user=${encodeURIComponent(USER_CODE)}'">
+        <div class="order-info">
+          <div class="order-customer">👤 ${order.customer_name || 'عميل غير مسجل الاسم'}</div>
+          <div class="order-details">📞 ${order.phone || '-'} | 💰 إجمالي الأوردر: ${order.total_price || 0} ج.م | 🆔 كود: ${order.order_id || '-'}</div>
+        </div>
+        <div class="order-status ${statusClass}">${statusText}</div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+
+// التشغيل التلقائي والفوري لجلب البيانات فور تحميل الواجهة
+loadAllData();
+setInterval(loadAllData, 20000); // تحديث تلقائي ذكي وخلفي للأرقام كل 20 ثانية
+</script>
+</body>
+</html>

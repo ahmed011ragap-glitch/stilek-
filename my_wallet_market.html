@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>المحفظة - المسوق</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --card-bg: #151515;
+  --card-border: #2a2a2a;
+  --text: #ffffff;
+  --muted: #888;
+  --green: #00ff88;
+  --red: #ff3366;
+  --blue: #00aaff;
+  --orange: #ff9900;
+  --purple: #aa00ff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  font-family: 'Tajawal', sans-serif;
+  color: #e0e0e0;
+  padding: 20px;
+  min-height: 100vh;
+}
+.container { max-width: 900px; margin: 0 auto; }
+
+/* ===== السليدر الجانبي (Sidebar) ===== */
+.menu-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  font-size: 28px;
+  color: var(--green);
+  cursor: pointer;
+  z-index: 1001;
+  background: #151515;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+.menu-btn:hover {
+  background: var(--green);
+  color: #000;
+  transform: scale(1.05);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100%;
+  background: #0a0a0a;
+  border-left: 2px solid var(--green);
+  transition: right 0.3s ease;
+  z-index: 1002;
+  overflow-y: auto;
+  direction: rtl;
+  box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+}
+.sidebar.active { right: 0; }
+.sidebar-header {
+  padding: 20px;
+  background: #151515;
+  border-bottom: 2px solid var(--green);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--green);
+  font-size: 20px;
+  font-weight: 900;
+}
+.sidebar-header button {
+  background: none;
+  border: none;
+  color: #ff4444;
+  font-size: 32px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.sidebar-header button:hover { transform: scale(1.1); }
+.sidebar-menu { padding: 15px 0; }
+.sidebar-menu a {
+  display: block;
+  padding: 15px 20px;
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 10px;
+  border-radius: 10px;
+  transition: 0.2s;
+  border-right: 4px solid transparent;
+}
+.sidebar-menu a:hover {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+  padding-right: 30px;
+}
+.sidebar-menu a.active {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  z-index: 1001;
+}
+.overlay.active { display: block; }
+
+/* ===== باقي التنسيقات وعناصر الواجهة ===== */
+h2 {
+  text-align: center;
+  margin: 15px 0 25px;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--green);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 25px;
+}
+@media(max-width: 768px) {
+ .grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media(max-width: 480px) {
+ .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 18px 12px;
+  text-align: center;
+  border: 1px solid var(--card-border);
+  position: relative;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: 0.3s;
+}
+.card:hover {
+  border-color: var(--green);
+  box-shadow: 0 0 15px rgba(0,255,136,0.15);
+}
+.card.active {
+  border: 2px solid var(--green);
+  box-shadow: 0 0 20px rgba(0,255,136,0.3);
+  background: linear-gradient(180deg, #151515, #0d1e15);
+}
+
+.card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+}
+.orange { color: var(--orange); }
+.green { color: var(--green); }
+.blue { color: var(--blue); }
+.purple { color: var(--purple); }
+
+.card-label {
+  font-size: 13px;
+  color: #b0b0b0;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.card-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+}
+.card-value.highlight { color: var(--green); font-size: 26px; }
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  background: var(--green);
+  color: #000;
+  border-radius: 50%;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+.btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+.btn {
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Tajawal', sans-serif;
+  transition: 0.3s;
+}
+.btn-purple {
+  background: linear-gradient(135deg, #aa00ff, #7700cc);
+  color: #fff;
+}
+.btn-purple:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(170,0,255,0.4);
+}
+.btn-green {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  color: #000;
+}
+.btn-green:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,255,136,0.4);
+}
+
+.alert {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  color: var(--orange);
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+/* ===== النوافذ المنبثقة (Modals) ===== */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9);
+  z-index: 1003;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-content {
+  background: var(--card-bg);
+  border-radius: 20px;
+  max-width: 440px;
+  width: 100%;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+  overflow: hidden;
+}
+
+.history-modal {
+  max-width: 500px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+.history-list {
+  padding: 15px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+.history-item {
+  background: #0e0e0e;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.history-amount {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--orange);
+}
+.history-status {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.status-pending { background: #2a1a08; color: var(--orange); border: 1px solid var(--orange); }
+.status-approved { background: #082a14; color: var(--green); border: 1px solid var(--green); }
+.status-rejected { background: #2a080c; color: var(--red); border: 1px solid var(--red); }
+
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.2);
+  border-radius: 50%;
+  border-top-color: #00ff88;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <span>📋 القائمة</span>
+    <button onclick="toggleSidebar()">×</button>
+  </div>
+  <div class="sidebar-menu">
+    <a href="#" onclick="goToPage('Data_Page')">🏠 لوحة البيانات</a>
+    <a href="#" onclick="goToPage('Displayed_Products')">🛍️ المنتجات المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders')">📋 طلباتي</a>
+    <a href="#" onclick="goToPage('my_wallet')" class="active">💰 المحفظة</a>
+  </div>
+</div>
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<div class="container">
+
+  <h2>💰 محفظة الأرباح والعوائد</h2>
+
+  <div id="userMode">
+    <div class="grid">
+      <div class="card active">
+        <div class="badge">!</div>
+        <div class="card-icon green">💰</div>
+        <div class="card-label">الرصيد المتاح للسحب</div>
+        <div class="card-value highlight" id="available">0 ج</div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon orange">⏳</div>
+        <div class="card-label">معلق قيد المراجعة</div>
+        <div class="card-value" id="pending">0 ج</div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon blue">✅</div>
+        <div class="card-label">إجمالي المبالغ المسحوبة</div>
+        <div class="card-value" id="withdrawn">0 ج</div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon purple">📦</div>
+        <div class="card-label">إجمالي عمولاتك المكتملة</div>
+        <div class="card-value" id="totalCommission">0 ج</div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon green">🚚</div>
+        <div class="card-label">عدد الطلبات المستلمة</div>
+        <div class="card-value" id="completedOrders">0</div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon red">↩️</div>
+        <div class="card-label">سحوبات مرفوضة</div>
+        <div class="card-value" id="rejected">0 ج</div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="btn btn-purple" onclick="openHistory()">🕐 سجل السحوبات السابقة</button>
+      <button class="btn btn-green" onclick="openWithdrawModal()">+ إنشاء طلب سحب جديد</button>
+    </div>
+
+    <div class="alert">
+      ⚠️ سياسة السحب والأمان: تتم مراجعة طلبات السحب خلال 48 ساعة عمل كحد أقصى. العمولات تصبح متاحة فقط للطلبات التي تحولت حالتها إلى (تم التسليم). الطلبات الملغية أو المرتجعة لا تحتسب لها أي عمولات.
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="withdrawModal">
+  <div class="modal-content">
+    <div style="padding: 15px 20px; text-align: center; position: relative; border-bottom: 1px solid var(--card-border);">
+      <h3 style="color: var(--green); font-size: 20px; margin: 0;">💸 تقديم طلب سحب مالي</h3>
+      <button onclick="closeWithdrawModal()" style="position: absolute; top: 12px; left: 20px; background: none; border: none; font-size: 28px; color: #666; cursor: pointer;">×</button>
+    </div>
+
+    <div style="background: #1a150a; border: 1px solid #3a2208; border-radius: 8px; margin: 15px 20px; padding: 12px; font-size: 13px; color: var(--orange); text-align: center; font-weight: 600;">
+      سيتم تعليق المبلغ المطلوب مؤقتاً لحين موافقة الإدارة وإرساله لك.
+    </div>
+
+    <form id="withdrawForm" style="padding: 0 20px 20px;">
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 6px; font-size: 13px; color: #aaa; font-weight: 600;">كود التتبع للطلب (اختياري)</label>
+        <input type="text" id="w_order" placeholder="مثال: WD-1025"
+          style="width: 100%; padding: 11px; background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 10px; font-size: 15px; color: #fff; text-align: center; font-family: 'Tajawal'; font-weight: 600;">
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 6px; font-size: 13px; color: #aaa; font-weight: 600;">وسيلة التحويل المفضلة *</label>
+        <select id="w_account" required
+          style="width: 100%; padding: 11px; background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 10px; font-size: 14px; color: #fff; font-family: 'Tajawal'; outline: none;">
+          <option value="">-- اختر المحفظة أو وسيلة الدفع --</option>
+          <option value="فودافون كاش">فودافون كاش (Vodafone Cash)</option>
+          <option value="اورانج كاش">أورانج كاش (Orange Cash)</option>
+          <option value="اتصالات كاش">اتصالات كاش (Etisalat Cash)</option>
+          <option value="انستاباي">إنستا باي (InstaPay)</option>
+          <option value="تحويل بنكي">تحويل بنكي مباشر</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 6px; font-size: 13px; color: #aaa; font-weight: 600;">المبلغ المطلوب سحبه (ج.م) *</label>
+        <input type="number" id="w_amount" min="1" step="1" required placeholder="أدخل القيمة المطلوبة"
+          style="width: 100%; padding: 12px; background: #0a0a0a; border: 1px solid var(--green); border-radius: 10px; font-size: 18px; color: var(--green); font-weight: 900; text-align: center; font-family: 'Tajawal';">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <label style="font-size: 13px; color: #aaa; font-weight: 600;">تفاصيل الحساب / رقم المحفظة *</label>
+          <span id="charCount" style="font-size: 11px; color: #555;">0 / 50</span>
+        </div>
+        <textarea id="w_notes" rows="2" maxlength="50" required placeholder="اكتب رقم الهاتف الخاص بالمحفظة أو بيانات الحساب بدقة..."
+          style="width: 100%; padding: 11px; background: #0a0a0a; border: 1px solid var(--card-border); border-radius: 10px; font-size: 14px; color: #fff; font-family: 'Tajawal'; resize: none; outline: none;"></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn"
+        style="width: 100%; padding: 14px; background: var(--green); border: none; border-radius: 10px; color: #000; font-size: 16px; font-weight: 900; cursor: pointer; font-family: 'Tajawal'; transition: 0.3s; margin-bottom: 10px;">
+        تأكيد وإرسال طلب السحب الكلي
+      </button>
+      
+      <button type="button" onclick="closeWithdrawModal()"
+        style="width: 100%; padding: 11px; background: transparent; border: 1px solid #444; color: #aaa; font-size: 14px; cursor: pointer; border-radius: 10px; font-weight: 600;">
+        إلغاء وتراجع
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="historyModal">
+  <div class="modal-content history-modal">
+    <div style="padding: 15px 20px; text-align: center; position: relative; border-bottom: 1px solid var(--card-border);">
+      <h3 style="color: var(--green); font-size: 20px; margin: 0;">📋 سجل تتبع السحوبات المالية</h3>
+      <button onclick="closeHistoryModal()" style="position: absolute; top: 12px; left: 20px; background: none; border: none; font-size: 28px; color: #666; cursor: pointer;">×</button>
+    </div>
+    <div id="historyList" class="history-list">
+      <div style="text-align:center; padding: 20px;"><span class="loading"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+
+function goToPage(pageName) {
+  const currentUser = localStorage.getItem('username') || currentUserVar;
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
+}
+
+// ===== إعدادات الاتصال المباشر بقاعدة بيانات Supabase لـ Stylek Store =====
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+const urlParams = new URLSearchParams(window.location.search);
+let currentUserVar = urlParams.get('user') || localStorage.getItem('username') || '';
+let USER_NAME = localStorage.getItem('userName') || 'مسوق';
+
+if(!currentUserVar) {
+  currentUserVar = 'marketer_' + Math.random().toString(36).substr(2, 6);
+  localStorage.setItem('username', currentUserVar);
+}
+
+window.onload = function() {
+  loadWalletData();
+  setInterval(loadWalletData, 30000); // تحديث الأرقام تلقائياً كل 30 ثانية
+}
+
+async function supabaseApi(endpoint, options = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(`خطأ ${response.status}: ${await response.text()}`);
+  return await response.json();
+}
+
+async function callApi(action, data = {}) {
+  try {
+    switch(action) {
+      case 'getMarketerOrders':
+        return await supabaseApi(`orders?marketer_id=eq.${encodeURIComponent(currentUserVar)}&select=*`);
+      case 'getMarketerWithdrawals':
+        return await supabaseApi(`withdrawals?username=eq.${encodeURIComponent(currentUserVar)}&select=*&order=created_at.desc`);
+      case 'addWithdrawal':
+        return await supabaseApi('withdrawals', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: currentUserVar,
+            amount: data.amount,
+            account: data.account,
+            notes: data.notes,
+            order_id: data.order || 'WD-' + Math.floor(1000 + Math.random() * 9000),
+            customer: USER_NAME,
+            status: 'قيد المراجعة',
+            due: data.amount,
+            paid: 0,
+            remaining: data.amount
+          })
+        });
+      default:
+        return { status: 'error', message: 'الطلب البرمجي غير مدعوم' };
+    }
+  } catch(err) {
+    console.error('API Error:', err);
+    return { status: 'error', message: err.message };
+  }
+}
+
+let walletData = { available: 0, pending: 0, withdrawn: 0, rejected: 0, totalCommission: 0, completedOrders: 0 };
+
+async function loadWalletData() {
+  try {
+    const orders = await callApi('getMarketerOrders') || [];
+    
+    let totalCommission = 0;
+    let completedOrders = 0;
+    
+    orders.forEach(order => {
+      // احتساب العمولات فقط للأوردرات المستلمة والمشحونة كلياً بنجاح
+      if (order.order_status === 'تم التسليم' || order.order_status === 'تم التوصيل') {
+        totalCommission += parseFloat(order.commission) || 0;
+        completedOrders++;
+      }
+    });
+    
+    const withdrawals = await callApi('getMarketerWithdrawals') || [];
+    
+    let pending = 0;
+    let withdrawn = 0;
+    let rejected = 0;
+    
+    withdrawals.forEach(w => {
+      const amount = parseFloat(w.amount) || 0;
+      if(w.status === 'قيد المراجعة') pending += amount;
+      else if(w.status === 'تم' || w.status === 'تم الدفع') withdrawn += amount;
+      else if(w.status === 'مرفوض') rejected += amount;
+    });
+    
+    // معادلة الحساب الدقيقة والمقاصة المالية للرصيد الفعلي للمسوق
+    const available = totalCommission - (pending + withdrawn);
+    
+    walletData = {
+      available: available > 0 ? available : 0,
+      pending: pending,
+      withdrawn: withdrawn,
+      rejected: rejected,
+      totalCommission: totalCommission,
+      completedOrders: completedOrders
+    };
+    
+    updateUI();
+  } catch(err) {
+    console.error('Error computing wallet systems:', err);
+  }
+}
+
+function updateUI() {
+  document.getElementById('available').textContent = walletData.available.toFixed(2) + " ج.م";
+  document.getElementById('pending').textContent = walletData.pending.toFixed(2) + " ج.م";
+  document.getElementById('withdrawn').textContent = walletData.withdrawn.toFixed(2) + " ج.م";
+  document.getElementById('rejected').textContent = walletData.rejected.toFixed(2) + " ج.م";
+  document.getElementById('totalCommission').textContent = walletData.totalCommission.toFixed(2) + " ج.م";
+  document.getElementById('completedOrders').textContent = walletData.completedOrders;
+}
+
+async function submitWithdrawal(event) {
+  event.preventDefault();
+  
+  const orderNum = document.getElementById('w_order').value.trim();
+  const method = document.getElementById('w_account').value;
+  const amount = parseFloat(document.getElementById('w_amount').value);
+  const notes = document.getElementById('w_notes').value.trim();
+  
+  if(!method) { alert('❌ يرجى اختيار وسيلة التحويل المطلوبة'); return; }
+  if(!amount || amount <= 0) { alert('❌ يرجى كتابة قيمة مالية صحيحة'); return; }
+  if(!notes) { alert('❌ تفاصيل الحساب ورقم المحفظة حقل إجباري لمنع التحويل الخاطئ'); return; }
+  
+  if(amount > walletData.available) {
+    alert(`❌ الرصيد غير كافٍ! رصيدك المتاح الحالي للطلبات المكتملة هو (${walletData.available.toFixed(2)} ج.م)`);
+    return;
+  }
+  
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="loading"></span> جاري تسجيل حركتك المالية بالسيستم...';
+  
+  try {
+    const result = await callApi('addWithdrawal', {
+      amount: amount,
+      account: method,
+      notes: notes,
+      order: orderNum
+    });
+    
+    if(result.status !== 'error') {
+      alert(`✅ تم استلام طلب السحب الخاص بك بنجاح!\nالمبلغ المخصوم مؤقتاً: ${amount} ج.م\nجاري المراجعة والإرسال عبر الإدارة.`);
+      closeWithdrawModal();
+      await loadWalletData();
+    } else {
+      alert('❌ حدثت مشكلة أثناء تسجيل الطلب بالسيرفر: ' + result.message);
+    }
+  } catch(err) {
+    alert('❌ خطأ غير متوقع: ' + err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = 'تأكيد وإرسال طلب السحب الكلي';
+  }
+}
+
+async function openHistory() {
+  document.getElementById('historyModal').style.display = 'flex';
+  const listContainer = document.getElementById('historyList');
+  listContainer.innerHTML = '<div style="text-align:center; padding: 20px;"><span class="loading"></span> جاري جلب السجلات...</div>';
+  
+  try {
+    const withdrawals = await callApi('getMarketerWithdrawals') || [];
+    
+    if(withdrawals.length === 0) {
+      listContainer.innerHTML = '<div style="text-align:center;padding:40px;color:#666;font-size:14px">📭 لم تقم بأي عمليات سحب أرباح مسبقة حتى الآن</div>';
+      return;
+    }
+    
+    let html = '';
+    withdrawals.forEach(w => {
+      let statusClass = 'status-pending';
+      let statusText = '⏳ قيد المراجعة والتدقيق';
+      if(w.status === 'تم' || w.status === 'تم الدفع') {
+        statusClass = 'status-approved';
+        statusText = '✅ تم التحويل بنجاح';
+      } else if(w.status === 'مرفوض') {
+        statusClass = 'status-rejected';
+        statusText = '❌ تم الرفض من الإدارة';
+      }
+      
+      html += `
+        <div class="history-item">
+          <div>
+            <div style="font-weight:700; color: #fff; font-size:14px;">🆔 المعاملة: ${w.order_id || '-'}</div>
+            <div style="font-size:11px; color:#666; margin-top: 4px;">📅 التوقيت: ${w.created_at ? new Date(w.created_at).toLocaleDateString('ar-EG') : '-'}</div>
+            <div style="font-size:11px; color:#aaa; margin-top: 2px;">💳 الطريقة: ${w.account || 'غير محدد'}</div>
+          </div>
+          <div style="text-align: left;">
+            <div class="history-amount">${parseFloat(w.amount).toFixed(2)} ج</div>
+            <div class="history-status ${statusClass}" style="margin-top:6px; display:inline-block;">${statusText}</div>
+          </div>
+        </div>
+      `;
+    });
+    
+    listContainer.innerHTML = html;
+  } catch(err) {
+    listContainer.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">❌ فشل الاتصال بقاعدة البيانات لجلب العمليات</div>';
+  }
+}
+
+function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+
+function openWithdrawModal() {
+  if(walletData.available <= 0) {
+    alert('⚠️ لا يتوفر رصيد كافٍ للسحب بمحفظتك حالياً. يجب انتظار تسليم وشحن الطلبات النشطة أولاً لعملاء Stylek Store.');
+    return;
+  }
+  document.getElementById('withdrawModal').style.display = 'flex';
+  document.getElementById('charCount').textContent = "0 / 50";
+  document.getElementById('withdrawForm').reset();
+}
+
+function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
+
+document.getElementById('w_notes').addEventListener('input', e => {
+  document.getElementById('charCount').textContent = `${e.target.value.length} / 50`;
+});
+
+document.getElementById('withdrawForm').addEventListener('submit', submitWithdrawal);
+</script>
+</body>
+</html>

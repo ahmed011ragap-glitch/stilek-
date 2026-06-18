@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>لوحة الإدارة الشاملة - إدارة الحالات</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-green: #10b981;
+  --accent-blue: #3b82f6;
+  --accent-orange: #f59e0b;
+  --accent-purple: #8b5cf6;
+  --accent-red: #ef4444;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Tajawal", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.container { max-width: 1400px; margin: 0 auto; }
+
+.main-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.main-header h1 {
+  font-size: 30px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.tab-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 35px;
+}
+.btn-tab {
+  flex: 1;
+  max-width: 300px;
+  padding: 18px;
+  border: 2px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  border-radius: 16px;
+  font-family: "Tajawal";
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+.btn-tab.active {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #fff;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 25px;
+}
+
+.data-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.card-status-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 5px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.status-pending-bg { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+.status-success-bg { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+.status-danger-bg { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+
+.product-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px dashed var(--card-border);
+  padding-bottom: 15px;
+  margin-top: 15px;
+}
+.product-image {
+  width: 75px;
+  height: 75px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #0f172a;
+}
+.product-title {
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.section-divider {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-blue);
+  border-right: 4px solid var(--accent-blue);
+  padding-right: 8px;
+}
+.section-divider.withdraw { color: var(--accent-purple); border-right-color: var(--accent-purple); }
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  font-size: 14px;
+}
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.label-title { color: var(--text-muted); font-size: 13px; }
+.value-text { font-weight: 600; }
+
+/* ===== أزرار التحكم وتغيير الحالة الجديدة ===== */
+.action-controls-box {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+  border-top: 1px solid var(--card-border);
+  padding-top: 12px;
+}
+.btn-status-change {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-family: "Tajawal";
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  transition: opacity 0.2s;
+  text-align: center;
+}
+.btn-status-change:hover { opacity: 0.85; }
+.btn-receive { background-color: var(--accent-purple); }
+.btn-deliver { background-color: var(--accent-green); }
+.btn-return { background-color: var(--accent-orange); }
+.btn-reject { background-color: var(--accent-red); }
+
+.no-data {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 50px;
+  color: var(--text-muted);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="main-header">
+    <h1>👑 لوحة التحكم والمتابعة الشاملة</h1>
+    <p style="color: var(--text-muted);">تعديل حالات طلبات الشحن والسحوبات المالية فوريًا</p>
+  </div>
+
+  <div class="tab-buttons">
+    <button class="btn-tab active" id="btnOrders" onclick="switchView('orders')">📦 شيت الطلبات<br><span style="font-size:12px; font-weight:normal;">(orders)</span></button>
+    <button class="btn-tab" id="btnWithdrawals" onclick="switchView('withdrawals')">💵 شيت المحفظة والسحب<br><span style="font-size:12px; font-weight:normal;">(withdrawals)</span></button>
+  </div>
+
+  <div class="cards-grid" id="cardsContainer">
+    <div class="no-data">⏳ جاري تحميل البيانات وبناء عناصر التحكم...</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+let allOrders = [];
+let allWithdrawals = [];
+let allProducts = [];
+let currentTab = 'orders';
+
+// دالة جلب البيانات العامة
+async function supabaseFetch(table) {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?select=*`;
+  const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+  const response = await fetch(url, { headers });
+  return await response.json();
+}
+
+// دالة التحديث وتعديل الحالات داخل الـ Supabase
+async function updateStatusInSupabase(table, idColumn, idValue, statusColumn, newStatusValue) {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?${idColumn}=eq.${idValue}`;
+  const headers = { 
+    'apikey': SUPABASE_KEY, 
+    'Authorization': `Bearer ${SUPABASE_KEY}`, 
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal'
+  };
+  
+  try {
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: headers,
+      body: JSON.stringify({ [statusColumn]: newStatusValue })
+    });
+    
+    if(response.ok) {
+      alert(`🎯 تم تحديث الحالة بنجاح إلى: ${newStatusValue}`);
+      loadDataFromServer(); // إعادة تحميل البيانات لتحديث واجهة المستخدم
+    } else {
+      alert('❌ حدث خطأ أثناء محاولة التحديث بالسيرفر');
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function formatDateArabic(dateString) {
+  if(!dateString) return '-';
+  const date = new Date(dateString);
+  if(isNaN(date.getTime())) return dateString;
+  const yyyy = date.getFullYear();
+  let mm = date.getMonth() + 1;
+  let dd = date.getDate();
+  let hh = date.getHours();
+  let min = date.getMinutes();
+  const ampm = hh >= 12 ? 'م' : 'ص';
+  hh = hh % 12 || 12;
+  if (dd < 10) dd = '0' + dd;
+  if (mm < 10) mm = '0' + mm;
+  if (min < 10) min = '0' + min;
+  return `${yyyy}-${mm}-${dd} || ${hh}:${min} ${ampm}`;
+}
+
+function switchView(tabName) {
+  currentTab = tabName;
+  document.getElementById('btnOrders').classList.toggle('active', tabName === 'orders');
+  document.getElementById('btnWithdrawals').classList.toggle('active', tabName === 'withdrawals');
+  renderCards();
+}
+
+function getBadgeClass(status) {
+  if(['تم التسليم', 'delivered', 'تم'].includes(status)) return 'status-success-bg';
+  if(['مرتجع', 'مرفوض'].includes(status)) return 'status-danger-bg';
+  return 'status-pending-bg';
+}
+
+function renderCards() {
+  const container = document.getElementById('cardsContainer');
+  container.innerHTML = '';
+
+  if (currentTab === 'orders') {
+    if (allOrders.length === 0) {
+      container.innerHTML = '<div class="no-data">📭 لا توجد أوردرات في شيت orders</div>';
+      return;
+    }
+
+    allOrders.forEach(o => {
+      const prodMatch = allProducts.find(p => p.product_id === o.product_id);
+      const pImage = prodMatch ? prodMatch.image_url : '';
+      const pName = prodMatch ? prodMatch.name : (o.product_name || 'منتج غير محدد بالنظام');
+      const sPhone = prodMatch ? prodMatch.username : 'غير متوفر';
+
+      const card = document.createElement('div');
+      card.className = 'data-card';
+      card.innerHTML = `
+        <span class="card-status-badge ${getBadgeClass(o.order_status)}">${o.order_status || 'pending'}</span>
+        
+        <div class="product-section">
+          <img src="${pImage || 'https://via.placeholder.com/150'}" class="product-image" onerror="this.src='https://via.placeholder.com/150'">
+          <div class="product-info-meta">
+            <div class="product-title">${pName}</div>
+            <div style="font-size:13px; color:var(--accent-green); font-weight:bold; margin-top:3px;">💰 عمولة المسوق: ${o.commission || 0} ج.م</div>
+          </div>
+        </div>
+
+        <div class="section-divider">📌 تفاصيل العميل والطلب</div>
+        <div class="info-row">
+          <div class="info-item"><span class="label-title">رقم الطلب (ID):</span> <span class="value-text">${o.order_id}</span></div>
+          <div class="info-item"><span class="label-title">اسم العميل:</span> <span class="value-text">${o.customer_name || '-'}</span></div>
+          <div class="info-item"><span class="label-title">رقم الهاتف الأساسي:</span> <span class="value-text" style="color:var(--accent-blue)">${o.phone || '-'}</span></div>
+          <div class="info-item"><span class="label-title">المحافظة / المدينة:</span> <span class="value-text">${o.governorate || '-'} / ${o.city || '-'}</span></div>
+          <div class="info-item"><span class="label-title">العنوان بالتفصيل:</span> <span class="value-text" style="font-size:12px;">${o.address || '-'}</span></div>
+          <div class="info-item"><span class="label-title">تاريخ الطلب:</span> <span class="value-text" style="color:var(--accent-orange)">${formatDateArabic(o.created_at)}</span></div>
+        </div>
+
+        <div class="section-divider">📏 التفاصيل المالية والفنية</div>
+        <div class="info-row">
+          <div class="info-item"><span class="label-title">المقاس / اللون:</span> <span class="value-text">${o.size || 'حر'} / ${o.color || 'حر'}</span></div>
+          <div class="info-item"><span class="label-title">الكمية المطلوبة:</span> <span class="value-text">${o.qty || 1} قطعة</span></div>
+          <div class="info-item"><span class="label-title">إجمالي السعر الصافي:</span> <span class="value-text" style="color:var(--accent-green); font-weight:800;">${o.total_price || 0} ج.م</span></div>
+          <div class="info-item">
+            <span class="label-title">كود / هاتف المورد:</span> <span class="value-text" style="color:var(--accent-blue);">📞 ${sPhone}</span>
+          </div>
+        </div>
+
+        <div class="action-controls-box">
+          <button class="btn-status-change btn-receive" onclick="updateStatusInSupabase('orders', 'order_id', '${o.order_id}', 'order_status', 'تم الاستلام')">📥 تم الاستلام</button>
+          <button class="btn-status-change btn-deliver" onclick="updateStatusInSupabase('orders', 'order_id', '${o.order_id}', 'order_status', 'تم التوصيل')">✅ تم التوصيل</button>
+          <button class="btn-status-change btn-return" onclick="updateStatusInSupabase('orders', 'order_id', '${o.order_id}', 'order_status', 'مرتجع')">🔄 مرتجع</button>
+          <button class="btn-status-change btn-reject" onclick="updateStatusInSupabase('orders', 'order_id', '${o.order_id}', 'order_status', 'مرفوض')">❌ مرفوض</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+  } else {
+    if (allWithdrawals.length === 0) {
+      container.innerHTML = '<div class="no-data">📭 لا توجد طلبات سحب رصيد في شيت withdrawals</div>';
+      return;
+    }
+
+    allWithdrawals.forEach(w => {
+      const card = document.createElement('div');
+      card.className = 'data-card';
+      card.innerHTML = `
+        <span class="card-status-badge ${getBadgeClass(w.status)}">${w.status || 'قيد المراجعة'}</span>
+
+        <div class="section-divider withdraw" style="margin-top:20px;">💵 تفاصيل طلب السحب المالي</div>
+        <div class="info-row">
+          <div class="info-item"><span class="label-title">اسم / كود المسوق طالب السحب:</span> <span class="value-text" style="font-weight:bold; color:var(--accent-green);">${w.username}</span></div>
+          <div class="info-item"><span class="label-title">المبلغ المطلوب سحبه:</span> <span class="value-text" style="font-size:18px; font-weight:800; color:#fff;">${w.amount || 0} ج.م</span></div>
+          <div class="info-item"><span class="label-title">طريقة تحويل الأموال:</span> <span class="value-text" style="color:var(--accent-blue); font-weight:bold;">${w.account || 'غير محددة'}</span></div>
+          <div class="info-item"><span class="label-title">بيانات الهاتف المستلم:</span> <span class="value-text" style="color:var(--accent-orange); font-weight:bold;">${w.notes || 'غير متوفر'}</span></div>
+          <div class="info-item"><span class="label-title">تاريخ الطلب:</span> <span class="value-text">${formatDateArabic(w.date1 || w.created_at)}</span></div>
+        </div>
+
+        <div class="action-controls-box" style="grid-template-columns: repeat(2, 1fr);">
+          <button class="btn-status-change btn-deliver" onclick="updateStatusInSupabase('withdrawals', 'id', '${w.id}', 'status', 'تم')">✅ موافقة وتأكيد السحب (تم)</button>
+          <button class="btn-status-change btn-reject" onclick="updateStatusInSupabase('withdrawals', 'id', '${w.id}', 'status', 'مرفوض')">❌ رفض طلب السحب</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+}
+
+async function loadDataFromServer() {
+  try {
+    allOrders = await supabaseFetch('orders');
+    allWithdrawals = await supabaseFetch('withdrawals');
+    allProducts = await supabaseFetch('products');
+
+    allOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    allWithdrawals.sort((a,b) => new Date(b.date1 || b.created_at) - new Date(a.date1 || a.created_at));
+
+    renderCards();
+  } catch(err) {
+    console.error(err);
+  }
+}
+
+loadDataFromServer();
+</script>
+</body>
+</html>

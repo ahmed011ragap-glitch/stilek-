@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إضافة منتج - Stylek Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #000;
+  --card-bg: #111;
+  --card-border: #222;
+  --text: #fff;
+  --muted: #888;
+  --green: #00ff88;
+  --blue: #00aaff;
+  --red: #ff3366;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Tajawal", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* ===== السليدر الجانبي المطور للمورد ===== */
+.menu-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  font-size: 28px;
+  color: var(--green);
+  cursor: pointer;
+  z-index: 1001;
+  background: #151515;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  transition: 0.3s;
+}
+.menu-btn:hover { background: var(--green); color: #000; }
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100%;
+  background: #0a0a0a;
+  border-left: 2px solid var(--green);
+  transition: right 0.3s ease;
+  z-index: 1002;
+  overflow-y: auto;
+  box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+}
+.sidebar.active { right: 0; }
+.sidebar-header {
+  padding: 20px;
+  background: #151515;
+  border-bottom: 2px solid var(--green);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 900;
+}
+.sidebar-header button {
+  background: none; border: none; color: var(--red); font-size: 32px; cursor: pointer;
+}
+.sidebar-menu { padding: 15px 0; }
+.sidebar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 10px;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+.sidebar-menu a:hover, .sidebar-menu a.active {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+}
+
+/* زر الدعم الفني عبر واتساب */
+.whatsapp-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25d366;
+  color: #fff !important;
+  font-weight: 700 !important;
+  margin: 20px 15px 5px !important;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+.whatsapp-chat-btn:hover {
+  background: #20ba5a !important;
+  transform: translateY(-2px);
+}
+
+.logout-btn {
+  color: var(--red) !important;
+  border-right: 4px solid transparent;
+}
+.logout-btn:hover {
+  background: #2a080c !important;
+  color: #ff4444 !important;
+}
+
+.overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); display: none; z-index: 1000;
+}
+.overlay.active { display: block; }
+
+/* ===== الهيدر ومحتوى الصفحة ===== */
+.header { text-align: center; margin-bottom: 25px; margin-top: 10px; }
+.header h1 {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #00ff88, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.container {
+  max-width: 750px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 30px;
+}
+h2 {
+  text-align: center;
+  font-size: 22px;
+  color: var(--text);
+  margin-bottom: 25px;
+}
+.form-group { margin-bottom: 18px; }
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 14px;
+  background: #0a0a0a;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: "Tajawal";
+  outline: none;
+  transition: 0.3s;
+}
+input:focus, textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(0,255,136,0.1);
+}
+textarea { resize: vertical; min-height: 100px; }
+.price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 25px;
+}
+button.submit {
+  padding: 16px;
+  background: linear-gradient(90deg,var(--green),#00cc66);
+  border: none;
+  border-radius: 12px;
+  color: #000;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+button.cancel {
+  padding: 16px;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.code-box {
+  background: #0a0a0a;
+  border: 1px dashed var(--green);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  color: var(--green);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+.success { text-align: center; color: var(--green); margin-top: 15px; font-weight: 600; }
+.error { text-align: center; color: var(--red); margin-top: 15px; font-weight: 600; }
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  flex-direction: column;
+}
+.loading-overlay.active { display: flex; }
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #333;
+  border-top-color: #00ff88;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.loading-overlay p {
+  margin-top: 20px;
+  color: #00ff88;
+  font-size: 18px;
+  font-weight: 600;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <span>🏬 لوحة تحكم المورد</span>
+    <button onclick="toggleSidebar()">×</button>
+  </div>
+  <div class="sidebar-menu">
+    <a href="#" onclick="goToPage('supplier_dashboard')">🏠 لوحة البيانات الرئيسية</a>
+    <a href="#" onclick="goToPage('my_wallet_supplier')">💼 المحفظة والسحوبات</a>
+    <a href="#" class="active">➕ إضافة منتج جديد</a>
+    <a href="#" onclick="goToPage('my_products_supplier')">📦 منتجاتي المعروضة</a>
+    
+    <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">
+      💬 تواصل مع الدعم الفني
+    </a>
+    
+    <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
+  </div>
+</div>
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <p>⏳ جاري إضافة المنتج...</p>
+</div>
+
+<div class="header">
+  <h1>Stylek Store</h1>
+</div>
+
+<div class="container">
+<h2>➕ إضافة منتج جديد</h2>
+
+<div class="code-box" id="productCode">🆔 كود المنتج: جاري التوليد...</div>
+
+<div class="price-row">
+  <div class="form-group">
+    <label>🏷️ كود المورد *</label>
+    <input id="supplierCode" type="text" placeholder="مثال: SUP001" readonly>
+  </div>
+  <div class="form-group">
+    <label>📞 رقم هاتف المورد (واتساب) *</label>
+    <input id="supplierPhone" type="tel" placeholder="مثال: 01012345678">
+  </div>
+</div>
+
+<div class="form-group">
+  <label>📦 اسم المنتج *</label>
+  <input id="productName" placeholder="مثال: تيشيرت قطن">
+</div>
+
+<div class="price-row">
+  <div class="form-group">
+    <label>💰 سعر التكلفة * (جنيه)</label>
+    <input id="price" type="number" placeholder="250" min="1">
+  </div>
+  <div class="form-group">
+    <label>📊 المخزون *</label>
+    <input id="stock" type="number" placeholder="50" min="0" value="1">
+  </div>
+</div>
+
+<div class="form-group">
+  <label>🖼️ صورة المنتج *</label>
+  <input id="coverImg" type="file" accept="image/*">
+  <img id="preview" style="max-width:100%;max-height:150px;margin-top:10px;border-radius:8px;display:none">
+</div>
+
+<div class="form-group">
+  <label>🔗 لينكات المعرض الإضافية (Gallery Link)</label>
+  <input id="galleryLink" type="url" placeholder="https://drive.google.com/...">
+</div>
+
+<div class="form-group">
+  <label>📝 وصف المنتج</label>
+  <textarea id="productDesc" rows="3" placeholder="اكتب وصف المنتج بالتفصيل..."></textarea>
+</div>
+
+<div class="btn-row">
+  <button class="submit" id="addBtn">✅ إضافة المنتج</button>
+  <button class="cancel" onclick="resetForm()">❌ إلغاء</button>
+</div>
+
+<div id="success" class="success"></div>
+<div id="error" class="error"></div>
+</div>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+
+const urlParams = new URLSearchParams(window.location.search);
+let SUPPLIER_CODE = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+localStorage.setItem('username', SUPPLIER_CODE);
+
+// وضع كود المورد تلقائياً في خانة كود المورد وجعله للقراءة فقط لعدم التلاعب
+document.getElementById('supplierCode').value = SUPPLIER_CODE;
+
+function goToPage(pageName) {
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(SUPPLIER_CODE)}&type=supplier`;
+}
+
+function logout() {
+  if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+    localStorage.removeItem('username');
+    localStorage.removeItem('userType');
+    window.location.href = 'index.html';
+  }
+}
+
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+function generateCode() {
+  const code = 'PRD' + Date.now().toString().slice(-8);
+  document.getElementById('productCode').innerHTML = '🆔 كود المنتج: ' + code;
+  return code;
+}
+let productCode = generateCode();
+
+function showLoading(message = '⏳ جاري إضافة المنتج...') {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.querySelector('p').textContent = message;
+  overlay.classList.add('active');
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+async function supabaseApi(endpoint, options = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+    ...options.headers
+  };
+  
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`خطأ ${response.status}: ${error}`);
+  }
+  return await response.json();
+}
+
+async function uploadImageToSupabase(file) {
+  const fileName = `${Date.now()}_${file.name}`;
+  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/product_images/${fileName}`;
+  
+  const response = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': file.type
+    },
+    body: file
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`فشل رفع الصورة: ${error}`);
+  }
+  
+  return `${SUPABASE_URL}/storage/v1/object/public/product_images/${fileName}`;
+}
+
+function resetForm() {
+  document.getElementById('productName').value = '';
+  document.getElementById('price').value = '';
+  document.getElementById('stock').value = '1';
+  document.getElementById('supplierPhone').value = '';
+  document.getElementById('galleryLink').value = '';
+  document.getElementById('productDesc').value = '';
+  document.getElementById('coverImg').value = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('error').innerHTML = '';
+  document.getElementById('success').innerHTML = '';
+  productCode = generateCode();
+}
+
+document.getElementById('addBtn').onclick = async function() {
+  productCode = generateCode();
+
+  const name = document.getElementById('productName').value.trim();
+  const price = document.getElementById('price').value;
+  const stock = document.getElementById('stock').value;
+  const supplierCode = document.getElementById('supplierCode').value.trim();
+  const supplierPhone = document.getElementById('supplierPhone').value.trim();
+  const galleryLink = document.getElementById('galleryLink').value.trim();
+  const desc = document.getElementById('productDesc').value.trim();
+  const fileInput = document.getElementById('coverImg');
+
+  const errorDiv = document.getElementById('error'), successDiv = document.getElementById('success');
+  errorDiv.innerHTML = ''; successDiv.innerHTML = '';
+
+  if(!supplierCode) { errorDiv.innerHTML = '❌ من فضلك اكتب كود المورد'; return; }
+  if(!supplierPhone) { errorDiv.innerHTML = '❌ من فضلك اكتب رقم هاتف المورد للتواصل'; return; }
+  if(!name) { errorDiv.innerHTML = '❌ من فضلك اكتب اسم المنتج'; return; }
+  if(!price || price <= 0) { errorDiv.innerHTML = '❌ من فضلك اكتب سعر صحيح'; return; }
+  if(!fileInput.files || !fileInput.files[0]) { errorDiv.innerHTML = '❌ من فضلك اختر صورة للمنتج'; return; }
+
+  const btn = this;
+  btn.disabled = true;
+  showLoading('⏳ جاري الحفظ والرفع...');
+
+  try {
+    const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
+    const combinedUsername = `${supplierCode} - 📞 ${supplierPhone}`;
+
+    const productData = {
+      product_id: productCode,
+      name: name,
+      base_price: parseFloat(price),
+      stock: parseInt(stock),
+      image_url: imageUrl,
+      description: desc,
+      sizes: '',
+      colors: '',
+      username: combinedUsername, 
+      gallery_link: galleryLink || null,
+      slider: []
+    };
+
+    await supabaseApi('products', {
+      method: 'POST',
+      body: JSON.stringify(productData)
+    });
+
+    hideLoading();
+    successDiv.innerHTML = `✅ تم الحفظ بنجاح! سيظهر في لوحة الأدمن كالتالي: <br> <b>المورد: ${combinedUsername}</b>`;
+    resetForm();
+    
+  } catch(err) {
+    hideLoading();
+    productCode = generateCode();
+    errorDiv.innerHTML = '❌ فشل الرفع: ' + err.message;
+  }
+  
+  btn.disabled = false;
+};
+
+document.getElementById('coverImg').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      document.getElementById('preview').src = event.target.result;
+      document.getElementById('preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+</script>
+</body>
+</html>

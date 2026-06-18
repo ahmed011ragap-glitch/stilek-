@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stylek</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo', sans-serif;}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;background:linear-gradient(135deg,#0a0a0a,#121212);color:#e0e0e0;}
+.container{width:100%;max-width:420px;background:#1a1a1a;padding:35px 30px;border-radius:25px;box-shadow:0 15px 50px rgba(0,0,0,0.7);border:1px solid #2a2a2a;}
+.logo{font-size:38px;font-weight:700;background:linear-gradient(90deg,#00ff88,#00c6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:8px;}
+.title{text-align:center;color:#999;margin-bottom:25px;font-size:15px;}
+input,select{width:100%;padding:16px;margin:10px 0;border:none;outline:none;border-radius:14px;background:#262626;color:#fff;font-size:15px;border:1px solid #333;}
+.passwordBox{position:relative;}
+.eye{position:absolute;left:18px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:20px;color:#666;}
+button{width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;font-size:16px;cursor:pointer;color:white;font-weight:600;}
+.green{background:linear-gradient(90deg,#00aa55,#00cc66);}
+.blue{background:linear-gradient(90deg,#0099ff,#00c6ff);}
+.error{text-align:center;margin-top:12px;color:#ff5555;font-weight:600;font-size:14px;min-height:20px;}
+.success{text-align:center;margin-top:12px;color:#00ff88;font-weight:600;font-size:14px;min-height:20px;}
+.page{display:none;}
+.page.active{display:block;}
+.link{text-align:center;margin-top:15px;color:#00c6ff;cursor:pointer;text-decoration:underline;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div id="signupPage" class="page active">
+<div class="logo">Stylek</div>
+<div class="title">إنشاء حساب جديد</div>
+<input id="name" placeholder="الاسم الكامل">
+<input id="username" placeholder="اسم المستخدم">
+<input id="email" placeholder="البريد الإلكتروني">
+<div class="passwordBox">
+<input id="password" type="password" placeholder="كلمة المرور">
+<span class="eye" onclick="togglePass('password',this)">👁️</span>
+</div>
+<select id="type"><option value="">نوع الحساب</option><option value="مسوق">مسوق</option><option value="تاجر">تاجر</option></select>
+<button class="green" id="create">إنشاء حساب</button>
+<div class="link" onclick="showPage('loginPage')">لدي حساب بالفعل</div>
+<div class="error" id="error"></div>
+<div class="success" id="success"></div>
+</div>
+
+<div id="loginPage" class="page">
+<div class="logo">Stylek</div>
+<div class="title">تسجيل الدخول</div>
+<input id="loginEmail" placeholder="البريد الإلكتروني">
+<div class="passwordBox">
+<input id="loginPassword" type="password" placeholder="كلمة المرور">
+<span class="eye" onclick="togglePass('loginPassword',this)">👁️</span>
+</div>
+<button class="green" id="login">دخول</button>
+<div class="link" onclick="showPage('forgotPage')">نسيت كلمة السر؟</div>
+<div class="link" onclick="showPage('signupPage')">إنشاء حساب جديد</div>
+<div class="error" id="loginError"></div>
+</div>
+
+<div id="forgotPage" class="page">
+<div class="logo">Stylek</div>
+<div class="title">استعادة كلمة السر</div>
+<input id="forgotEmail" placeholder="البريد الإلكتروني">
+<button class="blue" id="sendOtp">إرسال الكود</button>
+<div id="otpBox" style="display:none;margin-top:15px;">
+<input id="otpCode" placeholder="الكود من الجيميل" maxlength="6">
+<div class="passwordBox">
+<input id="newPass" type="password" placeholder="كلمة السر الجديدة">
+<span class="eye" onclick="togglePass('newPass',this)">👁️</span>
+</div>
+<button class="green" id="resetPass">تغيير كلمة السر</button>
+</div>
+<div class="link" onclick="showPage('loginPage')">رجوع</div>
+<div class="error" id="forgotError"></div>
+<div class="success" id="forgotSuccess"></div>
+</div>
+
+</div>
+
+<script>
+// ===== إعدادات Supabase =====
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+function togglePass(id,eye){let pass=document.getElementById(id);pass.type=pass.type==="password"?"text":"password";eye.innerHTML=pass.type==="password"?"👁️":"🙈";}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.error,.success').forEach(e=>e.innerHTML="");document.getElementById("otpBox").style.display="none";}
+
+// ===== دوال Supabase API (المعدلة لمنع أخطاء الـ JSON الفارغ) =====
+async function supabaseApi(endpoint, options = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  
+  // إجبار السيرفر على إرجاع البيانات المضافة أو المعدلة لضمان عدم وجود JSON فارغ
+  if (options.method === 'POST' || options.method === 'PATCH') {
+    headers['Prefer'] = 'return=representation';
+  }
+  
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`خطأ ${response.status}: ${error}`);
+  }
+  
+  // قراءة الاستجابة كنص والتحقق منها قبل فك الجيسون
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+}
+
+window.onload = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const email = urlParams.get('email');
+  const pass = urlParams.get('pass');
+  if(email && pass) {
+    showPage('loginPage');
+    document.getElementById('loginEmail').value = decodeURIComponent(email);
+    document.getElementById('loginPassword').value = decodeURIComponent(pass);
+    history.replaceState(null, null, window.location.pathname);
+  }
+}
+
+// ===== إنشاء حساب جديد =====
+document.getElementById("create").onclick=async function(){
+let name=document.getElementById("name").value.trim();
+let username=document.getElementById("username").value.trim();
+let email=document.getElementById("email").value.trim();
+let password=document.getElementById("password").value;
+let type=document.getElementById("type").value;
+let error=document.getElementById("error");
+let success=document.getElementById("success");
+error.innerHTML=""; success.innerHTML="";
+
+if(name.length<3){error.innerHTML="اكتب اسم صحيح";return;}
+if(username.length<3){error.innerHTML="اسم المستخدم 3 أحرف أو أكثر";return;}
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error.innerHTML="البريد غير صحيح";return;}
+if(password.length<8){error.innerHTML="كلمة المرور 8 أحرف أو أكثر";return;}
+if(type===""){error.innerHTML="اختر نوع الحساب";return;}
+
+this.disabled=true; this.innerText="جاري الإرسال...";
+
+try {
+  // التحقق من وجود الحساب
+  const checkUser = await supabaseApi(`stylek_password?or=(username.eq.${username},email.eq.${email})&select=*`);
+  if(checkUser && checkUser.length > 0) {
+    error.innerHTML="اسم المستخدم أو البريد الإلكتروني مسجل بالفعل";
+    this.disabled=false; this.innerText="إنشاء حساب";
+    return;
+  }
+
+  // الحساب الجديد
+  const newUser = {
+    username: username,
+    password: password,
+    email: email,
+    role: type,
+    name: name
+  };
+
+  await supabaseApi('stylek_password', {
+    method: 'POST',
+    body: JSON.stringify(newUser)
+  });
+
+  success.innerHTML="تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن ✅";
+  document.getElementById("name").value="";
+  document.getElementById("username").value="";
+  document.getElementById("email").value="";
+  document.getElementById("password").value="";
+  document.getElementById("type").value="";
+  
+  setTimeout(() => {
+    showPage('loginPage');
+    document.getElementById('loginEmail').value = email;
+  }, 2000);
+
+} catch(e) {
+  error.innerHTML="خطأ: " + e.message;
+}
+this.disabled=false; this.innerText="إنشاء حساب";
+};
+
+// ===== تسجيل الدخول عبر الإيميل =====
+document.getElementById("login").onclick=async function(){
+let email=document.getElementById("loginEmail").value.trim();
+let password=document.getElementById("loginPassword").value;
+let error=document.getElementById("loginError");
+error.innerHTML="";
+
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length<3){error.innerHTML="اكتب بيانات البريد وكلمة السر بشكل صحيح";return;}
+
+this.disabled=true; this.innerText="جاري الدخول...";
+
+try {
+  // جلب الحساب بالإيميل
+  const users = await supabaseApi(`stylek_password?email=eq.${email}&select=*`);
+  
+  if(!users || users.length === 0) {
+    error.innerHTML="البريد الإلكتروني غير مسجل لدينا";
+    this.disabled=false; this.innerText="دخول";
+    return;
+  }
+
+  const user = users[0];
+  
+  if(user.password !== password) {
+    error.innerHTML="كلمة المرور غير صحيحة";
+    this.disabled=false; this.innerText="دخول";
+    return;
+  }
+
+  // نجاح الدخول وحفظ البيانات في الجلسة
+  const userType = user.role || 'مسوق';
+  sessionStorage.setItem('username', user.username);
+  sessionStorage.setItem('userType', userType);
+  sessionStorage.setItem('userName', user.name || user.username);
+  localStorage.setItem('username', user.username);
+  localStorage.setItem('userType', userType);
+  localStorage.setItem('userName', user.name || user.username);
+
+  if(userType === 'تاجر'){
+    window.location.href = 'dashboard.html?user=' + encodeURIComponent(user.username);
+  } else {
+    window.location.href = 'Displayed_Products.html?user=' + encodeURIComponent(user.username);
+  }
+
+} catch(e) {
+  error.innerHTML="خطأ في الاتصال: " + e.message;
+}
+this.disabled=false; this.innerText="دخول";
+};
+
+// ===== استعادة كلمة السر =====
+document.getElementById("sendOtp").onclick=async function(){
+let email=document.getElementById("forgotEmail").value.trim();
+let error=document.getElementById("forgotError");
+let success=document.getElementById("forgotSuccess");
+error.innerHTML=""; success.innerHTML="";
+
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error.innerHTML="البريد غير صحيح";return;}
+
+this.disabled=true; this.innerText="جاري الإرسال...";
+
+try {
+  const users = await supabaseApi(`stylek_password?email=eq.${email}&select=*`);
+  
+  if(!users || users.length === 0) {
+    error.innerHTML="البريد الإلكتروني غير مسجل";
+    this.disabled=false; this.innerText="إرسال الكود";
+    return;
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  await supabaseApi(`stylek_password?email=eq.${email}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ otp_temp: otp })
+  });
+
+  alert(`🔐 كود التحقق الخاص بك: ${otp}\n(سيتم إرساله على بريدك الإلكتروني في التطبيق الحقيقي)`);
+  
+  success.innerHTML="تم إرسال الكود على جيميلك 📧";
+  document.getElementById("otpBox").style.display="block";
+
+} catch(e) {
+  error.innerHTML="خطأ: " + e.message;
+}
+this.disabled=false; this.innerText="إرسال الكود";
+};
+
+// ===== تغيير كلمة السر =====
+document.getElementById("resetPass").onclick=async function(){
+let email=document.getElementById("forgotEmail").value.trim();
+let otp=document.getElementById("otpCode").value.trim();
+let newpass=document.getElementById("newPass").value;
+let error=document.getElementById("forgotError");
+let success=document.getElementById("forgotSuccess");
+error.innerHTML=""; success.innerHTML="";
+
+if(otp.length<6){error.innerHTML="اكتب الكود كامل";return;}
+if(newpass.length<8){error.innerHTML="كلمة السر 8 أحرف أو أكثر";return;}
+
+this.disabled=true; this.innerText="جاري التغيير...";
+
+try {
+  const users = await supabaseApi(`stylek_password?email=eq.${email}&otp_temp=eq.${otp}&select=*`);
+  
+  if(!users || users.length === 0) {
+    error.innerHTML="الكود غير صحيح أو منتهي الصلاحية";
+    this.disabled=false; this.innerText="تغيير كلمة السر";
+    return;
+  }
+
+  await supabaseApi(`stylek_password?email=eq.${email}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ 
+      password: newpass,
+      otp_temp: null 
+    })
+  });
+
+  success.innerHTML="تم تغيير كلمة السر ✅";
+  setTimeout(()=>{
+    showPage('loginPage'); 
+    document.getElementById("loginEmail").value=email;
+  }, 2000);
+
+} catch(e) {
+  error.innerHTML="خطأ: " + e.message;
+}
+this.disabled=false; this.innerText="تغيير كلمة السر";
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title id="pageTitle">صفحة هبوط - Stylek</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style id="customStyle"></style>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0a;color:#fff;font-family:'Tajawal',sans-serif}
+  
+  /* ===== السليدر الجانبي ===== */
+  .menu-btn{position:fixed;top:15px;right:15px;font-size:28px;color:#00ff88;cursor:pointer;z-index:1001;background:#151515;width:45px;height:45px;border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid #333;box-shadow:0 4px 15px rgba(0,0,0,0.5);transition:all 0.3s ease}
+  .menu-btn:hover{background:#00ff88;color:#000;transform:scale(1.05)}
+  
+  .sidebar{position:fixed;top:0;right:-280px;width:280px;height:100%;background:#0a0a0a;border-left:2px solid #00ff88;transition:right 0.3s ease;z-index:1002;overflow-y:auto;direction:rtl;box-shadow:-5px 0 30px rgba(0,0,0,0.5)}
+  .sidebar.active{right:0}
+  .sidebar-header{padding:20px;background:#151515;border-bottom:2px solid #00ff88;display:flex;justify-content:space-between;align-items:center;color:#00ff88;font-size:20px;font-weight:900}
+  .sidebar-header button{background:none;border:none;color:#ff4444;font-size:32px;cursor:pointer;transition:0.2s}
+  .sidebar-header button:hover{transform:scale(1.1)}
+  .sidebar-menu{padding:15px 0}
+  .sidebar-menu a{display:block;padding:15px 20px;color:#e0e0e0;text-decoration:none;font-size:15px;font-weight:600;margin:4px 10px;border-radius:10px;transition:0.2s;border-right:4px solid transparent}
+  .sidebar-menu a:hover{background:#151515;color:#00ff88;border-right:4px solid #00ff88;padding-right:30px}
+  .sidebar-menu a.active{background:#151515;color:#00ff88;border-right:4px solid #00ff88}
+  .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:none;z-index:1001}
+  .overlay.active{display:block}
+  
+  /* ===== باقي التنسيقات ===== */
+  .container{max-width:800px;margin:0 auto;padding:20px;margin-top:10px}
+  .product-image{width:100%;max-width:400px;margin:0 auto 20px;display:block;border-radius:20px;background:#1a1a1a;padding:10px}
+  h1{font-size:28px;text-align:center;margin-bottom:10px}
+  .price-box{background:#1a1a1a;padding:15px;border-radius:16px;margin:20px 0;text-align:center}
+  .price{font-size:32px;color:#00ff88;font-weight:bold}
+  .old-price{text-decoration:line-through;color:#888;font-size:18px;margin-left:10px}
+  .commission-box{background:#0a2a0a;border:1px solid #00ff88;border-radius:12px;padding:12px;margin:15px 0;text-align:center}
+  .commission-box span{color:#00ff88;font-size:22px;font-weight:bold}
+  .btn-buy{width:100%;padding:16px;background:#00ff88;color:#000;border:none;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer;margin:15px 0}
+  .btn-buy:hover{background:#00cc66}
+  .btn-whats{width:100%;padding:12px;background:#25d366;color:#fff;border:none;border-radius:12px;font-size:16px;cursor:pointer;margin-top:10px}
+  .options{display:flex;gap:15px;margin:20px 0;flex-wrap:wrap}
+  .option{flex:1;min-width:120px;background:#1a1a1a;padding:12px;border-radius:12px;text-align:center}
+  .option select,.option input{width:100%;padding:8px;margin-top:8px;background:#0a0a0a;border:1px solid #333;border-radius:8px;color:#fff}
+  .quantity-selector{display:flex;align-items:center;gap:10px;justify-content:center}
+  .qty-btn{width:36px;height:36px;background:#333;border:none;color:#fff;border-radius:8px;font-size:18px;cursor:pointer}
+  .qty-input{width:60px;text-align:center;background:#0a0a0a;border:1px solid #333;border-radius:8px;color:#fff;padding:8px}
+  .colors{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0;align-items:center}
+  .color-option{width:40px;height:40px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:0.2s}
+  .color-option.selected{border-color:#00ff88;transform:scale(1.1)}
+  .sizes{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0;align-items:center}
+  .size-option{padding:8px 16px;background:#1a1a1a;border-radius:8px;cursor:pointer;border:1px solid #333}
+  .size-option.selected{background:#00ff88;color:#000;border-color:#00ff88}
+  .stock-status{font-size:14px;text-align:center;margin:10px 0;padding:8px;border-radius:8px}
+  .stock-status.in-stock{background:#0a2a0a;color:#00ff88}
+  .stock-status.out-stock{background:#2a0a0a;color:#ff4444}
+  .gallery{display:flex;gap:10px;overflow-x:auto;margin:20px 0;padding-bottom:10px}
+  .gallery img{width:80px;height:80px;object-fit:cover;border-radius:10px;cursor:pointer;border:1px solid #333}
+  .gallery img:hover{opacity:0.8;border-color:#00ff88}
+  .reviews{background:#1a1a1a;padding:15px;border-radius:12px;margin:20px 0}
+  .review{border-bottom:1px solid #333;padding:10px 0}
+  .review:last-child{border-bottom:none}
+  .review-rating{color:#ffcc00;margin-bottom:5px}
+  .faq-item{margin-bottom:15px}
+  .faq-question{background:#1a1a1a;padding:12px;border-radius:10px;cursor:pointer;display:flex;justify-content:space-between}
+  .faq-question:hover{background:#222}
+  .faq-answer{display:none;padding:12px;background:#0a0a0a;border-radius:10px;margin-top:5px;line-height:1.6}
+  .countdown{background:#111;padding:15px;border-radius:12px;text-align:center;margin:20px 0}
+  .countdown-timer{font-size:28px;font-weight:bold;color:#00ff88}
+  .coupon{background:#ff9900;color:#000;padding:12px;border-radius:10px;text-align:center;margin:15px 0}
+  .coupon-code{font-size:22px;font-weight:bold;letter-spacing:2px;background:#000;color:#ff9900;display:inline-block;padding:5px 15px;border-radius:8px;margin-top:5px}
+  .features{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
+  .feature{background:#1a1a1a;padding:10px 15px;border-radius:10px;flex:1;min-width:100px;text-align:center;border:1px solid #333}
+  .feature:hover{border-color:#00ff88}
+  .social-icons{display:flex;gap:15px;justify-content:center;margin:20px 0}
+  .social-icon{width:45px;height:45px;background:#1a1a1a;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:0.2s;font-size:22px}
+  .social-icon:hover{background:#00ff88;color:#000;transform:scale(1.1)}
+  footer{text-align:center;padding:20px;color:#666;font-size:12px;margin-top:20px;border-top:1px solid #222}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#00ff88;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px}
+  .tabs{display:flex;gap:10px;margin:20px 0;border-bottom:1px solid #222}
+  .tab{flex:1;padding:10px;text-align:center;cursor:pointer;background:#1a1a1a;border-radius:8px 8px 0 0}
+  .tab.active{background:#00ff88;color:#000}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+
+  /* ===== تنسيق جدول عرض جميع الصفحات ===== */
+  .all-pages-table{width:100%;border-collapse:collapse;margin-top:20px;direction:rtl}
+  .all-pages-table th,.all-pages-table td{border:1px solid #333;padding:10px;text-align:right}
+  .all-pages-table th{background:#00ff88;color:#000}
+  .all-pages-table tr:nth-child(even){background:#151515}
+  .all-pages-table tr:hover{background:#1a1a1a}
+  .all-pages-table a{color:#00ff88;text-decoration:none}
+  .all-pages-table a:hover{text-decoration:underline}
+  .view-btn{display:inline-block;background:#00ff88;color:#000;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:bold;text-decoration:none}
+  .view-btn:hover{background:#00cc66}
+  .delete-btn{display:inline-block;background:#ff4444;color:#fff;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:bold;text-decoration:none;border:none;cursor:pointer;margin-right:5px}
+  .delete-btn:hover{background:#cc0000}
+  .status-badge{padding:3px 10px;border-radius:12px;font-size:12px;font-weight:bold;display:inline-block}
+  .status-active{background:#0a2a0a;color:#00ff88}
+  .status-inactive{background:#2a0a0a;color:#ff4444}
+</style>
+</head>
+<body>
+
+<!-- زر القائمة -->
+<div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
+<!-- السليدر الجانبي -->
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <span>📋 القائمة</span>
+    <button onclick="toggleSidebar()">×</button>
+  </div>
+  <div class="sidebar-menu">
+    <a href="#" onclick="goToPage('Data_Page')">🏠 لوحة البيانات</a>
+    <a href="#" onclick="goToPage('Displayed_Products')">🛍️ المنتجات المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders')">📋 طلباتي</a>
+    <a href="#" onclick="goToPage('my_wallet')">💰 المحفظة</a>
+    <a href="#" onclick="goToPage('landing_page')" class="active">🚀 صفحات الهبوط</a>
+  </div>
+</div>
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<!-- المحتوى الرئيسي -->
+<div id="mainContent" style="min-height:100vh;padding:20px">
+  <div style="text-align:center;padding:50px">
+    <div class="spinner"></div>
+    <p>⏳ جاري تحميل صفحة الهبوط...</p>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  دوال السليدر الجانبي
+// ============================================================
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+
+function goToPage(pageName) {
+  const currentUser = localStorage.getItem('username') || '';
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
+}
+
+// ============================================================
+//  رابط API (عدّل هذا الرابط بعد إعادة النشر)
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbxJvB9RKTuMrl3V8dWFvpFDxP-TBMYguDvPDSCwLPwJrLWG5OWrKmhwKaclN8W7cIQaaQ/exec';
+
+// ============================================================
+//  جلب slug من الرابط
+// ============================================================
+const slug = new URLSearchParams(window.location.search).get('slug') ||
+             window.location.hash.substring(1) ||
+             window.location.pathname.split('/').pop();
+
+// المتغيرات العامة
+let landingData = null;
+let productData = null;
+let selectedColor = '';
+let selectedSize = '';
+let quantity = 1;
+let countdownInterval = null;
+let activeTab = 'product';
+
+// ============================================================
+//  دوال مساعدة
+// ============================================================
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, m => m === '&'? '&amp;' : (m === '<'? '&lt;' : '&gt;'));
+}
+
+function fixImageUrl(url) {
+  if (!url) return 'https://placehold.co/400x400/1a1a1a/444?text=No+Image';
+  url = url.toString().trim();
+  if (url.includes('drive.google.com')) {
+    let fileId = null;
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) fileId = match[1];
+    if (!fileId) {
+      const match2 = url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (match2) fileId = match2[1];
+    }
+    if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+  }
+  if (url.includes('lh3.googleusercontent.com')) return url;
+  return url;
+}
+
+function getColorCode(colorName) {
+  const colors = {
+    'أحمر': '#ff4444', 'احمر': '#ff4444', 'red': '#ff4444',
+    'أزرق': '#4444ff', 'ازرق': '#4444ff', 'blue': '#4444ff',
+    'أخضر': '#44ff44', 'اخضر': '#44ff44', 'green': '#44ff44',
+    'أسود': '#222', 'اسود': '#222', 'black': '#222',
+    'أبيض': '#ffffff', 'ابيض': '#ffffff', 'white': '#ffffff',
+    'أصفر': '#ffff44', 'اصفر': '#ffff44', 'yellow': '#ffff44',
+    'وردي': '#ff88ff', 'وردى': '#ff88ff', 'pink': '#ff88ff',
+    'بنفسجي': '#aa44ff', 'purple': '#aa44ff',
+    'ذهبي': '#ffcc00', 'gold': '#ffcc00',
+    'فضي': '#cccccc', 'silver': '#cccccc'
+  };
+  return colors[colorName] || '#cccccc';
+}
+
+// ============================================================
+//  الاتصال بـ API
+// ============================================================
+async function callApi(action, data = {}) {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...data })
+    });
+    return await response.json();
+  } catch(err) {
+    return { status: 'error', message: err.message };
+  }
+}
+
+// ============================================================
+//  عرض جميع صفحات الهبوط (دالة جديدة)
+// ============================================================
+async function loadAllLandingPages() {
+  try {
+    const result = await callApi('get_my_landing_pages', {});
+    if (result.status === 'success' && result.data.length > 0) {
+      let html = `
+        <div style="max-width:1200px;margin:0 auto;padding:20px">
+          <h1 style="text-align:center;margin-bottom:30px">📊 جميع صفحات الهبوط</h1>
+          <div style="text-align:center;margin-bottom:20px">
+            <span style="background:#1a1a1a;padding:8px 20px;border-radius:20px;color:#00ff88">📌 عدد الصفحات: ${result.count || result.data.length}</span>
+          </div>
+          <table class="all-pages-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>اسم الصفحة</th>
+                <th>الـ Slug</th>
+                <th>المنتج</th>
+                <th>الحالة</th>
+                <th>الطلبات</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      result.data.forEach((row, index) => {
+        const statusClass = row.status === 'active' ? 'status-active' : 'status-inactive';
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(row.page_name || row.slug)}</td>
+            <td><code style="background:#111;padding:2px 8px;border-radius:4px;font-size:12px">${escapeHtml(row.slug)}</code></td>
+            <td>${escapeHtml(row.product_id || '-')}</td>
+            <td><span class="status-badge ${statusClass}">${row.status === 'active' ? '✅ نشط' : '❌ غير نشط'}</span></td>
+            <td>${row.current_orders || 0} / ${row.max_orders || '∞'}</td>
+            <td>
+              <a href="?slug=${encodeURIComponent(row.slug)}" class="view-btn">👁️ عرض</a>
+              <button onclick="deleteLandingPage('${row.slug}')" class="delete-btn">🗑️ حذف</button>
+            </td>
+          </tr>
+        `;
+      });
+      html += `
+            </tbody>
+          </table>
+          <div style="text-align:center;margin-top:30px">
+            <a href="?slug=${result.data[0]?.slug || ''}" style="color:#00ff88;text-decoration:none">← العودة لعرض صفحة واحدة</a>
+          </div>
+        </div>
+      `;
+      document.getElementById('mainContent').innerHTML = html;
+    } else {
+      document.getElementById('mainContent').innerHTML = `
+        <div style="text-align:center;padding:50px">
+          <div style="font-size:48px">📭</div>
+          <h2>لا توجد صفحات هبوط</h2>
+          <p style="color:#888;margin-top:10px">لم يتم إنشاء أي صفحة هبوط بعد</p>
+          <button onclick="location.reload()" style="margin-top:20px;padding:12px 25px;background:#00ff88;color:#000;border:none;border-radius:10px">🔄 تحديث</button>
+        </div>
+      `;
+    }
+  } catch(err) {
+    document.getElementById('mainContent').innerHTML = `
+      <div style="text-align:center;padding:50px">
+        <div style="font-size:48px">❌</div>
+        <h2>حدث خطأ</h2>
+        <p style="color:#ff4444">${escapeHtml(err.message)}</p>
+        <button onclick="location.reload()" style="margin-top:20px;padding:12px 25px;background:#00ff88;color:#000;border:none;border-radius:10px">🔄 إعادة المحاولة</button>
+      </div>
+    `;
+  }
+}
+
+// ============================================================
+//  حذف صفحة هبوط
+// ============================================================
+async function deleteLandingPage(slugToDelete) {
+  if (!confirm(`هل أنت متأكد من حذف صفحة "${slugToDelete}"؟`)) return;
+  try {
+    const result = await callApi('delete_landing_page', { slug: slugToDelete });
+    if (result.status === 'success') {
+      alert('✅ تم حذف الصفحة بنجاح');
+      loadAllLandingPages();
+    } else {
+      alert('❌ خطأ: ' + result.message);
+    }
+  } catch(err) {
+    alert('❌ خطأ: ' + err.message);
+  }
+}
+
+// ============================================================
+//  تحميل صفحة هبوط واحدة
+// ============================================================
+async function loadLandingPage() {
+  if (!slug || slug === '') {
+    // إذا لم يوجد slug، اعرض جميع الصفحات
+    await loadAllLandingPages();
+    return;
+  }
+
+  try {
+    const result = await callApi('get_landing_page', { slug: slug });
+    if (result.status !== 'success') throw new Error(result.message);
+
+    landingData = result.data;
+    productData = landingData.product_data;
+    if (!productData) throw new Error('المنتج المرتبط غير موجود');
+
+    renderPage();
+  } catch(err) {
+    let extraMessage = '';
+    if (err.message.includes('غير نشطة')) extraMessage = '⚠️ هذه الصفحة غير متاحة حالياً';
+    else if (err.message.includes('انتهت صلاحية')) extraMessage = '⏰ انتهت صلاحية هذه الصفحة';
+    else if (err.message.includes('غير موجود')) extraMessage = '🔍 الصفحة غير موجودة';
+    
+    document.getElementById('mainContent').innerHTML = `
+      <div style="text-align:center;padding:50px;max-width:600px;margin:0 auto">
+        <div style="font-size:48px">😢</div>
+        <h2 style="color:#ff4444">${escapeHtml(err.message)}</h2>
+        ${extraMessage ? `<p style="margin-top:10px;font-size:18px">${extraMessage}</p>` : ''}
+        <p style="margin-top:10px;font-size:12px;color:#666">slug: ${escapeHtml(slug)}</p>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button onclick="location.href='?slug=' + prompt('أدخل slug الصحيح:')" style="padding:12px 25px;background:#00ff88;color:#000;border:none;border-radius:10px;cursor:pointer">🔍 تجربة slug آخر</button>
+          <button onclick="loadAllLandingPages()" style="padding:12px 25px;background:#444;color:#fff;border:none;border-radius:10px;cursor:pointer">📊 عرض جميع الصفحات</button>
+          <button onclick="history.back()" style="padding:12px 25px;background:#333;color:#fff;border:none;border-radius:10px;cursor:pointer">← العودة</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ============================================================
+//  عرض صفحة الهبوط
+// ============================================================
+function renderPage() {
+  const data = landingData;
+  const p = productData;
+
+  // حساب السعر مع تقريب الأرقام
+  let basePrice = parseFloat(data.custom_price) || parseFloat(p.base_price) || 0;
+  let commission = parseFloat(data.custom_commission) || 100;
+  let discount = parseFloat(data.discount_percent) || 0;
+  let finalPrice = basePrice + commission;
+  
+  basePrice = Math.round(basePrice);
+  commission = Math.round(commission);
+  finalPrice = Math.round(finalPrice);
+  let oldPrice = finalPrice;
+  if (discount > 0) {
+    finalPrice = Math.round(finalPrice * (1 - discount / 100));
+  }
+
+  const imgUrl = fixImageUrl(p.image_url);
+  const outStock = parseInt(p.stock) === 0;
+  const showStock = data.show_stock === 'true';
+
+  const colors = p.colors ? p.colors.split(',').map(c => c.trim()).filter(c => c) : [];
+  const sizes = p.sizes ? p.sizes.split(',').map(s => s.trim()).filter(s => s) : [];
+
+  let features = [];
+  if (data.features) {
+    features = data.features.split(',').map(f => f.trim()).filter(f => f);
+  }
+
+  // تطبيق CSS و JS مخصص
+  if (data.custom_css) {
+    const style = document.getElementById('customStyle');
+    if (style) style.textContent = data.custom_css;
+  }
+
+  if (data.custom_js) {
+    try { eval(data.custom_js); } catch(e) { console.log('JS error:', e); }
+  }
+
+  // بناء HTML
+  let html = `
+    <div class="container">
+      <img class="product-image" src="${imgUrl}" onerror="this.src='https://placehold.co/400x400/1a1a1a/444?text=صورة+غير+متوفرة'">
+      <h1>${escapeHtml(data.custom_title || p.name)}</h1>
+
+      <div class="price-box">
+        ${discount > 0 ? `<div class="old-price">${oldPrice} ج</div>` : ''}
+        <div class="price">${finalPrice} ج</div>
+        <div style="font-size:12px;color:#aaa">السعر شامل الضريبة</div>
+      </div>
+
+      <div class="commission-box">
+        💰 عمولتك: <span>${commission} ج</span>
+        <div style="font-size:11px;margin-top:5px">(قابلة للتعديل عند الشراء)</div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab ${activeTab === 'product' ? 'active' : ''}" onclick="switchTab('product')">📦 المنتج</div>
+        <div class="tab ${activeTab === 'details' ? 'active' : ''}" onclick="switchTab('details')">📏 التفاصيل</div>
+        <div class="tab ${activeTab === 'reviews' ? 'active' : ''}" onclick="switchTab('reviews')">⭐ التقييمات</div>
+      </div>
+
+      <div id="tab-product" class="tab-content ${activeTab === 'product' ? 'active' : ''}">
+        <p style="line-height:1.8;margin:20px 0">${escapeHtml(data.custom_description || p.description || 'لا يوجد وصف')}</p>
+  `;
+
+  if (features.length > 0) {
+    html += `<div class="features"><strong>✨ مميزات المنتج:</strong>`;
+    features.forEach(f => {
+      html += `<div class="feature">✅ ${escapeHtml(f)}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (colors.length > 0) {
+    html += `<div class="colors"><strong>🎨 الألوان المتاحة:</strong>`;
+    colors.forEach(color => {
+      html += `<div class="color-option" style="background:${getColorCode(color)}" data-color="${color}" onclick="selectColor('${color}')" title="${color}"></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (sizes.length > 0) {
+    html += `<div class="sizes"><strong>📏 المقاسات المتاحة:</strong>`;
+    sizes.forEach(size => {
+      html += `<div class="size-option" data-size="${size}" onclick="selectSize('${size}')">${size}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `
+    <div class="options">
+      <div class="option">
+        <strong>🔢 الكمية المطلوبة</strong>
+        <div class="quantity-selector">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <input class="qty-input" id="qty" value="${quantity}" readonly>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (showStock) {
+    html += `<div class="stock-status ${outStock ? 'out-stock' : 'in-stock'}">${outStock ? '❌ غير متوفر حالياً' : `✅ متوفر (${p.stock} قطعة)`}</div>`;
+  }
+
+  if (data.countdown_enabled === 'true' && data.countdown_date) {
+    html += `<div class="countdown" id="countdownBox"><div>⏰ ينتهي العرض خلال:</div><div class="countdown-timer" id="countdownTimer">--:--</div></div>`;
+  }
+
+  if (data.enable_coupon === 'true' && data.coupon_code) {
+    html += `<div class="coupon">🎫 كود الخصم الخاص بك:<br><span class="coupon-code">${data.coupon_code}</span><br>خصم ${data.coupon_discount || 0}% على السعر النهائي</div>`;
+  }
+
+  html += `
+      <button class="btn-buy" onclick="buyNow()" ${outStock ? 'disabled style="opacity:0.5"' : ''}>${data.button_text || '🛍️ اشتري الآن'}</button>
+      <button class="btn-whats" onclick="openWhatsApp()">💬 تواصل عبر واتساب</button>
+  `;
+
+  html += `<div class="social-icons">`;
+  if (data.social_facebook) html += `<div class="social-icon" onclick="window.open('${data.social_facebook}','_blank')">📘</div>`;
+  if (data.social_instagram) html += `<div class="social-icon" onclick="window.open('${data.social_instagram}','_blank')">📷</div>`;
+  if (data.social_twitter) html += `<div class="social-icon" onclick="window.open('${data.social_twitter}','_blank')">🐦</div>`;
+  if (data.social_youtube) html += `<div class="social-icon" onclick="window.open('${data.social_youtube}','_blank')">▶️</div>`;
+  if (data.social_tiktok) html += `<div class="social-icon" onclick="window.open('${data.social_tiktok}','_blank')">🎵</div>`;
+  html += `</div>`;
+
+  html += `</div>`;
+
+  // تبويب التفاصيل
+  html += `
+    <div id="tab-details" class="tab-content ${activeTab === 'details' ? 'active' : ''}">
+      <div style="background:#1a1a1a;padding:15px;border-radius:12px;margin:10px 0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>🏷️ كود المنتج:</strong><span>${escapeHtml(p.product_id)}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>📂 الفئة:</strong><span>${escapeHtml(p.category || 'عام')}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>💰 سعر التكلفة:</strong><span>${basePrice} ج</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>🎁 عمولتك:</strong><span>${commission} ج</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>🏷️ الخصم:</strong><span>${discount}%</span></div>
+        <div style="display:flex;justify-content:space-between"><strong>📅 تاريخ الإنشاء:</strong><span>${p.created_at ? new Date(p.created_at).toLocaleDateString('ar') : '-'}</span></div>
+      </div>
+  `;
+
+  if (p.drive_link || p['drive link']) {
+    const galleryLink = p.drive_link || p['drive link'];
+    html += `<a href="${galleryLink}" target="_blank" style="display:block;text-align:center;background:#00aaff;color:#fff;padding:12px;border-radius:12px;text-decoration:none;margin:20px 0">📸 اضغط لعرض معرض الصور الكامل (Google Drive)</a>`;
+  }
+
+  html += `</div>`;
+
+  // تبويب التقييمات
+  if (data.show_reviews === 'true' && data.reviews) {
+    try {
+      const reviews = JSON.parse(data.reviews);
+      html += `<div id="tab-reviews" class="tab-content ${activeTab === 'reviews' ? 'active' : ''}"><div class="reviews"><h3>⭐ آراء العملاء</h3>`;
+      reviews.forEach(r => {
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+          stars += i <= r.rating ? '★' : '☆';
+        }
+        html += `
+          <div class="review">
+            <div class="review-rating">${stars}</div>
+            <strong>${escapeHtml(r.name)}</strong>
+            <div style="margin-top:5px">${escapeHtml(r.text)}</div>
+            <div style="font-size:11px;color:#666;margin-top:5px">${r.date || ''}</div>
+          </div>
+        `;
+      });
+      html += `</div></div>`;
+    } catch(e) { console.log('Reviews parse error:', e); }
+  } else {
+    html += `<div id="tab-reviews" class="tab-content ${activeTab === 'reviews' ? 'active' : ''}"><div class="reviews"><p style="text-align:center;padding:20px;color:#888">⭐ لا توجد تقييمات بعد</p></div></div>`;
+  }
+
+  // الأسئلة الشائعة
+  if (data.faq_title && data.faq_content) {
+    html += `
+      <div class="faq-item" style="margin-top:20px">
+        <div class="faq-question" onclick="toggleFaq(this)">❓ ${escapeHtml(data.faq_title)} <span>▼</span></div>
+        <div class="faq-answer">${escapeHtml(data.faq_content)}</div>
+      </div>
+    `;
+  }
+
+  // زر عرض جميع الصفحات
+  html += `
+    <div style="text-align:center;margin:20px 0">
+      <button onclick="loadAllLandingPages()" style="padding:12px 25px;background:#444;color:#fff;border:none;border-radius:10px;cursor:pointer">📊 عرض جميع صفحات الهبوط</button>
+    </div>
+  `;
+
+  html += `<footer>© ${new Date().getFullYear()} Stylek - جميع الحقوق محفوظة</footer></div>`;
+
+  document.getElementById('mainContent').innerHTML = html;
+
+  // بدء العد التنازلي
+  if (data.countdown_enabled === 'true' && data.countdown_date) {
+    startCountdown(data.countdown_date);
+  }
+}
+
+// ============================================================
+//  دوال التفاعل
+// ============================================================
+function switchTab(tab) {
+  activeTab = tab;
+  const tabs = document.querySelectorAll('.tab');
+  const contents = document.querySelectorAll('.tab-content');
+  
+  tabs.forEach((t, i) => {
+    t.classList.remove('active');
+    if ((tab === 'product' && i === 0) || (tab === 'details' && i === 1) || (tab === 'reviews' && i === 2)) {
+      t.classList.add('active');
+    }
+  });
+  
+  contents.forEach(c => c.classList.remove('active'));
+  const target = document.getElementById(`tab-${tab}`);
+  if (target) target.classList.add('active');
+}
+
+function selectColor(color) {
+  selectedColor = color;
+  document.querySelectorAll('.color-option').forEach(el => {
+    el.classList.remove('selected');
+    if (el.dataset.color === color) el.classList.add('selected');
+  });
+}
+
+function selectSize(size) {
+  selectedSize = size;
+  document.querySelectorAll('.size-option').forEach(el => {
+    el.classList.remove('selected');
+    if (el.dataset.size === size) el.classList.add('selected');
+  });
+}
+
+function changeQty(delta) {
+  const maxStock = parseInt(productData?.stock) || 999;
+  const newQty = quantity + delta;
+  if (newQty >= 1 && newQty <= maxStock) {
+    quantity = newQty;
+    const qtyInput = document.getElementById('qty');
+    if (qtyInput) qtyInput.value = quantity;
+  }
+}
+
+function startCountdown(targetDate) {
+  const target = new Date(targetDate).getTime();
+  const timer = document.getElementById('countdownTimer');
+  if (!timer) return;
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    const diff = target - new Date().getTime();
+    if (diff <= 0) {
+      clearInterval(countdownInterval);
+      timer.innerHTML = 'انتهى العرض';
+      return;
+    }
+    const days = Math.floor(diff / (1000*60*60*24));
+    const hours = Math.floor((diff % (86400000)) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    timer.innerHTML = `${days} يوم ${hours} ساعة ${minutes} دقيقة ${seconds} ثانية`;
+  }, 1000);
+}
+
+function buyNow() {
+  if (!productData) {
+    alert('حدث خطأ، يرجى المحاولة مرة أخرى');
+    return;
+  }
+  const params = new URLSearchParams();
+  params.set('product', productData.product_id);
+  params.set('qty', quantity);
+  if (selectedColor) params.set('color', selectedColor);
+  if (selectedSize) params.set('size', selectedSize);
+  window.location.href = `Displayed_Products.html?${params.toString()}`;
+}
+
+function openWhatsApp() {
+  const phone = landingData?.whatsapp_number || '201108712091';
+  window.open(`https://wa.me/${phone}`, '_blank');
+}
+
+function toggleFaq(el) {
+  const answer = el.nextElementSibling;
+  const isVisible = answer.style.display === 'block';
+  answer.style.display = isVisible ? 'none' : 'block';
+  const span = el.querySelector('span');
+  if (span) span.textContent = isVisible ? '▼' : '▲';
+}
+
+// ============================================================
+//  تشغيل الصفحة
+// ============================================================
+loadLandingPage();
+</script>
+</body>
+</html>
