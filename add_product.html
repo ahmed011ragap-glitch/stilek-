@@ -432,29 +432,35 @@ document.getElementById('addBtn').onclick = async function() {
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
-    // لضمان عدم ضياع رقم الهاتف للأدمن، نقوم بدمجه مع الوصف بالتفصيل
     const extraDescInfo = `\n\n📞 هاتف المورد: ${supplierPhone}`;
     const finalDesc = desc ? (desc + extraDescInfo) : `تواصل مع المورد: ${supplierPhone}`;
 
-    // تهيئة البيانات لتتوافق حرفياً مع شيت Marketer_Products
+    // تهيئة البيانات لتتوافق بنسبة 100% مع الهيكل الصريح لـ جدول Marketer_Products المرسل
     const productData = {
+      supplier_code: supplierCode, // تم التمكين هنا
       product_id: productCode,
+      image_url: imageUrl,
       name: name,
       base_price: parseFloat(price),
       stock: parseInt(stock),
-      image_url: imageUrl,
       description: finalDesc,
+      category: 'عام',
+      status: 'active',
       sizes: '',
       colors: '',
-      username: supplierCode, // ربط كود المورد الموحد بالتجميع
-      whatsapp: supplierPhone, // إرسال الهاتف لخانة الـ whatsapp المخصصة بجدول Marketer_Products
+      username: supplierCode, 
+      whatsapp: supplierPhone, 
       gallery_link: galleryLink || null,
-      slider: [],
-      status: 'active',
-      category: 'عام'
+      slider: [], // مصفوفة فارغة جاهزة لعمود JSONB بدون تحويل لـ String
+      profit_amount: 20,
+      discount_percent: 0,
+      sales_count: 0,
+      delivered_count: 0,
+      returned_count: 0,
+      rejected_count: 0
     };
 
-    // التوجيه المباشر إلى جدول Marketer_Products
+    // الإرسال المباشر لـ Supabase
     await supabaseApi('Marketer_Products', {
       method: 'POST',
       body: JSON.stringify(productData)
