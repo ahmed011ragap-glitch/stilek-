@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stylek</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo', sans-serif;}
 body{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;background:linear-gradient(135deg,#0a0a0a,#121212);color:#e0e0e0;}
 .container{width:100%;max-width:420px;background:#1a1a1a;padding:35px 30px;border-radius:25px;box-shadow:0 15px 50px rgba(0,0,0,0.7);border:1px solid #2a2a2a;}
@@ -79,14 +79,12 @@ button{width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;fo
 </div>
 
 <script>
-// ===== إعدادات Supabase =====
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 function togglePass(id,eye){let pass=document.getElementById(id);pass.type=pass.type==="password"?"text":"password";eye.innerHTML=pass.type==="password"?"👁️":"🙈";}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.error,.success').forEach(e=>e.innerHTML="");document.getElementById("otpBox").style.display="none";}
 
-// ===== دوال Supabase API (المعدلة لمنع أخطاء الـ JSON الفارغ) =====
 async function supabaseApi(endpoint, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = {
@@ -95,23 +93,14 @@ async function supabaseApi(endpoint, options = {}) {
     'Content-Type': 'application/json',
     ...options.headers
   };
-  
-  // إجبار السيرفر على إرجاع البيانات المضافة أو المعدلة لضمان عدم وجود JSON فارغ
   if (options.method === 'POST' || options.method === 'PATCH') {
     headers['Prefer'] = 'return=representation';
   }
-  
-  const response = await fetch(url, {
-    ...options,
-    headers
-  });
-  
+  const response = await fetch(url, { ...options, headers });
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`خطأ ${response.status}: ${error}`);
   }
-  
-  // قراءة الاستجابة كنص والتحقق منها قبل فك الجيسون
   const text = await response.text();
   return text ? JSON.parse(text) : {};
 }
@@ -148,7 +137,6 @@ if(type===""){error.innerHTML="اختر نوع الحساب";return;}
 this.disabled=true; this.innerText="جاري الإرسال...";
 
 try {
-  // التحقق من وجود الحساب
   const checkUser = await supabaseApi(`stylek_password?or=(username.eq.${username},email.eq.${email})&select=*`);
   if(checkUser && checkUser.length > 0) {
     error.innerHTML="اسم المستخدم أو البريد الإلكتروني مسجل بالفعل";
@@ -156,7 +144,6 @@ try {
     return;
   }
 
-  // الحساب الجديد
   const newUser = {
     username: username,
     password: password,
@@ -188,7 +175,7 @@ try {
 this.disabled=false; this.innerText="إنشاء حساب";
 };
 
-// ===== تسجيل الدخول عبر الإيميل =====
+// ===== تسجيل الدخول عبر الإيميل وتعديل المسارات الحقيقية =====
 document.getElementById("login").onclick=async function(){
 let email=document.getElementById("loginEmail").value.trim();
 let password=document.getElementById("loginPassword").value;
@@ -200,7 +187,6 @@ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length<3){error.innerHT
 this.disabled=true; this.innerText="جاري الدخول...";
 
 try {
-  // جلب الحساب بالإيميل
   const users = await supabaseApi(`stylek_password?email=eq.${email}&select=*`);
   
   if(!users || users.length === 0) {
@@ -217,7 +203,6 @@ try {
     return;
   }
 
-  // نجاح الدخول وحفظ البيانات في الجلسة
   const userType = user.role || 'مسوق';
   sessionStorage.setItem('username', user.username);
   sessionStorage.setItem('userType', userType);
@@ -226,8 +211,9 @@ try {
   localStorage.setItem('userType', userType);
   localStorage.setItem('userName', user.name || user.username);
 
-  if(userType === 'تاجر'){
-    window.location.href = 'dashboard.html?user=' + encodeURIComponent(user.username);
+  // تصليح التوجيه بناءً على ملفاتك المرفوعة الحقيقية بالملي لعدم حدوث خطأ 404
+  if(userType === 'تاجر' || userType === 'تاجر'){
+    window.location.href = 'Data_Page.html?user=' + encodeURIComponent(user.username);
   } else {
     window.location.href = 'Displayed_Products.html?user=' + encodeURIComponent(user.username);
   }
