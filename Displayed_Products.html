@@ -111,7 +111,6 @@ body {
   color: var(--green);
   border-right: 4px solid var(--green);
 }
-/* تنسيق خاص لزر تسجيل الخروج */
 .sidebar-menu a.logout-btn {
   color: #ff4444;
   margin-top: 30px;
@@ -256,21 +255,6 @@ body {
   border-color: var(--green);
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(0,255,136,0.1);
-}
-.product-img-box {
-  width: 100%;
-  height: 130px;
-  background: #0f0f0f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-.product-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 6px;
 }
 .product-img-box {
   width: 100%;
@@ -599,23 +583,41 @@ function toggleSidebar() {
 }
 
 function goToPage(pageName) {
+  let lowerPage = pageName.toLowerCase();
+  let correctPageName = pageName + '.html'; 
+
+  if (lowerPage.includes("data_page") || lowerPage.includes("dashboard")) {
+    correctPageName = "Data_Page.html";
+  } else if (lowerPage.includes("my_wallet") || lowerPage.includes("wallet")) {
+    correctPageName = "my_wallet.html";
+  } else if (lowerPage.includes("displayed_products")) {
+    correctPageName = "Displayed_Products.html";
+  } else if (lowerPage.includes("manage_orders")) {
+    correctPageName = "manage_orders.html";
+  }
+
   const currentUser = localStorage.getItem('username') || marketerId;
-  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
+  window.location.href = `${correctPageName}?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
-// دالة تسجيل الخروج
 function logout() {
   if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
-    localStorage.clear(); // مسح البيانات المخزنة
-    window.location.href = "login.html"; // توجيه المسوق لصفحة تسجيل الدخول
+    localStorage.clear();
+    window.location.href = "login.html";
   }
 }
 
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
-const marketerId = 'marketer_' + Date.now();
-const marketerName = 'مسوق ' + Math.random().toString(36).substr(2, 4);
+const urlParams = new URLSearchParams(window.location.search);
+let marketerId = urlParams.get('user') || localStorage.getItem('username') || '';
+let marketerName = localStorage.getItem('userName') || 'مسوق';
+
+if(!marketerId) {
+  marketerId = 'marketer_' + Math.random().toString(36).substr(2, 6);
+  localStorage.setItem('username', marketerId);
+}
 document.getElementById('userInfo').innerHTML = `👤 ${marketerName}`;
 
 const WHATSAPP_NUMBER = '201108712091';
@@ -640,7 +642,7 @@ const CITIES_BY_GOV = {
   'السويس': ['السويس', 'الأربعين', 'الجناين', 'عتاقة'],
   'كفر الشيخ': ['كفر الشيخ', 'دسوق', 'قلين', 'سيدي سالم', 'بلطيم', 'فوه', 'مطوبس', 'بيلا', 'الحامول'],
   'الفيوم': ['الفيوم', 'إطسا', 'سنورس', 'طامية', 'أبشواي', 'يوسف الصديق'],
-  'بني سيف': ['بني سويف', 'الواسطى', 'ناصر', 'ببا', 'الفشن', 'سمسطا', 'إهناسيا'],
+  'بني سويف': ['بني سويف', 'الواسطى', 'ناصر', 'ببا', 'الفشن', 'سمسطا', 'إهناسيا'],
   'المنيا': ['المنيا', 'ملوي', 'بني مزار', 'مغاغة', 'سمالوط', 'أبو قرقاص', 'مطاي', 'دير مواس', 'العدوة'],
   'أسيوط': ['أسيوط', 'ديروط', 'منفلوط', 'القوصية', 'أبنوب', 'أبو تيج', 'البداري', 'ساحل سليم', 'صدفا', 'الغنايم'],
   'سوهاج': ['سوهاج', 'أخميم', 'طهطا', 'جرجا', 'طما', 'البلينا', 'المنشأة', 'المراغة', 'دار السلام', 'جهينة'],
@@ -695,13 +697,15 @@ async function supabaseApi(endpoint, options = {}) {
   return JSON.parse(textData);
 }
 
+// تم ربط العمليات بجدول شيت Marketer_Products الموحد والمحدث لجميع الأقسام والمسوقين
 async function callApi(action, data = {}) {
   try {
+    const tableEndpoint = 'Marketer_Products';
     switch(action) {
       case 'get_products':
-        return await supabaseApi('products?select=*');
+        return await supabaseApi(`${tableEndpoint}?select=*`);
       case 'get_product':
-        return await supabaseApi(`products?product_id=eq.${data.product_id}&select=*`);
+        return await supabaseApi(`${tableEndpoint}?product_id=eq.${data.product_id}&select=*`);
       case 'get_favorites':
         return await supabaseApi(`favorites?marketer_id=eq.${data.marketer_id}&select=*`);
       case 'add_to_favorites':
@@ -1121,7 +1125,8 @@ async function submitOrder() {
     governorate: gov, city: city, address: address, qty: qty,
     size: document.getElementById('orderSize')?.value || '', color: document.getElementById('orderColor')?.value || '',
     price: price, shipping: shipping, total_price: (price * qty + shipping), commission: commission,
-    notes: document.getElementById('orderNotes')?.value || '', marketer_username: marketerName, marketer_id: marketerId
+    notes: document.getElementById('orderNotes')?.value || '', marketer_username: marketerName, marketer_id: marketerId,
+    order_status: 'جديد'
   };
 
   const btn = document.getElementById('submitOrderBtn');
