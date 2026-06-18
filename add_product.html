@@ -225,7 +225,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
-  <p>⏳ جاري إضافة المنتج...</p>
+  <p>⏳ جاري إضافة المنتج للمتجر...</p>
 </div>
 
 <div class="header">
@@ -233,24 +233,24 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 </div>
 
 <div class="container">
-<h2>➕ إضافة منتج جديد (لوحة المعروضات)</h2>
+<h2>➕ إضافة منتج جديد إلى المعرض العام</h2>
 
 <div class="code-box" id="productCode">🆔 كود المنتج: جاري التوليد...</div>
 
 <div class="price-row">
   <div class="form-group">
-    <label>🏷️ كود المورد *</label>
-    <input id="supplierCode" type="text" placeholder="مثال: SUP001" readonly>
+    <label>👤 اسم المستخدم (المورد الحالي) *</label>
+    <input id="supplierUsername" type="text" placeholder="اسم المستخدم" readonly style="background: #1a1a1a; color: #00ff88; font-weight: bold;">
   </div>
   <div class="form-group">
-    <label>📞 رقم هاتف المورد (واتساب) *</label>
+    <label>📞 رقم واتساب المورد *</label>
     <input id="supplierPhone" type="tel" placeholder="مثال: 01012345678">
   </div>
 </div>
 
 <div class="form-group">
   <label>📦 اسم المنتج *</label>
-  <input id="productName" placeholder="مثال: تيشيرت قطن">
+  <input id="productName" placeholder="مثال: سويت شيرت ميلتون">
 </div>
 
 <div class="price-row">
@@ -259,30 +259,30 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     <input id="price" type="number" placeholder="250" min="1">
   </div>
   <div class="form-group">
-    <label>📊 المخزون *</label>
+    <label>📊 كمية المخزون المتاحة *</label>
     <input id="stock" type="number" placeholder="50" min="0" value="1">
   </div>
 </div>
 
 <div class="form-group">
-  <label>🖼️ صورة المنتج *</label>
+  <label>🖼️ صورة غلاف المنتج الأساسية *</label>
   <input id="coverImg" type="file" accept="image/*">
   <img id="preview" style="max-width:100%;max-height:150px;margin-top:10px;border-radius:8px;display:none">
 </div>
 
 <div class="form-group">
-  <label>🔗 لينكات المعرض الإضافية (Gallery Link)</label>
+  <label>🔗 رابط معرض الصور الإضافي (Drive / Telegram)</label>
   <input id="galleryLink" type="url" placeholder="https://drive.google.com/...">
 </div>
 
 <div class="form-group">
-  <label>📝 وصف المنتج</label>
-  <textarea id="productDesc" rows="3" placeholder="اكتب وصف المنتج بالتفصيل..."></textarea>
+  <label>📝 تفاصيل ووصف المنتج</label>
+  <textarea id="productDesc" rows="3" placeholder="اكتب المقاسات والألوان المتوفرة وأي تفاصيل أخرى..."></textarea>
 </div>
 
 <div class="btn-row">
-  <button class="submit" id="addBtn">✅ إضافة المنتج</button>
-  <button class="cancel" onclick="resetForm()">❌ إلغاء</button>
+  <button class="submit" id="addBtn">✅ إضافة وتثبيت المنتج</button>
+  <button class="cancel" onclick="resetForm()">❌ إعادة تعيين</button>
 </div>
 
 <div id="success" class="success"></div>
@@ -295,11 +295,13 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
+// سحب الـ username المكتوب أو المخزن تلقائياً من نظام تسجيل الدخول أو الرابط
 const urlParams = new URLSearchParams(window.location.search);
-let SUPPLIER_CODE = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
-localStorage.setItem('username', SUPPLIER_CODE);
+let CURRENT_USER = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+localStorage.setItem('username', CURRENT_USER);
 
-document.getElementById('supplierCode').value = SUPPLIER_CODE;
+// تعبئة حقل اسم المستخدم تلقائياً وحمايته
+document.getElementById('supplierUsername').value = CURRENT_USER;
 
 function goToPage(pageName) {
   let lowerPage = pageName.toLowerCase();
@@ -319,7 +321,7 @@ function goToPage(pageName) {
     correctPageName = "manage_orders.html";
   }
 
-  window.location.href = `${correctPageName}?user=${encodeURIComponent(SUPPLIER_CODE)}&type=supplier`;
+  window.location.href = `${correctPageName}?user=${encodeURIComponent(CURRENT_USER)}&type=supplier`;
 }
 
 function logout() {
@@ -350,23 +352,25 @@ function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-// تعديل دالة الاتصال وتثبيت توجيه الجدول لـ Marketer_Products بشكل صارم وقاطع
-async function supabaseApi(endpoint, options = {}) {
-  // استخدام اسم الجدول الصريح مع علامات الاقتباس لتجنب تداخل الـ Cases في الـ PostgREST
-  const url = `${SUPABASE_URL}/rest/v1/%22Marketer_Products%22`; 
-  
+// وظيفة التعامل الحصري والمباشر مع الجدول الأساسي المعتمد products
+async function postProductToSupabase(productData) {
+  const url = `${SUPABASE_URL}/rest/v1/products`;
   const headers = {
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${SUPABASE_KEY}`,
     'Content-Type': 'application/json',
-    'Prefer': 'return=representation',
-    ...options.headers
+    'Prefer': 'return=representation'
   };
   
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(productData)
+  });
+  
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`خطأ ${response.status}: ${error}`);
+    throw new Error(`خطأ في خادم قاعدة البيانات: ${error}`);
   }
   return await response.json();
 }
@@ -413,7 +417,7 @@ document.getElementById('addBtn').onclick = async function() {
   const name = document.getElementById('productName').value.trim();
   const price = document.getElementById('price').value;
   const stock = document.getElementById('stock').value;
-  const supplierCode = document.getElementById('supplierCode').value.trim();
+  const usernameValue = document.getElementById('supplierUsername').value.trim();
   const supplierPhone = document.getElementById('supplierPhone').value.trim();
   const galleryLink = document.getElementById('galleryLink').value.trim();
   let desc = document.getElementById('productDesc').value.trim();
@@ -422,61 +426,52 @@ document.getElementById('addBtn').onclick = async function() {
   const errorDiv = document.getElementById('error'), successDiv = document.getElementById('success');
   errorDiv.innerHTML = ''; successDiv.innerHTML = '';
 
-  if(!supplierCode) { errorDiv.innerHTML = '❌ من فضلك اكتب كود المورد'; return; }
-  if(!supplierPhone) { errorDiv.innerHTML = '❌ من فضلك اكتب رقم هاتف المورد للتواصل'; return; }
-  if(!name) { errorDiv.innerHTML = '❌ من فضلك اكتب اسم المنتج'; return; }
-  if(!price || price <= 0) { errorDiv.innerHTML = '❌ من فضلك اكتب سعر صحيح'; return; }
-  if(!fileInput.files || !fileInput.files[0]) { errorDiv.innerHTML = '❌ من فضلك اختر صورة للمنتج'; return; }
+  if(!usernameValue || usernameValue === 'supplier_default') { 
+    errorDiv.innerHTML = '❌ خطأ: اسم المستخدم غير معرف، يرجى إعادة تسجيل الدخول'; 
+    return; 
+  }
+  if(!supplierPhone) { errorDiv.innerHTML = '❌ من فضلك أدخل رقم واتساب الخاص بك للتواصل'; return; }
+  if(!name) { errorDiv.innerHTML = '❌ من فضلك أدخل اسم المنتج'; return; }
+  if(!price || price <= 0) { errorDiv.innerHTML = '❌ من فضلك أدخل سعراً صحيحاً'; return; }
+  if(!fileInput.files || !fileInput.files[0]) { errorDiv.innerHTML = '❌ من فضلك ارفع صورة الغلاف للمنتج'; return; }
 
   const btn = this;
   btn.disabled = true;
-  showLoading('⏳ جاري الحفظ والرفع لـ Marketer_Products...');
+  showLoading('⏳ جاري رفع الصورة وحفظ البيانات بجدول products...');
 
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
-    const extraDescInfo = `\n\n📞 هاتف المورد: ${supplierPhone}`;
-    const finalDesc = desc ? (desc + extraDescInfo) : `تواصل مع المورد: ${supplierPhone}`;
+    // حماية إضافية: ندمج رقم الهاتف ولينك المعرض بالوصف لتجنب فقدانها لو لم تكن متوفرة كأعمدة في الهيكل الحالي
+    const extraDetails = `\n\n📞 هاتف واتساب المورد: ${supplierPhone}\n🔗 المعرض الإضافي: ${galleryLink || 'لا يوجد'}`;
+    const finalDescription = desc ? (desc + extraDetails) : `منتج المورد: ${usernameValue} ${extraDetails}`;
 
-    // الكائن بالبيانات والأسماء المتطابقة حرفياً ومصيرياً لجدول Marketer_Products فقط
-    const productData = {
-      supplier_code: supplierCode, 
+    // بناء الكائن متطابقاً تماماً وحرفياً مع أعمدة جدول `products` المستلم في الاسكريبت
+    const finalProductPayload = {
       product_id: productCode,
-      image_url: imageUrl,
       name: name,
       base_price: parseFloat(price),
       stock: parseInt(stock),
-      description: finalDesc,
-      category: 'عام',
-      status: 'active',
+      image_url: imageUrl,
+      description: finalDescription,
+      username: usernameValue, // الإرسال المباشر والمنفصل للعمود الجديد لفلترة المنتجات بدقة
+      gallery_link: galleryLink || null,
       sizes: '',
       colors: '',
-      username: supplierCode, 
-      whatsapp: supplierPhone, 
-      gallery_link: galleryLink || null,
-      slider: [], 
-      profit_amount: 20,
-      discount_percent: 0,
-      sales_count: 0,
-      delivered_count: 0,
-      returned_count: 0,
-      rejected_count: 0
+      slider: []
     };
 
-    // التنفيذ الإجباري على الرابط المحمي لـ Marketer_Products
-    await supabaseApi('', {
-      method: 'POST',
-      body: JSON.stringify(productData)
-    });
+    // الإرسال والتدوين الفوري بداخل الشيت المطلوب
+    await postProductToSupabase(finalProductPayload);
 
     hideLoading();
-    successDiv.innerHTML = `✅ نجاح تام! تم إرسال وحفظ المنتج داخل جدول (Marketer_Products) بنجاح ولم يذهب لجدول المنتجات الفرعي.`;
+    successDiv.innerHTML = `✅ تم الحفظ التام! تم إدراج المنتج بنجاح تحت اسم المستخدم الخاص بك (${usernameValue}) داخل جدول products الرئيسي.`;
     resetForm();
     
   } catch(err) {
     hideLoading();
     productCode = generateCode();
-    errorDiv.innerHTML = '❌ فشل الرفع والتخزين: ' + err.message;
+    errorDiv.innerHTML = '❌ تعذر الرفع: ' + err.message;
   }
   
   btn.disabled = false;
