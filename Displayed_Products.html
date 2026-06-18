@@ -697,7 +697,7 @@ async function supabaseApi(endpoint, options = {}) {
   return JSON.parse(textData);
 }
 
-// تم ربط العمليات بجدول شيت Marketer_Products الموحد والمحدث لجميع الأقسام والمسوقين
+// تم ربط جميع عمليات الجلب والبحث بجدول الاستعلام الموحد والمحدث Marketer_Products
 async function callApi(action, data = {}) {
   try {
     const tableEndpoint = 'Marketer_Products';
@@ -713,7 +713,16 @@ async function callApi(action, data = {}) {
       case 'remove_from_favorites':
         return await supabaseApi(`favorites?marketer_id=eq.${data.marketer_id}&product_id=eq.${data.product_id}`, { method: 'DELETE' });
       case 'get_cart':
-        return await supabaseApi(`cart?marketer_id=eq.${data.marketer_id}&select=*`);
+        // نقوم بعمل ربط غير مباشر من خلال السلة، لكن لضمان تحديث الأسعار نستخدم البيانات من الجدول الموحد
+        const cartRes = await supabaseApi(`cart?marketer_id=eq.${data.marketer_id}&select=*`);
+        if(Array.isArray(cartRes)) {
+          const freshProducts = await supabaseApi(`${tableEndpoint}?select=*`);
+          return cartRes.map(item => {
+            const matchedProd = freshProducts.find(p => String(p.product_id) === String(item.product_id));
+            return matchedProd ? { ...item, ...matchedProd } : item;
+          });
+        }
+        return cartRes;
       case 'add_to_cart':
         return await supabaseApi('cart', { method: 'POST', body: JSON.stringify({ marketer_id: data.marketer_id, product_id: data.product_id, qty: 1, cart_id: 'C' + Date.now() }) });
       case 'update_cart_qty':
@@ -959,9 +968,13 @@ async function removeFromCart(cartId) {
 async function openFavorites() {
   document.getElementById('favoritesPopup').style.display = 'flex';
   document.getElementById('favoritesBody').innerHTML = '<div class="loading-text">⏳ جاري التحميل...</div>';
+  
+  // لجلب تفاصيل المنتجات المفضلة من الجدول الموحد
   const result = await callApi('get_favorites', { marketer_id: marketerId });
   if (result.status !== 'error' && Array.isArray(result)) {
-    const favs = result;
+    const freshProducts = await callApi('get_products');
+    const favs = result.map(f => freshProducts.find(p => String(p.product_id) === String(f.product_id))).filter(Boolean);
+    
     if (favs.length === 0) {
       document.getElementById('favoritesBody').innerHTML = '<div class="loading-text">⭐ لا توجد منتجات مفضلة</div>';
       return;
