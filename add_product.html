@@ -436,6 +436,7 @@ document.getElementById('addBtn').onclick = async function() {
     const extraDescInfo = `\n\n📞 هاتف المورد: ${supplierPhone}`;
     const finalDesc = desc ? (desc + extraDescInfo) : `تواصل مع المورد: ${supplierPhone}`;
 
+    // تهيئة البيانات لتتوافق حرفياً مع شيت Marketer_Products
     const productData = {
       product_id: productCode,
       name: name,
@@ -445,18 +446,22 @@ document.getElementById('addBtn').onclick = async function() {
       description: finalDesc,
       sizes: '',
       colors: '',
-      username: supplierCode, // تم التعديل لحفظ كود المورد النظيف فقط ليتوافق مع صفحة العرض
+      username: supplierCode, // ربط كود المورد الموحد بالتجميع
+      whatsapp: supplierPhone, // إرسال الهاتف لخانة الـ whatsapp المخصصة بجدول Marketer_Products
       gallery_link: galleryLink || null,
-      slider: []
+      slider: [],
+      status: 'active',
+      category: 'عام'
     };
 
-    await supabaseApi('products', {
+    // التوجيه المباشر إلى جدول Marketer_Products
+    await supabaseApi('Marketer_Products', {
       method: 'POST',
       body: JSON.stringify(productData)
     });
 
     hideLoading();
-    successDiv.innerHTML = `✅ تم الحفظ بنجاح! تم ربط المنتج بكود حسابك النظيف ليعرض فوراً.`;
+    successDiv.innerHTML = `✅ تم الحفظ بنجاح! تم إرسال المنتج إلى لوحة العرض (Marketer_Products) وربطه بـ حسابك بنجاح.`;
     resetForm();
     
   } catch(err) {
