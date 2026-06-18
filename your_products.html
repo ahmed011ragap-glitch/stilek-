@@ -89,10 +89,6 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
 .card .price { color: var(--green); font-size: 14px; font-weight: 800; }
 .card .stock { font-size: 11px; color: #888; }
 
-.badge { padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: bold; display: inline-block; width: fit-content; text-align: center; }
-.badge.active { background: #112a1a; color: #4caf50; border: 1px solid #1b5e20; }
-.badge.inactive { background: #2a1111; color: #f44336; border: 1px solid #5e1b1b; }
-
 /* ===== السليدر الجانبي ===== */
 .menu-btn {
   position: fixed;
@@ -238,21 +234,21 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
       <div class="num" id="totalProducts">0</div>
       <div class="label">إجمالي المنتجات</div>
     </div>
-    <div class="stat-box">
-      <div class="num" id="activeProducts">0</div>
-      <div class="label">نشط</div>
+    <div class="stats-box" style="flex: 1; background: var(--card-bg); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid var(--card-border);">
+      <div class="num" id="activeProducts" style="font-size: 18px; font-weight: 800; color: var(--green);">0</div>
+      <div class="label" style="font-size: 11px; color: #aaa; margin-top: 2px;">نشط</div>
     </div>
-    <div class="stat-box">
-      <div class="num" id="inactiveProducts">0</div>
-      <div class="label">متوقف</div>
+    <div class="stats-box" style="flex: 1; background: var(--card-bg); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid var(--card-border);">
+      <div class="num" id="inactiveProducts" style="font-size: 18px; font-weight: 800; color: var(--red);">0</div>
+      <div class="label" style="font-size: 11px; color: #aaa; margin-top: 2px;">متوقف</div>
     </div>
   </div>
 
-  <div id="loading" class="loading">جاري التحميل...</div>
+  <div id="loading" class="loading">جاري التحميل من جدول المنتجات الأساسي...</div>
   <div id="grid" class="grid" style="display:none"></div>
 
   <div id="empty" class="empty" style="display:none">
-    <h3>مفيش منتجات لسه</h3>
+    <h3>مفيش منتجات لسه بجدول المنتجات</h3>
     <p>ابدأ بإضافة أول منتج ليك</p>
     <button class="empty-btn" onclick="goToPage('add_product_supplier')">➕ ضيف أول منتج</button>
   </div>
@@ -373,7 +369,8 @@ function nextSlide() { showSlide(currentSlide + 1); }
 function prevSlide() { showSlide(currentSlide - 1); }
 
 async function supabaseApi(endpoint, options = {}) {
-  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  // تم تحويل الرابط بالكامل وبشكل صريح ليتعامل مع جدول products الرئيسي الخاص بك
+  const url = `${SUPABASE_URL}/rest/v1/products${endpoint}`;
   const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...options.headers };
   if (options.method === 'PATCH' || options.method === 'DELETE') { headers['Prefer'] = 'return=representation'; }
   const response = await fetch(url, { ...options, headers });
@@ -384,14 +381,14 @@ async function supabaseApi(endpoint, options = {}) {
 
 async function api(action, data = {}) {
   try {
-    const tableEndpoint = 'Marketer_Products'; 
     switch(action) {
+      // الفلترة هنا تتم بشكل صريح بناءً على حقل username للتفريق بين المنتجات لكل مورد
       case 'getSupplierProducts': 
-        return await supabaseApi(`${tableEndpoint}?username=eq.${encodeURIComponent(username)}&select=*`);
+        return await supabaseApi(`?username=eq.${encodeURIComponent(username)}&select=*`);
       case 'getProductDetails': 
-        return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}&select=*`);
+        return await supabaseApi(`?product_id=eq.${encodeURIComponent(data.product_id)}&select=*`);
       case 'updateProduct':
-        return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}`, {
+        return await supabaseApi(`?product_id=eq.${encodeURIComponent(data.product_id)}`, {
           method: 'PATCH',
           body: JSON.stringify({
             base_price: parseFloat(data.base_price) || 0,
@@ -402,7 +399,7 @@ async function api(action, data = {}) {
           })
         });
       case 'deleteProduct': 
-        return await supabaseApi(`${tableEndpoint}?product_id=eq.${encodeURIComponent(data.product_id)}`, { method: 'DELETE' });
+        return await supabaseApi(`?product_id=eq.${encodeURIComponent(data.product_id)}`, { method: 'DELETE' });
       default: 
         return { status: 'error', message: 'العملية غير مدعومة' };
     }
@@ -468,7 +465,7 @@ async function deleteProduct(){
 }
 
 async function loadProducts(){
-  if (!username) { document.getElementById('loading').innerHTML = 'خطأ: لم يتم التعرف على الحساب.'; return; }
+  if (!username) { document.getElementById('loading').innerHTML = 'خطأ: لم يتم التعرف على اسم المستخدم للتصفية.'; return; }
   try{
     const result = await api('getSupplierProducts');
     document.getElementById('loading').style.display = 'none';
