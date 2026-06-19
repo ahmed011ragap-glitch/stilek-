@@ -215,9 +215,9 @@ try {
   localStorage.setItem('userName', user.name || user.username);
 
   if(userType === 'تاجر'){
-    window.location.href = 'Data_Page.html?user=' + encodeURIComponent(user.username);
+    window.location.href = 'data_page.html?user=' + encodeURIComponent(user.username);
   } else {
-    window.location.href = 'Displayed_Products.html?user=' + encodeURIComponent(user.username);
+    window.location.href = 'displayed_products.html?user=' + encodeURIComponent(user.username);
   }
 
 } catch(e) {
