@@ -166,13 +166,12 @@ body {
   flex: 1;
   min-width: 200px;
   padding: 12px 16px;
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--green); /* تغيير لون الإطار ليوضح أنه متاح للكتابة */
   border-radius: 10px;
   background: #1e1e1e;
-  color: #bbbbbb;
+  color: #ffffff;
   font-size: 14px;
   outline: none;
-  cursor: not-allowed;
 }
 
 /* ===== الهيدر ومحتوى الصفحة ===== */
@@ -342,8 +341,8 @@ h2 {
   </div>
 
   <div class="user-input-section">
-    <label>👤 الحساب المسجل حالياً:</label>
-    <input type="text" id="usernameInput" readonly placeholder="جاري قراءة بيانات الحساب...">
+    <label>👤 اسم حساب المسوق:</label>
+    <input type="text" id="usernameInput" placeholder="اكتب اسم الحساب هنا...">
   </div>
 
   <h2>💼 المحفظة والملخص المالي</h2>
@@ -475,11 +474,22 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// قراءة اسم المستخدم من الرابط أو التخزين المحلي
+// قراءة اسم المستخدم الأولي من الرابط أو التخزين المحلي
 const urlParams = new URLSearchParams(window.location.search);
 let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'marketer_default';
 let currentUser = rawUser.toLowerCase().trim();
 localStorage.setItem('username', currentUser);
+
+// الاستماع لعملية تغيير اسم المستخدم يدوياً من خانة الإدخال
+document.getElementById('usernameInput').addEventListener('input', (e) => {
+  const inputVal = e.target.value.toLowerCase().trim();
+  if (inputVal) {
+    currentUser = inputVal;
+    localStorage.setItem('username', currentUser);
+    document.getElementById('userName').textContent = currentUser;
+    loadDashboard(); // إعادة تحميل الأرقام بناءً على اسم المستخدم الجديد فوراً
+  }
+});
 
 // دالة التنقل الموحدة للمسوق
 function goToPage(pageName) {
@@ -501,6 +511,7 @@ const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 let isAdmin = false;
 const ADMIN_CODE = 'Ahmed**##$$1';
 
+// تحديث الدالة لمنع مشكلة الاستجابات الفارغة من سوبابيز وبدء إرجاع محتوى دائم
 async function supabaseApi(endpoint, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = { 
@@ -509,23 +520,28 @@ async function supabaseApi(endpoint, options = {}) {
     'Content-Type': 'application/json', 
     ...options.headers 
   };
+  
+  if (options.method === 'POST') {
+    headers['Prefer'] = 'return=representation';
+  }
+
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) throw new Error(await response.text());
-  return await response.json();
+  
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
 }
 
 let globalAvailableBalance = 0;
 
-// ===== دالة تحميل البيانات الرئيسية (معدلة مثل كود لوحة التحكم) =====
+// ===== دالة تحميل البيانات الرئيسية =====
 async function loadDashboard() {
   try {
     document.getElementById('userName').textContent = currentUser;
     document.getElementById('usernameInput').value = currentUser;
 
-    // ✅ جلب جميع الحقول من orders (مثل الكود الجديد)
     const allOrders = await supabaseApi(`orders?select=*`);
     
-    // ✅ الفلترة باستخدام marketer_id أو marketer_username (أي واحد فيهم)
     const marketerOrders = allOrders.filter(o => {
       const id = (o.marketer_id || '').toLowerCase().trim();
       const username = (o.marketer_username || '').toLowerCase().trim();
@@ -540,22 +556,18 @@ async function loadDashboard() {
       const commission = parseFloat(o.commission) || 0;
       const status = (o.order_status || '').trim();
       
-      // الحالات المكتملة
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
         deliveredCommissionTotal += commission; 
         deliveredCount++; 
       } 
-      // حالات الشحن
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
         shippingCommissionTotal += commission; 
       } 
-      // حالات التحضير
       else if (status === 'تغليف') { 
         preparingCommissionTotal += commission; 
       }
     });
 
-    // جلب السحوبات الخاصة بالمسوق
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
@@ -577,7 +589,6 @@ async function loadDashboard() {
 
   } catch(err) { 
     console.error('❌ خطأ في تحميل البيانات:', err);
-    alert('حدث خطأ أثناء جلب البيانات: ' + err.message);
   }
 }
 
@@ -718,7 +729,7 @@ function openWithdrawModal() { document.getElementById('withdrawModal').style.di
 function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 function openHistory() { alert('السجل المالي يظهر للأدمن تلقائياً عند البحث بكود الإدارة.'); }
 
-// تشغيل التحميل الأولي
+// تشغيل التحميل الأولي عند فتح الصفحة
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>
