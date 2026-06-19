@@ -237,11 +237,13 @@ body {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
+    <!-- الروابط الخمسة المطلوبة -->
     <a href="#" class="active">🏠 لوحة البيانات الرئيسية</a>
-    <a href="#" onclick="goToPage('my_wallet.html')">💼 المحفظة والسحوبات</a>
-    <a href="#" onclick="goToPage('add_product.html')">➕ إضافة منتج جديد</a>
-    <a href="#" onclick="goToPage('your_products.html')">📦 منتجاتي المعروضة</a>
-    
+    <a href="#" onclick="goToPage('my_wallet')">💼 المحفظة والسحوبات</a>
+    <a href="#" onclick="goToPage('add_product')">➕ إضافة منتج جديد</a>
+    <a href="#" onclick="goToPage('your_products')">📦 منتجاتي المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders')">📋 إدارة الطلبات</a>
+
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">
       💬 تواصل مع الدعم الفني
     </a>
@@ -323,7 +325,14 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
+/**
+ * دالة التنقل إلى صفحة معينة مع تمرير اسم المستخدم ونوع المستخدم
+ * @param {string} pageName - اسم الصفحة بدون امتداد (مثل 'my_wallet')
+ */
 function goToPage(pageName) {
+  // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
+  // بناء الرابط مع إضافة .html وتمرير user و type
   window.location.href = `${pageName}.html?user=${encodeURIComponent(SUPPLIER_CODE)}&type=supplier`;
 }
 
