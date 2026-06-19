@@ -503,7 +503,12 @@ const ADMIN_CODE = 'Ahmed**##$$1';
 
 async function supabaseApi(endpoint, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-  const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...options.headers };
+  const headers = { 
+    'apikey': SUPABASE_KEY, 
+    'Authorization': `Bearer ${SUPABASE_KEY}`, 
+    'Content-Type': 'application/json', 
+    ...options.headers 
+  };
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) throw new Error(await response.text());
   return await response.json();
@@ -511,21 +516,23 @@ async function supabaseApi(endpoint, options = {}) {
 
 let globalAvailableBalance = 0;
 
-// ===== دالة تحميل البيانات الرئيسية =====
+// ===== دالة تحميل البيانات الرئيسية (معدلة مثل كود لوحة التحكم) =====
 async function loadDashboard() {
   try {
     document.getElementById('userName').textContent = currentUser;
     document.getElementById('usernameInput').value = currentUser;
 
-    // ✅ استخدام marketer_id (الفريد) للبحث عن طلبات المسوق
-    const allOrders = await supabaseApi(`orders?select=order_status,commission,marketer_id`);
+    // ✅ جلب جميع الحقول من orders (مثل الكود الجديد)
+    const allOrders = await supabaseApi(`orders?select=*`);
     
+    // ✅ الفلترة باستخدام marketer_id أو marketer_username (أي واحد فيهم)
     const marketerOrders = allOrders.filter(o => {
       const id = (o.marketer_id || '').toLowerCase().trim();
-      return id === currentUser;
+      const username = (o.marketer_username || '').toLowerCase().trim();
+      return id === currentUser || username === currentUser;
     });
 
-    console.log('🔍 عدد طلبات المسوق (باستخدام marketer_id):', marketerOrders.length);
+    console.log('🔍 عدد طلبات المسوق:', marketerOrders.length);
 
     let deliveredCommissionTotal = 0, shippingCommissionTotal = 0, preparingCommissionTotal = 0, deliveredCount = 0;
 
@@ -570,7 +577,7 @@ async function loadDashboard() {
 
   } catch(err) { 
     console.error('❌ خطأ في تحميل البيانات:', err);
-    alert('حدث خطأ أثناء جلب البيانات، تحقق من الاتصال بقاعدة البيانات.');
+    alert('حدث خطأ أثناء جلب البيانات: ' + err.message);
   }
 }
 
@@ -587,7 +594,7 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
   }
 
   if (requestedAmount > globalAvailableBalance) {
-    alert(`❌ خطأ: الرصيد المتاح غير كافٍ.`);
+    alert(`❌ خطأ: الرصيد المتاح غير كافٍ. الرصيد المتاح: ${globalAvailableBalance.toFixed(2)} ج.م`);
     return;
   }
 
