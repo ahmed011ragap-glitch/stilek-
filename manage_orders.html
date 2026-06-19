@@ -289,14 +289,19 @@ body {
 
 <div id="sidebar" class="sidebar">
   <div class="sidebar-header">
-    <span>📋 القائمة</span>
+    <span>🏬 لوحة تحكم المورد</span>
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('data_page.html')">🏠 لوحة البيانات</a>
-    <a href="#" onclick="goToPage('your_products.html')">🛍️ منتجاتي </a>
-    <a href="#" onclick="goToPage('manage_orders.html')" class="active">📋 طلبات منتجاتي</a>
-    <a href="#" onclick="goToPage('my_wallet.html')">💰 المحفظة</a>
+    <!-- الروابط الخمسة المطلوبة -->
+    <a href="#" onclick="goToPage('data_page')">🏠 لوحة البيانات الرئيسية</a>
+    <a href="#" onclick="goToPage('my_wallet')">💼 المحفظة والسحوبات</a>
+    <a href="#" onclick="goToPage('add_product')">➕ إضافة منتج جديد</a>
+    <a href="#" onclick="goToPage('your_products')">📦 منتجاتي المعروضة</a>
+    <a href="#" class="active">📋 طلبات منتجاتي</a>
+    
+    <a href="https://wa.me/201108712091" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#25d366;color:#fff !important;font-weight:700 !important;margin:20px 15px 5px !important;box-shadow:0 4px 15px rgba(37,211,102,0.3);">💬 تواصل مع الدعم الفني</a>
+    
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -331,29 +336,22 @@ body {
 <div id="ordersList" class="orders-list"></div>
 
 <script>
-// ===== دوال السليدر والتنقل (تم تعديلها لتصبح غير حساسة للأحرف) =====
+// ===== دوال السليدر والتنقل (تم تبسيطها وتوحيدها مع باقي الصفحات) =====
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
 
+/**
+ * دالة التنقل إلى صفحة معينة مع تمرير اسم المستخدم ونوع المستخدم
+ * @param {string} pageName - اسم الصفحة بدون امتداد (مثل 'my_wallet')
+ */
 function goToPage(pageName) {
-  let lowerPage = pageName.toLowerCase().trim();
-  let correctPageName = pageName + '.html'; 
-
-  if (lowerPage.includes("data_page") || lowerPage.includes("dashboard")) {
-    correctPageName = "Data_Page.html";
-  } else if (lowerPage.includes("my_wallet") || lowerPage.includes("wallet")) {
-    correctPageName = "my_wallet.html";
-  } else if (lowerPage.includes("displayed_products")) {
-    correctPageName = "Displayed_Products.html";
-  } else if (lowerPage.includes("manage_orders")) {
-    correctPageName = "manage_orders.html";
-  }
-
-  // معالجة اسم المستخدم بشكل آمن وغير حساس لحالة الأحرف
+  // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
+  // بناء الرابط مع إضافة .html وتمرير user و type
   const currentUser = (localStorage.getItem('username') || currentUserVar || '').toLowerCase().trim();
-  window.location.href = `${correctPageName}?user=${encodeURIComponent(currentUser)}&type=supplier`;
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=supplier`;
 }
 
 function logout() {
@@ -368,7 +366,6 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 const urlParams = new URLSearchParams(window.location.search);
-// تحويل المعطيات من الرابط تلقائياً إلى حروف صغيرة لتوحيد البيانات
 let currentUserVar = (urlParams.get('user') || localStorage.getItem('username') || '').toLowerCase().trim();
 let userType = 'supplier'; 
 let allOrders = [];
@@ -406,7 +403,6 @@ async function callApi(action, data = {}) {
   try {
     switch(action) {
       case 'getOrders':
-        // تعديل الاستعلام للمورد باستخدام ilike ليكون غير حساس لحالة الأحرف
         const products = await supabaseApi(`products?username=ilike.${currentUserVar}&select=product_id`);
         const productIds = products.map(p => `'${p.product_id}'`).join(',');
         
