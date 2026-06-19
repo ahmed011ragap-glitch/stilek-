@@ -145,9 +145,9 @@ body {
   padding: 20px 25px;
   margin-bottom: 30px;
 }
-.user-info h3 { color: var(--green); font-size: 20px; font-weight: 800; }
+.user-info h3 { color: var(--green); font-size: 22px; font-weight: 800; margin-bottom: 5px; }
 .user-info .role-tag {
-  display: inline-block; padding: 3px 10px; background: #151515; border: 1px solid #333;
+  display: inline-block; padding: 4px 12px; background: #151515; border: 1px solid #333;
   border-radius: 6px; font-size: 12px; color: var(--blue); margin-top: 6px; font-weight: 600;
 }
 
@@ -258,7 +258,7 @@ body {
 
   <div class="user-card">
     <div class="user-info">
-      <h3 id="supplierName">حساب المورد</h3>
+      <h3 id="supplierName">👤 جاري قراءة الحساب...</h3>
       <div id="supplierCode" style="color: #aaa; font-size: 14px; margin-top: 4px;">كود الحساب: جاري التحميل...</div>
       <span class="role-tag">مورد معتمد (Supplier)</span>
     </div>
@@ -339,10 +339,15 @@ function logout() {
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
+// استقبال اليوزر نيم وتوحيد حالته (حروف صغيرة) لمنع حساسية الأحرف الكبيرة والصغيرة تماماً
 const urlParams = new URLSearchParams(window.location.search);
-let SUPPLIER_CODE = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+let SUPPLIER_CODE = rawUser.trim().toLowerCase(); 
+
 localStorage.setItem('username', SUPPLIER_CODE);
 
+// طباعة اليوزر نيم بشكل صحيح ومباشر في واجهة العرض العلوية
+document.getElementById('supplierName').innerText = `👤 حساب المورد: ${SUPPLIER_CODE}`;
 document.getElementById('supplierCode').innerText = `كود المورد الخاص بك: ${SUPPLIER_CODE}`;
 
 async function supabaseRequest(endpoint, options = {}) {
@@ -362,7 +367,8 @@ let currentSupplierBalance = 0;
 
 async function loadSupplierData() {
   try {
-    const ordersProducts = await supabaseRequest(`Orders_product?supplier_id=eq.${encodeURIComponent(SUPPLIER_CODE)}&select=*`);
+    // تعديل الفلترة إلى (ilike) بدلاً من (eq) لضمان جلب البيانات حتى لو كانت مخزنة في الداتابيز بحروف كابيتال
+    const ordersProducts = await supabaseRequest(`Orders_product?supplier_id=ilike.${encodeURIComponent(SUPPLIER_CODE)}&select=*`);
     
     let totalSupplierRevenue = 0;
     
@@ -370,20 +376,24 @@ async function loadSupplierData() {
       const supplierCost = parseFloat(item.supplier_cost) || 0;
       const quantity = parseInt(item.quantity) || 1;
       
-      if (item.status === 'تم التسليم' || item.status === 'delivered') {
+      // توحيد مقارنة الحالات برمجياً
+      const itemStatus = (item.status || '').trim().toLowerCase();
+      if (itemStatus === 'تم التسليم' || itemStatus === 'delivered') {
         totalSupplierRevenue += (supplierCost * quantity);
       }
     });
 
-    const withdrawals = await supabaseRequest(`withdrawals?username=eq.${encodeURIComponent(SUPPLIER_CODE)}&select=*`);
+    // استخدام ilike لطلب السحوبات للتأكد من تجميع الأرقام بشكل سليم وغير حساس للأحرف
+    const withdrawals = await supabaseRequest(`withdrawals?username=ilike.${encodeURIComponent(SUPPLIER_CODE)}&select=*`);
     
     let pendingWithdrawals = 0;
     let approvedWithdrawals = 0;
 
     withdrawals.forEach(w => {
       const amt = parseFloat(w.amount) || 0;
-      if (w.status === 'قيد المراجعة') pendingWithdrawals += amt;
-      else if (w.status === 'تم' || w.status === 'تم الدفع') approvedWithdrawals += amt;
+      const wStatus = (w.status || '').trim();
+      if (wStatus === 'قيد المراجعة') pendingWithdrawals += amt;
+      else if (wStatus === 'تم' || wStatus === 'تم الدفع') approvedWithdrawals += amt;
     });
 
     currentSupplierBalance = totalSupplierRevenue - (pendingWithdrawals + approvedWithdrawals);
@@ -436,7 +446,7 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
     await supabaseRequest('withdrawals', {
       method: 'POST',
       body: JSON.stringify({
-        username: SUPPLIER_CODE,
+        username: SUPPLIER_CODE, // الإرسال بحالة أحرف صغيرة وموحدة بالكامل
         amount: amount,
         account: method,
         notes: `رقم تليفون تحويل المورد: ${phone}`,
@@ -463,6 +473,7 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
 function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'flex'; }
 function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 
+// تشغيل جلب البيانات عند بدء تحميل الصفحة مباشرة
 loadSupplierData();
 </script>
 </body>
