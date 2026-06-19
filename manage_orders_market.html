@@ -114,6 +114,37 @@ body {
   color: var(--green);
   border-right: 4px solid var(--green);
 }
+
+/* زر الدعم الفني عبر واتساب */
+.whatsapp-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25d366;
+  color: #fff !important;
+  font-weight: 700 !important;
+  margin: 20px 15px 5px !important;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+  border-radius: 10px;
+}
+.whatsapp-chat-btn:hover {
+  background: #20ba5a !important;
+  transform: translateY(-2px);
+}
+
+/* زر تسجيل الخروج */
+.logout-btn {
+  color: #ff4444 !important;
+  margin-top: 30px;
+  border-right: 4px solid transparent;
+}
+.logout-btn:hover {
+  background: #221111 !important;
+  color: #ff6666 !important;
+  border-right: 4px solid #ff4444;
+}
+
 .overlay {
   position: fixed;
   top: 0;
@@ -316,10 +347,17 @@ body {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('data_page_market.html')">🏠 لوحة البيانات</a>
-    <a href="#" onclick="goToPage('displayed_products.html')">🛍️ المنتجات المعروضة</a>
-    <a href="#" onclick="goToPage('manage_orders_market.html')" class="active">📋 طلباتي</a>
-    <a href="#" onclick="goToPage('my_wallet_market.html')">💰 المحفظة</a>
+    <!-- الروابط الخاصة بالمسوق -->
+    <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات</a>
+    <a href="#" onclick="goToPage('displayed_products')">🛍️ المنتجات المعروضة</a>
+    <a href="#" class="active">📋 طلباتي</a>
+    <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
+
+    <!-- زر الدعم الفني عبر واتساب -->
+    <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
+
+    <!-- زر تسجيل الخروج -->
+    <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
@@ -359,28 +397,29 @@ body {
 <div id="ordersList" class="orders-list"></div>
 
 <script>
-// ===== دوال السليدر (تم تعديلها لتصبح غير حساسة لحالة الأحرف) =====
+// ===== دوال السليدر والتنقل الموحدة للمسوقين =====
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
 
+/**
+ * دالة التنقل الموحدة - تستقبل اسم الصفحة بدون امتداد
+ */
 function goToPage(pageName) {
-  let lowerPage = pageName.toLowerCase().trim();
-  let correctPageName = pageName + '.html'; 
+  toggleSidebar(); // إغلاق السلايدر قبل التنقل
+  const currentUser = localStorage.getItem('username') || currentUserVar || '';
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
+}
 
-  if (lowerPage.includes("data_page") || lowerPage.includes("dashboard")) {
-    correctPageName = "Data_Page.html";
-  } else if (lowerPage.includes("my_wallet") || lowerPage.includes("wallet")) {
-    correctPageName = "my_wallet.html";
-  } else if (lowerPage.includes("displayed_products")) {
-    correctPageName = "Displayed_Products.html";
-  } else if (lowerPage.includes("manage_orders")) {
-    correctPageName = "manage_orders.html";
+/**
+ * دالة تسجيل الخروج
+ */
+function logout() {
+  if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+    localStorage.clear();
+    window.location.href = "index.html";
   }
-
-  const currentUser = (localStorage.getItem('username') || currentUserVar || '').toLowerCase().trim();
-  window.location.href = `${correctPageName}?user=${encodeURIComponent(currentUser)}&type=${userType.toLowerCase()}`;
 }
 
 // ===== إعدادات Supabase =====
@@ -400,10 +439,15 @@ const STAGE_DAYS = { 0: 0, 1: 2, 2: 3, 3: 10 };
 
 // ===== تهيئة الصفحة تلقائياً بالاعتماد على اليوزر المسجل =====
 window.onload = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const userFromUrl = (urlParams.get('user') || '').toLowerCase().trim();
   const savedUsername = (localStorage.getItem('username') || '').toLowerCase().trim();
-  if (savedUsername) {
-    document.getElementById('usernameInput').value = savedUsername;
-    currentUserVar = savedUsername;
+  
+  currentUserVar = userFromUrl || savedUsername || '';
+  
+  if (currentUserVar) {
+    document.getElementById('usernameInput').value = currentUserVar;
+    localStorage.setItem('username', currentUserVar);
     loadOrders();
   } else {
     document.getElementById('ordersList').innerHTML = '<div class="empty-orders">⚠️ لم يتم العثور على اسم مستخدم مسجل تلقائياً في النظام.</div>';
