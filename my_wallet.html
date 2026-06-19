@@ -320,10 +320,13 @@ h2 {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('data_page.html')">🏠 لوحة البيانات الرئيسية</a>
+    <!-- الروابط الخمسة المطلوبة -->
+    <a href="#" onclick="goToPage('data_page')">🏠 لوحة البيانات الرئيسية</a>
     <a href="#" class="active">💼 المحفظة والسحوبات</a>
-    <a href="#" onclick="goToPage('add_product.html')">➕ إضافة منتج جديد</a>
-    <a href="#" onclick="goToPage('your_products.html')">📦 منتجاتي المعروضة</a>
+    <a href="#" onclick="goToPage('add_product')">➕ إضافة منتج جديد</a>
+    <a href="#" onclick="goToPage('your_products')">📦 منتجاتي المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders')">📋 طلبات منتجاتي</a>
+    
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
@@ -477,12 +480,17 @@ function toggleSidebar() {
 // معالجة اسم الحساب بدون حساسية لحالة الأحرف
 const urlParams = new URLSearchParams(window.location.search);
 let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
-let currentUser = rawUser.toLowerCase().trim(); // تحويل دائم للأحرف الصغيرة ومنع الحساسية
+let currentUser = rawUser.toLowerCase().trim();
 
 localStorage.setItem('username', currentUser);
 
+/**
+ * دالة التنقل الموحدة - تستقبل اسم الصفحة بدون امتداد
+ */
 function goToPage(pageName) {
-  // الحفاظ على تحويل الحروف الصغيرة أثناء التنقل
+  // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
+  // بناء الرابط مع إضافة .html وتمرير user و type
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=supplier`;
 }
 
@@ -512,11 +520,9 @@ let globalAvailableBalance = 0;
 
 async function loadDashboard() {
   try {
-    // عرض اسم الحساب في البار العلوي المحمي
     document.getElementById('userName').textContent = currentUser;
     document.getElementById('usernameInput').value = currentUser;
 
-    // جلب الطلبات وفلترتها بشكل غير حساس لحالة الأحرف لقفل أي ثغرة تباين
     const allOrders = await supabaseApi(`orders?select=order_status,product_cost,supplier_username`);
     const supplierOrders = allOrders.filter(o => (o.supplier_username || '').toLowerCase().trim() === currentUser);
 
@@ -530,7 +536,6 @@ async function loadDashboard() {
       else if (status === 'تغليف') { preparingCostTotal += cost; }
     });
 
-    // استخدام الـ ilike لضمان استخراج السحوبات البرمجية دون حساسية للأحرف من قاعدة البيانات
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
