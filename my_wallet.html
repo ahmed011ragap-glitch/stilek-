@@ -121,6 +121,60 @@ body {
 }
 .overlay.active { display: block; }
 
+/* ===== بار معلومات المستخدم الثابت والمحمي ===== */
+.user-bar {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  margin-top: 55px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.user-bar span { font-size: 14px; color: #b0b0b0; }
+.user-bar strong { color: var(--green); }
+.user-type {
+  padding: 4px 12px;
+  background: #0a1a2a;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #00aaff;
+  border: 1px solid #00aaff;
+}
+
+.user-input-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.user-input-section label {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+.user-input-section input {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: #1e1e1e;
+  color: #bbbbbb;
+  font-size: 14px;
+  outline: none;
+  cursor: not-allowed;
+}
+
 /* ===== الهيدر ومحتوى الصفحة ===== */
 .header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
 .header h1 {
@@ -152,7 +206,7 @@ h2 {
 }
 .search-bar input:focus { outline: none; border-color: var(--green); }
 
-/* ===== شبكة المربعات الصغيرة والاحترافية بجانب بعضها ===== */
+/* ===== شبكة المربعات الصغيرة والاحترافية ===== */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -160,7 +214,7 @@ h2 {
   margin-bottom: 15px;
 }
 @media(max-width: 600px) {
-  .grid { grid-template-columns: repeat(2, 1fr); } /* مربعين جنب بعض على الشاشات الصغيرة جداً */
+  .grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .card {
@@ -281,6 +335,16 @@ h2 {
 </div>
 
 <div class="container">
+  <div id="userBar" class="user-bar">
+    <span id="userLabel">المستعلم عنه: <strong id="userName">-</strong></span>
+    <span>نوع الحساب: <strong class="user-type">🏭 مورد</strong></span>
+  </div>
+
+  <div class="user-input-section">
+    <label>👤 الحساب المسجل حالياً:</label>
+    <input type="text" id="usernameInput" readonly placeholder="جاري قراءة بيانات الحساب...">
+  </div>
+
   <h2>💼 المحفظة والملخص المالي</h2>
 
   <div class="search-bar">
@@ -410,11 +474,15 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
+// معالجة اسم الحساب بدون حساسية لحالة الأحرف
 const urlParams = new URLSearchParams(window.location.search);
-let currentUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+let currentUser = rawUser.toLowerCase().trim(); // تحويل دائم للأحرف الصغيرة ومنع الحساسية
+
 localStorage.setItem('username', currentUser);
 
 function goToPage(pageName) {
+  // الحفاظ على تحويل الحروف الصغيرة أثناء التنقل
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=supplier`;
 }
 
@@ -444,19 +512,26 @@ let globalAvailableBalance = 0;
 
 async function loadDashboard() {
   try {
+    // عرض اسم الحساب في البار العلوي المحمي
+    document.getElementById('userName').textContent = currentUser;
+    document.getElementById('usernameInput').value = currentUser;
+
+    // جلب الطلبات وفلترتها بشكل غير حساس لحالة الأحرف لقفل أي ثغرة تباين
     const allOrders = await supabaseApi(`orders?select=order_status,product_cost,supplier_username`);
-    const supplierOrders = allOrders.filter(o => o.supplier_username === currentUser);
+    const supplierOrders = allOrders.filter(o => (o.supplier_username || '').toLowerCase().trim() === currentUser);
 
     let deliveredCostTotal = 0, shippingCostTotal = 0, preparingCostTotal = 0, deliveredCount = 0;
 
     supplierOrders.forEach(o => {
       const cost = parseFloat(o.product_cost) || 0;
-      if (o.order_status === 'تم التسليم' || o.order_status === 'delivered') { deliveredCostTotal += cost; deliveredCount++; }
-      else if (o.order_status === 'جديد' || o.order_status === 'توصيل' || o.order_status === 'شحن') { shippingCostTotal += cost; }
-      else if (o.order_status === 'تغليف') { preparingCostTotal += cost; }
+      const status = (o.order_status || '').trim();
+      if (status === 'تم التسليم' || status === 'delivered') { deliveredCostTotal += cost; deliveredCount++; }
+      else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { shippingCostTotal += cost; }
+      else if (status === 'تغليف') { preparingCostTotal += cost; }
     });
 
-    const withdrawals = await supabaseApi(`withdrawals?username=eq.${encodeURIComponent(currentUser)}&select=status,amount`);
+    // استخدام الـ ilike لضمان استخراج السحوبات البرمجية دون حساسية للأحرف من قاعدة البيانات
+    const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
     withdrawals.forEach(w => {
