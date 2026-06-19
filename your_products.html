@@ -213,10 +213,13 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('data_page.html')">🏠 لوحة البيانات الرئيسية</a>
-    <a href="#" onclick="goToPage('my_wallet.html')">💼 المحفظة والسحوبات</a>
-    <a href="#" onclick="goToPage('add_product.html')">➕ إضافة منتج جديد</a>
+    <!-- الروابط الخمسة المطلوبة -->
+    <a href="#" onclick="goToPage('data_page')">🏠 لوحة البيانات الرئيسية</a>
+    <a href="#" onclick="goToPage('my_wallet')">💼 المحفظة والسحوبات</a>
+    <a href="#" onclick="goToPage('add_product')">➕ إضافة منتج جديد</a>
     <a href="#" class="active">📦 منتجاتي المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders')">📋 طلبات منتجاتي</a>
+
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
@@ -226,7 +229,7 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
 <div class="container">
   <div class="header">
     <h2>📦 منتجاتي</h2>
-    <button class="add-btn" onclick="goToPage('add_product_supplier')">➕ ضيف منتج</button>
+    <button class="add-btn" onclick="goToPage('add_product')">➕ ضيف منتج</button>
   </div>
 
   <div class="stats">
@@ -250,7 +253,7 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
   <div id="empty" class="empty" style="display:none">
     <h3>مفيش منتجات لسه بجدول المنتجات</h3>
     <p>ابدأ بإضافة أول منتج ليك</p>
-    <button class="empty-btn" onclick="goToPage('add_product_supplier')">➕ ضيف أول منتج</button>
+    <button class="empty-btn" onclick="goToPage('add_product')">➕ ضيف أول منتج</button>
   </div>
 </div>
 
@@ -313,42 +316,29 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
+// معالجة اسم المستخدم بشكل موحد (أحرف صغيرة)
 const urlParams = new URLSearchParams(window.location.search);
-const username = urlParams.get('user') || localStorage.getItem('username') || '';
+let rawUser = urlParams.get('user') || localStorage.getItem('username') || '';
+const username = rawUser.toLowerCase().trim();
 
 if(username) {
   localStorage.setItem('username', username);
 }
 
-let currentProductId = '';
-let currentProduct = {};
-let currentImages = [];
-let currentSlide = 0;
-
+// دوال السلايدر والتنقل الموحدة
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
 
-function goToPage(pageName){
-  let lowerPage = pageName.toLowerCase();
-  let correctPageName = pageName + '.html';
-
-  if (lowerPage.includes("supplier_dashboard") || lowerPage.includes("dashboard")) {
-    correctPageName = "Data_Page.html";
-  } else if (lowerPage.includes("my_wallet")) {
-    correctPageName = "my_wallet.html";
-  } else if (lowerPage.includes("add_product")) {
-    correctPageName = "add_product.html";
-  } else if (lowerPage.includes("my_products") || lowerPage.includes("your_products")) {
-    correctPageName = "your_products.html";
-  } else if (lowerPage.includes("displayed_products")) {
-    correctPageName = "Displayed_Products.html";
-  } else if (lowerPage.includes("manage_orders")) {
-    correctPageName = "manage_orders.html";
-  }
-
-  window.location.href = correctPageName + '?user=' + encodeURIComponent(username) + '&type=supplier';
+/**
+ * دالة التنقل الموحدة - تستقبل اسم الصفحة بدون امتداد
+ */
+function goToPage(pageName) {
+  // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
+  // بناء الرابط مع إضافة .html وتمرير user و type
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(username)}&type=supplier`;
 }
 
 function logout() {
@@ -368,8 +358,12 @@ function showSlide(index) {
 function nextSlide() { showSlide(currentSlide + 1); }
 function prevSlide() { showSlide(currentSlide - 1); }
 
+let currentProductId = '';
+let currentProduct = {};
+let currentImages = [];
+let currentSlide = 0;
+
 async function supabaseApi(endpoint, options = {}) {
-  // تم تحويل الرابط بالكامل وبشكل صريح ليتعامل مع جدول products الرئيسي الخاص بك
   const url = `${SUPABASE_URL}/rest/v1/products${endpoint}`;
   const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...options.headers };
   if (options.method === 'PATCH' || options.method === 'DELETE') { headers['Prefer'] = 'return=representation'; }
@@ -382,9 +376,8 @@ async function supabaseApi(endpoint, options = {}) {
 async function api(action, data = {}) {
   try {
     switch(action) {
-      // الفلترة هنا تتم بشكل صريح بناءً على حقل username للتفريق بين المنتجات لكل مورد
       case 'getSupplierProducts': 
-        return await supabaseApi(`?username=eq.${encodeURIComponent(username)}&select=*`);
+        return await supabaseApi(`?username=ilike.${encodeURIComponent(username)}&select=*`);
       case 'getProductDetails': 
         return await supabaseApi(`?product_id=eq.${encodeURIComponent(data.product_id)}&select=*`);
       case 'updateProduct':
