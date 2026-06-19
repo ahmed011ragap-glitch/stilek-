@@ -29,7 +29,7 @@ body {
 }
 .container { max-width: 1000px; margin: 0 auto; }
 
-/* ===== السليدر الجانبي المطور للمورد ===== */
+/* ===== السليدر الجانبي المطور للمسوق ===== */
 .menu-btn {
   position: fixed;
   top: 15px;
@@ -316,15 +316,20 @@ h2 {
 
 <div id="sidebar" class="sidebar">
   <div class="sidebar-header">
-    <span>🏬 لوحة تحكم المورد</span>
+    <span>📊 لوحة تحكم المسوق</span>
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('data_page_market.html')">🏠 لوحة البيانات الرئيسية</a>
-    <a href="#" class="active">💼 المحفظة والسحوبات</a>
-    <a href="#" onclick="goToPage('displayed_products.html')">المنتجات المعروضه </a>
-    <a href="#" onclick="goToPage('manage_orders_market.html')">اداره الطلبات </a>
+    <!-- روابط المسوق الأربعة -->
+    <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات الرئيسية</a>
+    <a href="#" onclick="goToPage('displayed_products')">🛍️ المنتجات المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders_market')">📋 إدارة الطلبات</a>
+    <a href="#" class="active">💰 المحفظة والسحوبات</a>
+
+    <!-- زر الدعم الفني عبر واتساب -->
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
+
+    <!-- زر تسجيل الخروج -->
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -337,7 +342,7 @@ h2 {
 <div class="container">
   <div id="userBar" class="user-bar">
     <span id="userLabel">المستعلم عنه: <strong id="userName">-</strong></span>
-    <span>نوع الحساب: <strong class="user-type">🏭 مورد</strong></span>
+    <span>نوع الحساب: <strong class="user-type">💰 مسوق</strong></span>
   </div>
 
   <div class="user-input-section">
@@ -413,7 +418,7 @@ h2 {
   </div>
 
   <div class="admin-panel" id="adminPanel">
-    <h3>🔐 طلبات سحب الموردين (الأدمن)</h3>
+    <h3>🔐 طلبات سحب المسوقين (الأدمن)</h3>
     <div class="admin-stats">
       <div class="stat-card"><div class="stat-value" style="color:var(--orange);" id="pendingCount">0</div><div class="stat-label">معلق</div></div>
       <div class="stat-card"><div class="stat-value" style="color:var(--green);" id="approvedCount">0</div><div class="stat-label">تم</div></div>
@@ -424,7 +429,7 @@ h2 {
       <table>
         <thead>
           <tr>
-            <th>#</th><th>المورد</th><th>رقم السحب</th><th>الهاتف</th><th>المبلغ</th><th>الطريقة</th><th>الملاحظات</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th>
+            <th>#</th><th>المسوق</th><th>رقم السحب</th><th>الهاتف</th><th>المبلغ</th><th>الطريقة</th><th>الملاحظات</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th>
           </tr>
         </thead>
         <tbody id="adminTableBody">
@@ -474,18 +479,16 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// تعديل قراءة الرابط وتحويل اسم الملف واسم المستخدم دائماً لحروف صغيرة (lowercase)
+// قراءة اسم المستخدم من الرابط أو التخزين المحلي
 const urlParams = new URLSearchParams(window.location.search);
-let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
-
-// السلاح السري لمنع الحساسية: تحويل الإدخال تلقائياً لأحرف صغيرة
-let currentUser = rawUser.toLowerCase().trim(); 
+let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'marketer_default';
+let currentUser = rawUser.toLowerCase().trim();
 localStorage.setItem('username', currentUser);
 
+// دالة التنقل الموحدة للمسوق - تستقبل اسم الصفحة بدون امتداد
 function goToPage(pageName) {
-  // تحويل اسم الصفحة والـ الرابط لـ lowercase تلقائياً لمنع أخطاء الـ 404 في GitHub
-  const cleanPageName = pageName.toLowerCase().trim();
-  window.location.href = `${cleanPageName}.html?user=${encodeURIComponent(currentUser)}&type=supplier`;
+  toggleSidebar(); // إغلاق السلايدر قبل التنقل
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
 function logout() {
@@ -517,22 +520,26 @@ async function loadDashboard() {
     document.getElementById('userName').textContent = currentUser;
     document.getElementById('usernameInput').value = currentUser;
 
-    const allOrders = await supabaseApi(`orders?select=order_status,product_cost,supplier_username`);
-    
-    // فلترة آمنة تماماً ضد الحروف الكبيرة والصغيرة (Case-Insensitive)
-    const supplierOrders = allOrders.filter(o => (o.supplier_username || '').toLowerCase().trim() === currentUser);
+    // جلب الطلبات الخاصة بالمسوق (marketer_id)
+    const allOrders = await supabaseApi(`orders?select=order_status,commission,marketer_id`);
+    const marketerOrders = allOrders.filter(o => (o.marketer_id || '').toLowerCase().trim() === currentUser);
 
-    let deliveredCostTotal = 0, shippingCostTotal = 0, preparingCostTotal = 0, deliveredCount = 0;
+    let deliveredCommissionTotal = 0, shippingCommissionTotal = 0, preparingCommissionTotal = 0, deliveredCount = 0;
 
-    supplierOrders.forEach(o => {
-      const cost = parseFloat(o.product_cost) || 0;
+    marketerOrders.forEach(o => {
+      const commission = parseFloat(o.commission) || 0;
       const status = (o.order_status || '').trim();
-      if (status === 'تم التسليم' || status === 'delivered') { deliveredCostTotal += cost; deliveredCount++; }
-      else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { shippingCostTotal += cost; }
-      else if (status === 'تغليف') { preparingCostTotal += cost; }
+      if (status === 'تم التسليم' || status === 'delivered') { 
+        deliveredCommissionTotal += commission; 
+        deliveredCount++; 
+      } else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
+        shippingCommissionTotal += commission; 
+      } else if (status === 'تغليف') { 
+        preparingCommissionTotal += commission; 
+      }
     });
 
-    // استخدام ilike في السيرفر لضمان جلب السحوبات بشكل غير حساس للحروف كلياً
+    // جلب السحوبات الخاصة بالمسوق
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
@@ -542,15 +549,15 @@ async function loadDashboard() {
       else if (w.status === 'تم' || w.status === 'تم الدفع') withdrawn += amount;
     });
 
-    globalAvailableBalance = deliveredCostTotal - (pending + withdrawn);
+    globalAvailableBalance = deliveredCommissionTotal - (pending + withdrawn);
     if(globalAvailableBalance < 0) globalAvailableBalance = 0;
 
     document.getElementById('available').textContent = globalAvailableBalance.toFixed(2);
     document.getElementById('pending').textContent = pending.toFixed(2);
     document.getElementById('withdrawn').textContent = withdrawn.toFixed(2);
-    document.getElementById('preparing').textContent = preparingCostTotal.toFixed(2);
+    document.getElementById('preparing').textContent = preparingCommissionTotal.toFixed(2);
     document.getElementById('delivered').textContent = deliveredCount;
-    document.getElementById('shipping').textContent = shippingCostTotal.toFixed(2);
+    document.getElementById('shipping').textContent = shippingCommissionTotal.toFixed(2);
 
   } catch(err) { console.error(err); }
 }
@@ -578,9 +585,9 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
         username: currentUser,
         amount: requestedAmount,
         account: document.getElementById('w_account').value,
-        notes: `رقم تليفون تحويل المورد: ${phone} | ${document.getElementById('w_notes').value}`,
-        order_id: 'SUP-WD-' + Math.floor(1000 + Math.random() * 9000),
-        customer: 'مورد',
+        notes: `رقم تليفون تحويل المسوق: ${phone} | ${document.getElementById('w_notes').value}`,
+        order_id: 'MKT-WD-' + Math.floor(1000 + Math.random() * 9000),
+        customer: 'مسوق',
         status: 'قيد المراجعة',
         due: requestedAmount,
         paid: 0,
@@ -624,9 +631,9 @@ async function loadAdminPanel() {
     tbody.innerHTML = data.map((w, i) => {
       let displayPhone = '-';
       let cleanNotes = w.notes || '';
-      if(cleanNotes.includes('رقم تليفون تحويل المورد:')) {
+      if(cleanNotes.includes('رقم تليفون تحويل المسوق:')) {
         const parts = cleanNotes.split('|');
-        displayPhone = parts[0].replace('رقم تليفون تحويل المورد:', '').trim();
+        displayPhone = parts[0].replace('رقم تليفون تحويل المسوق:', '').trim();
         cleanNotes = parts[1] || '';
       }
 
