@@ -1,1 +1,785 @@
 
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>إدارة الطلبات - Stylek</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --card-bg: #151515;
+  --card-border: #2a2a2a;
+  --text: #ffffff;
+  --muted: #888;
+  --green: #00ff88;
+  --red: #ff3366;
+  --blue: #00aaff;
+  --orange: #ff9900;
+  --gold: #ffd700;
+  --purple: #aa44ff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Tajawal", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* ===== السليدر الجانبي (Sidebar) ===== */
+.menu-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  font-size: 28px;
+  color: var(--green);
+  cursor: pointer;
+  z-index: 1001;
+  background: #151515;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+.menu-btn:hover {
+  background: var(--green);
+  color: #000;
+  transform: scale(1.05);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100%;
+  background: #0a0a0a;
+  border-left: 2px solid var(--green);
+  transition: right 0.3s ease;
+  z-index: 1002;
+  overflow-y: auto;
+  direction: rtl;
+  box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+}
+.sidebar.active { right: 0; }
+.sidebar-header {
+  padding: 20px;
+  background: #151515;
+  border-bottom: 2px solid var(--green);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--green);
+  font-size: 20px;
+  font-weight: 900;
+}
+.sidebar-header button {
+  background: none;
+  border: none;
+  color: #ff4444;
+  font-size: 32px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.sidebar-header button:hover { transform: scale(1.1); }
+.sidebar-menu { padding: 15px 0; }
+.sidebar-menu a {
+  display: block;
+  padding: 15px 20px;
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 4px 10px;
+  border-radius: 10px;
+  transition: 0.2s;
+  border-right: 4px solid transparent;
+}
+.sidebar-menu a:hover {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+  padding-right: 30px;
+}
+.sidebar-menu a.active {
+  background: #151515;
+  color: var(--green);
+  border-right: 4px solid var(--green);
+}
+
+/* زر الدعم الفني عبر واتساب */
+.whatsapp-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25d366;
+  color: #fff !important;
+  font-weight: 700 !important;
+  margin: 20px 15px 5px !important;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+  border-radius: 10px;
+}
+.whatsapp-chat-btn:hover {
+  background: #20ba5a !important;
+  transform: translateY(-2px);
+}
+
+/* زر تسجيل الخروج */
+.logout-btn {
+  color: #ff4444 !important;
+  margin-top: 30px;
+  border-right: 4px solid transparent;
+}
+.logout-btn:hover {
+  background: #221111 !important;
+  color: #ff6666 !important;
+  border-right: 4px solid #ff4444;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  z-index: 1001;
+}
+.overlay.active { display: block; }
+
+/* ===== بار معلومات المستخدم ===== */
+.user-bar {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.user-bar span { font-size: 14px; color: #b0b0b0; }
+.user-bar strong { color: var(--green); }
+.user-type {
+  padding: 4px 12px;
+  background: #0a2a0a;
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--green);
+  border: 1px solid var(--green);
+}
+
+/* ===== خانة البحث الثابت والمحمي ===== */
+.user-input-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.user-input-section label {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+.user-input-section input {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: #1e1e1e;
+  color: #bbbbbb;
+  font-size: 14px;
+  outline: none;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  padding: 12px 25px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.btn-primary:hover {
+  background: #00cc66;
+  transform: translateY(-1px);
+}
+
+/* ===== إحصائيات ===== */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 25px;
+}
+@media(max-width: 768px) { .stats-container { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width: 480px) { .stats-container { grid-template-columns: 1fr; } }
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 15px;
+  text-align: center;
+}
+.stat-card .number { font-size: 26px; font-weight: bold; color: var(--green); }
+.stat-card .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ===== الهيدر ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.header h2 { color: #ffffff; font-size: 24px; font-weight: 800; }
+.search-box {
+  flex: 1;
+  min-width: 250px;
+  padding: 14px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 14px;
+}
+.search-box:focus { outline: none; border-color: var(--green); }
+
+.filter-tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
+.filter-tab {
+  padding: 8px 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+.filter-tab.active { background: var(--green); color: #000; border-color: var(--green); }
+.filter-tab:hover { background: #222; }
+
+/* ===== كروت الطلبات ===== */
+.orders-list { display: flex; flex-direction: column; gap: 15px; }
+.order-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; transition: 0.3s; }
+.order-card:hover { border-color: var(--green); }
+
+.order-header { display: flex; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.order-header h4 { color: #fff; font-size: 18px; font-weight: 700; }
+.order-id { color: var(--green); font-size: 13px; font-weight: 600; margin-top: 2px; }
+.order-id-sub { color: var(--blue); font-size: 12px; }
+
+.customer-details { background: #0e0e0e; border-radius: 12px; padding: 14px; margin: 12px 0; font-size: 14px; color: #c0c0c0; line-height: 1.8; }
+
+/* المنتجات */
+.products-list { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--card-border); }
+.product-item { display: flex; gap: 12px; margin-bottom: 10px; padding: 10px; background: #0e0e0e; border-radius: 12px; align-items: center; }
+.product-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid var(--card-border); }
+.product-item-info { flex: 1; font-size: 13px; color: #e0e0e0; line-height: 1.6; }
+.product-code { color: var(--green); font-weight: 700; }
+.product-price { color: var(--orange); font-weight: 600; }
+
+/* شارات الحالات */
+.status-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.status-new { background: #1a237e; color: #9fa8da; }
+.status-packing { background: #e65100; color: #ffcc80; }
+.status-delivery { background: #0d47a1; color: #90caf9; }
+.status-received { background: #1b5e20; color: #a5d6a7; }
+.status-completed { background: #004d40; color: #80cbc4; }
+.status-returned { background: #b71c1c; color: #ef9a9a; }
+
+/* بروجريس */
+.progress-bar { position: relative; display: flex; justify-content: space-between; margin: 25px 0 10px; }
+.progress-line { position: absolute; top: 15px; left: 0; right: 0; height: 3px; background: #2a2a2a; z-index: 1; }
+.progress-fill { position: absolute; top: 15px; left: 0; height: 3px; background: var(--green); z-index: 2; transition: width 0.5s; }
+.step { position: relative; z-index: 3; text-align: center; flex: 1; }
+.step-dot { width: 32px; height: 32px; border-radius: 50%; background: #222; border: 2px solid var(--card-border); margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #777; transition: 0.3s; }
+.step.completed .step-dot { background: var(--green); color: #000; border-color: var(--green); }
+.step.active .step-dot { background: var(--green); color: #000; border-color: var(--green); box-shadow: 0 0 12px var(--green); }
+.step-label { font-size: 11px; color: var(--muted); }
+.step.active .step-label { color: var(--green); font-weight: bold; }
+
+/* أزرار التحكم */
+.status-controls { display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--card-border); justify-content: flex-end; flex-wrap: wrap; }
+.status-btn { padding: 8px 18px; border-radius: 30px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
+.btn-received { background: #1b5e20; color: #fff; }
+.btn-completed { background: #004d40; color: #fff; }
+.status-btn:hover { opacity: 0.85; transform: scale(1.02); }
+
+.commission-box { background: linear-gradient(90deg, #0a2a0a, #0d1e0d); border: 1px solid var(--green); border-radius: 12px; padding: 12px; margin-top: 12px; text-align: center; font-size: 14px; }
+.commission-box span { color: var(--green); font-size: 18px; font-weight: bold; }
+
+.loading { text-align: center; padding: 50px; color: var(--muted); font-size: 16px; }
+.empty-orders { text-align: center; padding: 50px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <span>📋 القائمة</span>
+    <button onclick="toggleSidebar()">×</button>
+  </div>
+  <div class="sidebar-menu">
+    <!-- الروابط الخاصة بالمسوق -->
+    <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات</a>
+    <a href="#" onclick="goToPage('displayed_products')">🛍️ المنتجات المعروضة</a>
+    <a href="#" class="active">📋 طلباتي</a>
+    <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
+
+    <!-- زر الدعم الفني عبر واتساب -->
+    <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
+
+    <!-- زر تسجيل الخروج -->
+    <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
+  </div>
+</div>
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<div id="userBar" class="user-bar">
+  <span id="userLabel">المستعلم عنه: <strong id="userName">-</strong></span>
+  <span>كود البحث: <strong id="userCode">-</strong></span>
+  <span class="user-type" id="userTypeLabel">💰 مسوق</span>
+</div>
+
+<div class="user-input-section">
+  <label>👤 الحساب المستعلم عنه:</label>
+  <input type="text" id="usernameInput" readonly placeholder="لا يوجد مستخدم مسجل حالياً...">
+  <button class="btn-primary" onclick="loadOrdersByUser()">🔄 تحديث البيانات</button>
+</div>
+
+<div class="stats-container">
+  <div class="stat-card"><div class="number" id="statTotal">0</div><div class="label">إجمالي الطلبات</div></div>
+  <div class="stat-card"><div class="number" id="statPending">0</div><div class="label">قيد التنفيذ</div></div>
+  <div class="stat-card"><div class="number" id="statCompleted">0</div><div class="label">مكتملة</div></div>
+  <div class="stat-card"><div class="number" id="statCommission">0</div><div class="label">إجمالي العمولة</div></div>
+</div>
+
+<div class="header">
+  <h2 id="pageTitle">📋 نتائج الفرز</h2>
+  <input type="text" class="search-box" id="searchInput" placeholder="🔍 فلاتر سريعة: اسم العميل، الهاتف، أو كود فرعي للطلب..." onkeyup="filterOrders()">
+</div>
+
+<div class="filter-tabs">
+  <div class="filter-tab active" data-filter="all" onclick="setFilter('all')">الكل</div>
+  <div class="filter-tab" data-filter="pending" onclick="setFilter('pending')">قيد التنفيذ</div>
+  <div class="filter-tab" data-filter="completed" onclick="setFilter('completed')">المكتملة</div>
+  <div class="filter-tab" data-filter="returned" onclick="setFilter('returned')">المرتجعة</div>
+</div>
+
+<div id="loading" class="loading">⏳ جاري جلب البيانات...</div>
+<div id="ordersList" class="orders-list"></div>
+
+<script>
+// ===== دوال السليدر والتنقل الموحدة للمسوقين =====
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+
+/**
+ * دالة التنقل الموحدة - تستقبل اسم الصفحة بدون امتداد
+ */
+function goToPage(pageName) {
+  toggleSidebar(); // إغلاق السلايدر قبل التنقل
+  const currentUser = localStorage.getItem('username') || currentUserVar || '';
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
+}
+
+/**
+ * دالة تسجيل الخروج
+ */
+function logout() {
+  if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+    localStorage.clear();
+    window.location.href = "index.html";
+  }
+}
+
+// ===== إعدادات Supabase =====
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+let currentUserVar = '';
+let userType = 'marketer';
+let allOrders = [];
+let currentFilter = 'all';
+let currentSearch = '';
+
+const STATUS_STAGES = {
+  'جديد': 0, 'تغليف': 1, 'توصيل': 2, 'تم الاستلام': 3, 'تم التسليم': 4, 'تم التوصيل': 4, 'مرتجع': -1, 'مرفوض': -1
+};
+const STAGE_DAYS = { 0: 0, 1: 2, 2: 3, 3: 10 };
+
+// ===== تهيئة الصفحة تلقائياً بالاعتماد على اليوزر المسجل =====
+window.onload = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const userFromUrl = (urlParams.get('user') || '').toLowerCase().trim();
+  const savedUsername = (localStorage.getItem('username') || '').toLowerCase().trim();
+  
+  currentUserVar = userFromUrl || savedUsername || '';
+  
+  if (currentUserVar) {
+    document.getElementById('usernameInput').value = currentUserVar;
+    localStorage.setItem('username', currentUserVar);
+    loadOrders();
+  } else {
+    document.getElementById('ordersList').innerHTML = '<div class="empty-orders">⚠️ لم يتم العثور على اسم مستخدم مسجل تلقائياً في النظام.</div>';
+    document.getElementById('loading').style.display = 'none';
+    updateUserBar('-', 'غير محدد', 'marketer');
+  }
+}
+
+// ===== تحديث واجهة المستخدم العلوية =====
+function updateUserBar(code, name, type) {
+  document.getElementById('userCode').innerText = code;
+  document.getElementById('userName').innerText = name;
+  document.getElementById('userLabel').innerHTML = 'المستعلم عنه: <strong id="userName">' + name + '</strong>';
+  
+  const typeLabel = document.getElementById('userTypeLabel');
+  if (type.toLowerCase() === 'supplier') {
+    typeLabel.innerText = '🏭 مورد / منتج';
+    typeLabel.style.background = '#0a1a2a';
+    typeLabel.style.borderColor = '#00aaff';
+    typeLabel.style.color = '#00aaff';
+  } else {
+    typeLabel.innerText = '💰 مسوق / طلبات';
+    typeLabel.style.background = '#0a2a0a';
+    typeLabel.style.borderColor = 'var(--green)';
+    typeLabel.style.color = 'var(--green)';
+  }
+}
+
+// ===== تحديث جلب البيانات تلقائياً بنفس اليوزر =====
+async function loadOrdersByUser() {
+  if (!currentUserVar) {
+    alert('⚠️ لا يوجد مستخدم مسجل لجلب بياناته');
+    return;
+  }
+  loadOrders();
+}
+
+// ===== دوال الاتصال بـ API Supabase =====
+async function supabaseApi(endpoint, options = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(`خطأ ${response.status}: ${await response.text()}`);
+  return await response.json();
+}
+
+async function callApi(action, data = {}) {
+  try {
+    switch(action) {
+      case 'getOrders':
+        const searchKey = currentUserVar.toLowerCase().trim();
+
+        // 1. فحص كود الطلب المباشر (Order ID)
+        if (searchKey.startsWith('ord') || (!isNaN(searchKey) && searchKey.length > 5)) {
+          userType = 'marketer';
+          return await supabaseApi(`orders?order_id=ilike.${searchKey}&select=*`);
+        }
+
+        // 2. فحص كود منتج محدد لجلب كل من قام بعمل طلب عليه
+        const productCheck = await supabaseApi(`products?product_id=ilike.${searchKey}&select=product_id`);
+        if (productCheck && productCheck.length > 0) {
+          userType = 'supplier'; 
+          return await supabaseApi(`orders?product_id=ilike.${searchKey}&select=*`);
+        }
+
+        // 3. فحص اسم مستخدم تابع لـ (مورد) عبر استخدام ilike ليكون غير حساس لحالة الأحرف
+        const supplierProducts = await supabaseApi(`products?username=ilike.${searchKey}&select=product_id`);
+        if (supplierProducts && supplierProducts.length > 0) {
+          userType = 'supplier';
+          const productIds = supplierProducts.map(p => p.product_id);
+          const formattedIds = productIds.map(id => `"${id}"`).join(',');
+          return await supabaseApi(`orders?product_id=in.(${formattedIds})&select=*`);
+        } else {
+          // 4. فحص اسم مستخدم تابع لـ (مسوق) عبر استخدام ilike
+          userType = 'marketer';
+          const orders = await supabaseApi(`orders?marketer_username=ilike.${searchKey}&select=*`);
+          if (orders.length === 0) {
+            return await supabaseApi(`orders?marketer_id=ilike.${searchKey}&select=*`);
+          }
+          return orders;
+        }
+        
+      case 'updateOrderStatus':
+        return await supabaseApi(`orders?order_id=ilike.${data.order_id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ order_status: data.status })
+        });
+        
+      case 'getProduct':
+        return await supabaseApi(`products?product_id=ilike.${data.product_id}&select=*`);
+        
+      default:
+        return { status: 'error', message: 'Action غير موجود' };
+    }
+  } catch(err) {
+    console.error('API Error:', err);
+    return { status: 'error', message: err.message };
+  }
+}
+
+// ===== إدارة حالات وتواريخ الطلبات تلقائياً =====
+function getAutoStage(createdAt, currentStatus) {
+  if(currentStatus === 'مرتجع' || currentStatus === 'مرفوض') return -1;
+  if(currentStatus === 'تم التسليم' || currentStatus === 'تم التوصيل') return 4;
+  
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+  
+  if(diffDays >= STAGE_DAYS[3]) return 3;
+  if(diffDays >= STAGE_DAYS[2]) return 2;
+  if(diffDays >= STAGE_DAYS[1]) return 1;
+  return 0;
+}
+
+function getStageName(stage) {
+  const names = ['جديد', 'تغليف', 'توصيل', 'تم الاستلام', 'تم التسليم'];
+  return names[stage] || 'جديد';
+}
+
+async function loadOrders() {
+  if (!currentUserVar) return;
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('loading').innerHTML = '⏳ جاري استخراج البيانات المحدثة للحساب...';
+
+  try {
+    const result = await callApi('getOrders');
+    let orders = result || [];
+    
+    updateUserBar(currentUserVar, currentUserVar, userType);
+    
+    // جلب تفاصيل المنتج لكل طلب
+    for(let i = 0; i < orders.length; i++) {
+      const order = orders[i];
+      const productResult = await callApi('getProduct', { product_id: order.product_id });
+      if(productResult && productResult.length > 0) {
+        order.product_details = productResult[0];
+      }
+    }
+    
+    // تحديث الحالات تلقائياً
+    orders = orders.map(order => {
+      const autoStage = getAutoStage(order.created_at, order.order_status);
+      const autoStatus = getStageName(autoStage);
+      
+      if(order.order_status !== autoStatus && 
+         order.order_status !== 'مرتجع' && 
+         order.order_status !== 'مرفوض' && 
+         order.order_status !== 'تم التسليم' && 
+         order.order_status !== 'تم التوصيل') {
+        callApi('updateOrderStatus', { order_id: order.order_id, status: autoStatus });
+        order.order_status = autoStatus;
+      }
+      return order;
+    });
+    
+    allOrders = orders;
+    updateStats();
+    filterAndDisplay();
+  } catch(err) {
+    document.getElementById('loading').innerHTML = '❌ خطأ أثناء معالجة البيانات: ' + err.message;
+  }
+}
+
+function updateStats() {
+  const total = allOrders.length;
+  const pending = allOrders.filter(o => o.order_status !== 'تم التسليم' && o.order_status !== 'تم التوصيل' && o.order_status !== 'مرتجع' && o.order_status !== 'مرفوض').length;
+  const completed = allOrders.filter(o => o.order_status === 'تم التسليم' || o.order_status === 'تم التوصيل').length;
+  
+  const totalAmount = allOrders.filter(o => o.order_status === 'تم التسليم' || o.order_status === 'تم التوصيل')
+    .reduce((sum, o) => {
+       const value = (userType.toLowerCase() === 'supplier') ? (parseFloat(o.price) || 0) : (parseFloat(o.commission) || 0);
+       return sum + value;
+    }, 0);
+  
+  const statCommissionLabel = document.querySelector('.stat-card:last-child .label');
+  if (statCommissionLabel) {
+    statCommissionLabel.innerText = (userType.toLowerCase() === 'supplier') ? 'إجمالي المبيعات' : 'إجمالي العمولة';
+  }
+
+  document.getElementById('statTotal').innerText = total;
+  document.getElementById('statPending').innerText = pending;
+  document.getElementById('statCompleted').innerText = completed;
+  document.getElementById('statCommission').innerText = totalAmount.toFixed(2);
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.classList.remove('active');
+    if(tab.dataset.filter === filter) tab.classList.add('active');
+  });
+  filterAndDisplay();
+}
+
+function filterOrders() {
+  currentSearch = document.getElementById('searchInput').value.toLowerCase().trim();
+  filterAndDisplay();
+}
+
+function filterAndDisplay() {
+  let filtered = [...allOrders];
+  
+  if(currentFilter === 'pending') {
+    filtered = filtered.filter(o => o.order_status !== 'تم التسليم' && o.order_status !== 'تم التوصيل' && o.order_status !== 'مرتجع' && o.order_status !== 'مرفوض');
+  } else if(currentFilter === 'completed') {
+    filtered = filtered.filter(o => o.order_status === 'تم التسليم' || o.order_status === 'تم التوصيل');
+  } else if(currentFilter === 'returned') {
+    filtered = filtered.filter(o => o.order_status === 'مرتجع' || o.order_status === 'مرفوض');
+  }
+  
+  if(currentSearch) {
+    filtered = filtered.filter(o => 
+      (o.customer_name && o.customer_name.toLowerCase().includes(currentSearch)) ||
+      (o.phone && o.phone.includes(currentSearch)) ||
+      (o.order_id && o.order_id.toLowerCase().includes(currentSearch)) ||
+      (o.product_details && o.product_details.name && o.product_details.name.toLowerCase().includes(currentSearch))
+    );
+  }
+  
+  displayOrders(filtered);
+}
+
+function getStatusClass(status) {
+  const classes = {
+    'جديد': 'status-new', 'تغليف': 'status-packing', 'توصيل': 'status-delivery',
+    'تم الاستلام': 'status-received', 'تم التسليم': 'status-completed', 'تم التوصيل': 'status-completed',
+    'مرتجع': 'status-returned', 'مرفوض': 'status-returned'
+  };
+  return classes[status] || 'status-new';
+}
+
+function getProgressWidth(stage) {
+  if(stage === -1) return '0%';
+  return (stage / 4) * 100 + '%';
+}
+
+async function updateStatus(orderId, newStatus) {
+  const result = await callApi('updateOrderStatus', { order_id: orderId, status: newStatus });
+  if(result.status !== 'error') {
+    const order = allOrders.find(o => o.order_id.toLowerCase() === orderId.toLowerCase());
+    if(order) order.order_status = newStatus;
+    filterAndDisplay();
+    updateStats();
+  } else {
+    alert('❌ فشل تحديث الحالة: ' + result.message);
+  }
+}
+
+function displayOrders(orders) {
+  const container = document.getElementById('ordersList');
+  document.getElementById('loading').style.display = 'none';
+  
+  if(!orders || orders.length === 0) {
+    container.innerHTML = '<div class="empty-orders">📭 لم نعثر على أي أوردرات متطابقة</div>';
+    return;
+  }
+  
+  let html = '';
+  orders.forEach(order => {
+    const product = order.product_details || {};
+    const stage = STATUS_STAGES[order.order_status] || 0;
+    const progressWidth = getProgressWidth(stage);
+    const statusClass = getStatusClass(order.order_status);
+    
+    const imgUrl = product.image_url || 'https://placehold.co/60x60/1a1a1a/444?text=Stylek';
+    const productName = product.name || 'منتج';
+    
+    html += `
+      <div class="order-card">
+        <div class="order-header">
+          <div>
+            <h4>👤 العميل: ${order.customer_name || 'غير مسجل'}</h4>
+            <div class="order-id">🆔 كود الطلب: ${order.order_id}</div>
+            <div class="order-id-sub">📦 المنتج المرفق: ${productName}</div>
+          </div>
+          <div style="text-align:left">
+            <span class="status-badge ${statusClass}">${order.order_status}</span>
+            <div class="order-date">📅 ${order.created_at ? new Date(order.created_at).toLocaleDateString('ar-EG') : '-'}</div>
+          </div>
+        </div>
+        
+        <div class="customer-details">
+          <div>📞 رقم الهاتف: ${order.phone || '-'}</div>
+          <div>📍 العنوان: ${order.governorate || ''}، ${order.city || ''}، ${order.address || ''}</div>
+          <div>📝 ملاحظات: ${order.notes || 'لا توجد'}</div>
+        </div>
+        
+        <div class="products-list">
+          <div class="product-item">
+            <img src="${imgUrl}" onerror="this.src='https://placehold.co/60x60/1a1a1a/444'">
+            <div class="product-item-info">
+              <div class="product-code">📦 كود المنتج: ${order.product_id || 'غير متوفر'}</div>
+              <div>🔢 الكمية: ${order.qty || 1}</div>
+              ${order.size ? `<div>📏 المقاس: ${order.size}</div>` : ''}
+              ${order.color ? `<div>🎨 اللون: ${order.color}</div>` : ''}
+              <div class="product-price">💰 السعر الفردي: ${order.price || 0} ج.م</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="commission-box">
+          💰 ${userType.toLowerCase() === 'supplier' ? 'سعر المنتجات الإجمالي' : 'عمولتك المقدرة'}: <span>${userType.toLowerCase() === 'supplier' ? (order.price * (order.qty || 1)) || 0 : order.commission || 0} ج.م</span>
+        </div>
+        
+        <div class="progress-bar">
+          <div class="progress-line"></div>
+          <div class="progress-fill" style="width:${progressWidth}"></div>
+          <div class="step ${stage >= 0 ? 'completed' : ''} ${stage === 0 ? 'active' : ''}"><div class="step-dot">📅</div><div class="step-label">جديد</div></div>
+          <div class="step ${stage >= 1 ? 'completed' : ''} ${stage === 1 ? 'active' : ''}"><div class="step-dot">🎁</div><div class="step-label">تغليف</div></div>
+          <div class="step ${stage >= 2 ? 'completed' : ''} ${stage === 2 ? 'active' : ''}"><div class="step-dot">🚚</div><div class="step-label">توصيل</div></div>
+          <div class="step ${stage >= 3 ? 'completed' : ''} ${stage === 3 ? 'active' : ''}"><div class="step-dot">📦</div><div class="step-label">استلام</div></div>
+          <div class="step ${stage >= 4 ? 'completed' : ''} ${stage === 4 ? 'active' : ''}"><div class="step-dot">✅</div><div class="step-label">مكتمل</div></div>
+        </div>
+        
+        <div class="status-controls">
+          ${order.order_status === 'توصيل' ? `<button class="status-btn btn-received" onclick="updateStatus('${order.order_id}', 'تم الاستلام')">📦 تأكيد الاستلام</button>` : ''}
+          ${order.order_status === 'تم الاستلام' ? `<button class="status-btn btn-completed" onclick="updateStatus('${order.order_id}', 'تم التسليم')">✅ إنهاء الطلب</button>` : ''}
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+</script>
+</body>
+</html>
