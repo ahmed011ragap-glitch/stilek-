@@ -111,6 +111,24 @@ body {
   color: var(--green);
   border-right: 4px solid var(--green);
 }
+/* زر الدعم الفني عبر واتساب */
+.whatsapp-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25d366;
+  color: #fff !important;
+  font-weight: 700 !important;
+  margin: 20px 15px 5px !important;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+  border-radius: 10px;
+}
+.whatsapp-chat-btn:hover {
+  background: #20ba5a !important;
+  transform: translateY(-2px);
+}
+
 .sidebar-menu a.logout-btn {
   color: #ff4444;
   margin-top: 30px;
@@ -506,10 +524,16 @@ body {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('Data_Page')">🏠 لوحة البيانات</a>
-    <a href="#" onclick="goToPage('Displayed_Products')" class="active">🛍️ المنتجات المعروضة</a>
-    <a href="#" onclick="goToPage('manage_orders')">📋 إدارة الأوردرات</a>
-    <a href="#" onclick="goToPage('my_wallet')">💰 المحفظة</a>
+    <!-- الروابط المخصصة للمسوق -->
+    <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات</a>
+    <a href="#" onclick="goToPage('displayed_products')" class="active">🛍️ المنتجات المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders_market')">📋 إدارة الأوردرات</a>
+    <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
+
+    <!-- زر الدعم الفني عبر واتساب -->
+    <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
+
+    <!-- تسجيل الخروج -->
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -582,29 +606,18 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// ✅ حل مشكلة GitHub Pages: مطابقة وتصحيح أسماء الملفات بدقة وبشكل غير حساس لحالة الحروف المدخلة
+// ✅ دالة التنقل الموحدة للمسوق - تستقبل اسم الصفحة بدون امتداد
 function goToPage(pageName) {
-  let lowerPage = pageName.toLowerCase().trim();
-  let correctPageName = pageName + '.html'; 
-
-  if (lowerPage.includes("data_page") || lowerPage.includes("dashboard")) {
-    correctPageName = "Data_Page.html";
-  } else if (lowerPage.includes("my_wallet") || lowerPage.includes("wallet")) {
-    correctPageName = "my_wallet.html";
-  } else if (lowerPage.includes("displayed_products")) {
-    correctPageName = "Displayed_Products.html";
-  } else if (lowerPage.includes("manage_orders")) {
-    correctPageName = "manage_orders.html";
-  }
-
+  toggleSidebar(); // إغلاق السلايدر قبل التنقل
   const currentUser = localStorage.getItem('username') || marketerId;
-  window.location.href = `${correctPageName}?user=${encodeURIComponent(currentUser)}&type=marketer`;
+  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
+// ✅ دالة تسجيل الخروج
 function logout() {
   if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
     localStorage.clear();
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   }
 }
 
@@ -613,7 +626,6 @@ const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 const urlParams = new URLSearchParams(window.location.search);
 let rawUser = urlParams.get('user') || localStorage.getItem('username') || '';
-// ✅ جعل كود المسوق غير حساس تماماً لحالة الأحرف عن طريق توحيده لـ lowercase
 let marketerId = rawUser.trim().toLowerCase(); 
 let marketerName = localStorage.getItem('userName') || 'مسوق';
 
@@ -708,7 +720,6 @@ async function callApi(action, data = {}) {
         return await supabaseApi(`${tableEndpoint}?select=*`);
       case 'get_product':
         return await supabaseApi(`${tableEndpoint}?product_id=eq.${data.product_id}&select=*`);
-      // ✅ تم استبدال eq بـ ilike في استعلامات الاسترجاع لضمان عدم الحساسية للمدخلات بقاعدة البيانات
       case 'get_favorites':
         return await supabaseApi(`favorites?marketer_id=ilike.${data.marketer_id}&select=*`);
       case 'add_to_favorites':
