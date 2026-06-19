@@ -213,10 +213,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('supplier_dashboard')">🏠 لوحة البيانات الرئيسية</a>
-    <a href="#" onclick="goToPage('my_wallet_supplier')">💼 المحفظة والسحوبات</a>
+    <!-- الروابط الخمسة المطلوبة فقط -->
+    <a href="#" onclick="goToPage('data_page.html')">🏠 لوحة البيانات الرئيسية</a>
+    <a href="#" onclick="goToPage('my_wallet.html')">💼 المحفظة والسحوبات</a>
     <a href="#" class="active">➕ إضافة منتج جديد</a>
-    <a href="#" onclick="goToPage('my_products_supplier')">📦 منتجاتي المعروضة</a>
+    <a href="#" onclick="goToPage('your_products.html')">📦 منتجاتي المعروضة</a>
+    <a href="#" onclick="goToPage('manage_orders.html')">📋 إدارة الطلبات</a>
+    
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
@@ -295,35 +298,24 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// جلب الـ username وتحويله فوراً إلى حروف صغيرة لتوحيد البيانات ومنع حساسية الأحرف
+// جلب الـ username وتحويله إلى حروف صغيرة
 const urlParams = new URLSearchParams(window.location.search);
 let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
 let CURRENT_USER = rawUser.trim().toLowerCase(); 
 
 localStorage.setItem('username', CURRENT_USER);
 
-// تعبئة حقل اسم المستخدم تلقائياً وحمايته
 document.getElementById('supplierUsername').value = CURRENT_USER;
 
-function goToPage(pageName) {
-  let lowerPage = pageName.toLowerCase();
-  let correctPageName = pageName + '.html';
-
-  if (lowerPage.includes("supplier_dashboard") || lowerPage.includes("dashboard")) {
-    correctPageName = "Data_Page.html";
-  } else if (lowerPage.includes("my_wallet") || lowerPage.includes("wallet")) {
-    correctPageName = "my_wallet.html";
-  } else if (lowerPage.includes("add_product")) {
-    correctPageName = "add_product.html";
-  } else if (lowerPage.includes("my_products") || lowerPage.includes("your_products")) {
-    correctPageName = "your_products.html";
-  } else if (lowerPage.includes("displayed_products")) {
-    correctPageName = "Displayed_Products.html";
-  } else if (lowerPage.includes("manage_orders")) {
-    correctPageName = "manage_orders.html";
-  }
-
-  window.location.href = `${correctPageName}?user=${encodeURIComponent(CURRENT_USER)}&type=supplier`;
+/**
+ * دالة التنقل إلى صفحة معينة مع تمرير اسم المستخدم ونوع المستخدم
+ * @param {string} page - اسم الملف كاملاً (مثل 'data_page.html')
+ */
+function goToPage(page) {
+  // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
+  // إضافة معاملات user و type إلى الرابط
+  window.location.href = `${page}?user=${encodeURIComponent(CURRENT_USER)}&type=supplier`;
 }
 
 function logout() {
@@ -418,7 +410,6 @@ document.getElementById('addBtn').onclick = async function() {
   const name = document.getElementById('productName').value.trim();
   const price = document.getElementById('price').value;
   const stock = document.getElementById('stock').value;
-  // تحويل حقل الإدخال أيضاً للتأكيد والتحصين التام ضد الأحرف الكبيرة والصغيرة
   const usernameValue = document.getElementById('supplierUsername').value.trim().toLowerCase();
   const supplierPhone = document.getElementById('supplierPhone').value.trim();
   const galleryLink = document.getElementById('galleryLink').value.trim();
@@ -454,7 +445,7 @@ document.getElementById('addBtn').onclick = async function() {
       stock: parseInt(stock),
       image_url: imageUrl,
       description: finalDescription,
-      username: usernameValue, // يتم حفظه برمجياً بأحرف صغيرة موحدة تماماً
+      username: usernameValue,
       gallery_link: galleryLink || null,
       sizes: '',
       colors: '',
