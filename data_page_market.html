@@ -355,13 +355,11 @@ body {
 </div>
 
 <script>
-// التحكم في السايد بار فتح / إغلاق
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// التوجيه الذكي بين الصفحات مع الحفاظ على كود ونوع المستخدم بالـ URL
 function goToPage(pageName) {
   const currentUser = localStorage.getItem('username') || USER_CODE;
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
@@ -372,26 +370,25 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 const urlParams = new URLSearchParams(window.location.search);
-let USER_CODE = urlParams.get('user') || localStorage.getItem('username') || '';
+let rawUser = urlParams.get('user') || localStorage.getItem('username') || '';
+// توحيد كود المسوق فوراً لحروف صغيرة لمنع الحساسية للمدخلات
+let USER_CODE = rawUser.trim().toLowerCase(); 
 let USER_NAME = localStorage.getItem('userName') || 'مسوق';
 
 if(!USER_CODE) {
   USER_CODE = 'marketer_' + Math.random().toString(36).substr(2, 6);
-  localStorage.setItem('username', USER_CODE);
 }
 
 localStorage.setItem('username', USER_CODE);
 document.getElementById('userCode').innerText = `كود المسوق: ${USER_CODE}`;
 document.getElementById('userName').innerHTML = `👋 مرحباً، ${USER_NAME}`;
 
-// نسخ رابط الصفحة الشخصية للمسوق لمشاركته
 function copyProfileLink() {
   const link = `${window.location.origin}${window.location.pathname}?user=${encodeURIComponent(USER_CODE)}`;
   navigator.clipboard.writeText(link);
   alert('✅ تم نسخ رابط صفحتك الشخصية بنجاح');
 }
 
-// دالة وسيطة للاتصال بـ Supabase API وجلب الجداول
 async function supabaseApi(endpoint) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = {
@@ -414,17 +411,14 @@ let dashboardData = {
   recentOrders: []
 };
 
-// جلب وحساب كافة العمليات والبيانات الحية من جداول السيرفر
 async function loadAllData() {
   const refreshBtn = document.querySelector('.btn-refresh');
   if(refreshBtn) refreshBtn.innerHTML = '<span class="loading"></span> جاري جلب الأرقام...';
   
   try {
-    // 1. جلب الطلبات المطابقة لكود المسوق الحالي من جدول orders
-    const orders = await supabaseApi(`orders?marketer_id=eq.${USER_CODE}&select=*`) || [];
-    
-    // 2. جلب مسحوبات الأرباح المؤكدة من جدول withdrawals
-    const withdrawals = await supabaseApi(`withdrawals?username=eq.${USER_CODE}&select=*`) || [];
+    // تم تحويل التصفية لـ ilike بدلاً من eq لتجنب فروق الـ Capital و Small بقاعدة البيانات
+    const orders = await supabaseApi(`orders?marketer_id=ilike.${USER_CODE}&select=*`) || [];
+    const withdrawals = await supabaseApi(`withdrawals?username=ilike.${USER_CODE}&select=*`) || [];
     
     let totalOrders = 0;
     let completedOrders = 0;
@@ -436,12 +430,13 @@ async function loadAllData() {
       const commission = parseFloat(order.commission) || 0;
       totalOrders++;
       
-      // فحص وتوزيع حالة الأوردر بناء على قواعد الإدارة
-      if (order.order_status === 'تم التسليم' || order.order_status === 'delivered' || order.order_status === 'تم التوصيل') {
+      const orderStatus = (order.order_status || '').trim().toLowerCase();
+      
+      if (orderStatus === 'تم التسليم' || orderStatus === 'delivered' || orderStatus === 'تم التوصيل') {
         completedOrders++;
-        totalCommission += commission; // إضافة العمولات للأوردرات المستلمة والمكتملة فقط
-      } else if (order.order_status === 'مرتجع' || order.order_status === 'مرفوض') {
-        // لا تحتسب في العمولات أو في الطلبات المعلقة
+        totalCommission += commission;
+      } else if (orderStatus === 'مرتجع' || orderStatus === 'مرفوض') {
+        // الاستبعاد المالي والتنفيذي للمرتجعات والمرفوضات
       } else {
         pendingOrders++;
       }
@@ -457,18 +452,16 @@ async function loadAllData() {
       });
     });
     
-    // ترتيب الأوردرات ليكون الأحدث دائمًا في البداية وعرض آخر 5 فقط
     recentOrders = recentOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
     
-    // 3. حساب الأرباح المسحوبة الفردية والنهائية التي تمت الموافقة عليها (تم)
     let withdrawnCommission = 0;
     withdrawals.forEach(w => {
-      if(w.status === 'تم') {
+      const wStatus = (w.status || '').trim();
+      if(wStatus === 'تم' || wStatus === 'تم الدفع') {
         withdrawnCommission += parseFloat(w.amount) || 0;
       }
     });
     
-    // صافي المحفظة الحالي المتاح للسحب
     const remainingCommission = totalCommission - withdrawnCommission;
     
     dashboardData = {
@@ -491,7 +484,6 @@ async function loadAllData() {
   if(refreshBtn) refreshBtn.innerHTML = '🔄 تحديث البيانات';
 }
 
-// رندرة وبناء كروت الإحصائيات الـ 6 في الواجهة بشكل منسق وعصري
 function renderStats() {
   const statsHtml = `
     <div class="stat-card">
@@ -534,7 +526,6 @@ function renderStats() {
   document.getElementById('stats').innerHTML = statsHtml;
 }
 
-// عرض قائمة الطلبات الأخيرة المسجلة بالتفاصيل وحالتها الملونة الذكية
 function renderRecentOrders() {
   const container = document.getElementById('recentOrders');
   
@@ -547,14 +538,15 @@ function renderRecentOrders() {
   dashboardData.recentOrders.forEach(order => {
     let statusClass = 'status-pending';
     let statusText = order.status || 'قيد الانتظار';
+    const currentStatus = (order.status || '').trim().toLowerCase();
     
-    if(order.status === 'تم التسليم' || order.status === 'تم التوصيل' || order.status === 'delivered') {
+    if(currentStatus === 'تم التسليم' || currentStatus === 'تم التوصيل' || currentStatus === 'delivered') {
       statusClass = 'status-completed';
       statusText = '✅ مكتمل بالتوصيل';
-    } else if(order.status === 'مرتجع') {
+    } else if(currentStatus === 'مرتجع') {
       statusClass = 'status-returned';
       statusText = '↩️ أوردر مرتجع';
-    } else if(order.status === 'مرفوض') {
+    } else if(currentStatus === 'مرفوض') {
       statusClass = 'status-returned';
       statusText = '❌ أوردر مرفوض';
     } else {
@@ -576,9 +568,9 @@ function renderRecentOrders() {
   container.innerHTML = html;
 }
 
-// التشغيل التلقائي والفوري لجلب البيانات فور تحميل الواجهة
+// البدء في جلب البيانات فوراً
 loadAllData();
-setInterval(loadAllData, 20000); // تحديث تلقائي ذكي وخلفي للأرقام كل 20 ثانية
+setInterval(loadAllData, 20000); // تحديث تلقائي آمن كل 20 ثانية في الخلفية
 </script>
 </body>
 </html>
