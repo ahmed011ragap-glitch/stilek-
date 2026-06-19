@@ -111,7 +111,6 @@ body {
   color: var(--green);
   border-right: 4px solid var(--green);
 }
-/* زر الدعم الفني عبر واتساب */
 .whatsapp-chat-btn {
   display: flex;
   align-items: center;
@@ -128,7 +127,6 @@ body {
   background: #20ba5a !important;
   transform: translateY(-2px);
 }
-
 .sidebar-menu a.logout-btn {
   color: #ff4444;
   margin-top: 30px;
@@ -139,7 +137,6 @@ body {
   color: #ff6666;
   border-right: 4px solid #ff4444;
 }
-
 .overlay {
   position: fixed;
   top: 0;
@@ -215,7 +212,6 @@ body {
 }
 .search-box:focus { border-color: var(--green); }
 
-/* ===== تبويبات الأقسام ===== */
 .tabs {
   display: flex;
   gap: 8px;
@@ -304,6 +300,11 @@ body {
   color: var(--green);
   font-size: 14px;
   font-weight: bold;
+}
+.product-commission {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
 }
 .product-stock {
   font-size: 10px;
@@ -524,16 +525,12 @@ body {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <!-- الروابط المخصصة للمسوق -->
     <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات</a>
     <a href="#" onclick="goToPage('displayed_products')" class="active">🛍️ المنتجات المعروضة</a>
     <a href="#" onclick="goToPage('manage_orders_market')">📋 إدارة الأوردرات</a>
     <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
 
-    <!-- زر الدعم الفني عبر واتساب -->
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
-
-    <!-- تسجيل الخروج -->
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -606,14 +603,12 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// ✅ دالة التنقل الموحدة للمسوق - تستقبل اسم الصفحة بدون امتداد
 function goToPage(pageName) {
-  toggleSidebar(); // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
   const currentUser = localStorage.getItem('username') || marketerId;
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
-// ✅ دالة تسجيل الخروج
 function logout() {
   if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
     localStorage.clear();
@@ -640,6 +635,18 @@ const WHATSAPP_NUMBER = '201108712091';
 let allProducts = [], allFavorites = [], cartItems = [], favoriteIds = [], currentProduct = null, productCards = [];
 let currentCategory = 'all';
 let filteredProducts = [];
+
+// ===== نظام العمولة الجديد =====
+function calculateCommission(basePrice) {
+  const price = parseFloat(basePrice) || 0;
+  
+  if (price < 100) return 10;
+  if (price >= 100 && price < 200) return 20;
+  if (price >= 200 && price < 400) return price * 0.10;
+  if (price >= 400 && price < 500) return price * 0.15;
+  if (price >= 500) return price * 0.05;
+  return 0;
+}
 
 const CITIES_BY_GOV = {
   'العاصمة': ['القاهرة', 'حلوان', 'مصر الجديدة', 'المعادي', 'مدينة نصر', 'التجمع الخامس', 'شبرا', 'عين شمس', 'المرج', 'الزيتون', 'مصر القديمة'],
@@ -670,19 +677,6 @@ const CITIES_BY_GOV = {
   'شمال سيناء': ['العريش', 'بئر العبد', 'الشيخ زويد', 'رفح'],
   'جنوب سيناء': ['طور سيناء', 'شرم الشيخ', 'دهب', 'نويبع', 'طابا', 'راس سدر', 'سانت كاترين']
 };
-
-function defaultCommission(basePrice) {
-  const p = parseFloat(basePrice) || 0;
-  if (p < 100) return 40;
-  if (p < 200) return 70;
-  if (p < 300) return 100;
-  if (p < 500) return 180;
-  return Math.round(p * 0.30);
-}
-
-function calcSellingPrice(basePrice, commission) {
-  return parseFloat(basePrice) + parseFloat(commission);
-}
 
 function fixImageUrl(url) {
   if (!url) return 'https://placehold.co/400x400/1a1a1a/444?text=No+Image';
@@ -743,7 +737,7 @@ async function callApi(action, data = {}) {
       case 'delete_cart':
         return await supabaseApi(`cart?cart_id=eq.${data.cart_id}`, { method: 'DELETE' });
       case 'place_order':
-        return await supabaseApi('orders', { method: 'POST', body: JSON.stringify({ order_id: 'ORD' + Date.now(), ...data }) });
+        return await supabaseApi('orders_product', { method: 'POST', body: JSON.stringify({ order_id: 'ORD' + Date.now(), ...data }) });
       default:
         return { status: 'error', message: 'Action غير موجود' };
     }
@@ -797,7 +791,8 @@ function renderProducts(products) {
   }
   products.forEach(p => {
     const outStock = parseInt(p.stock) === 0;
-    const sellingPrice = calcSellingPrice(p.base_price, defaultCommission(p.base_price));
+    const basePrice = parseFloat(p.base_price) || 0;
+    const commission = calculateCommission(basePrice);
     const imgUrl = fixImageUrl(p.image_url);
     const isFav = favoriteIds.includes(String(p.product_id));
 
@@ -812,7 +807,8 @@ function renderProducts(products) {
       </div>
       <div class="product-info">
         <div class="product-name">${escapeHtml(p.name)}</div>
-        <div class="product-price">${sellingPrice} ج</div>
+        <div class="product-price">💰 ${basePrice} ج</div>
+        <div class="product-commission">⭐ عمولتك: ${commission} ج</div>
         <div class="product-stock" style="color:${outStock ? '#ff4444' : '#00ff88'}">${outStock ? '❌ نفذ' : '✅ متوفر'}</div>
       </div>
     `;
@@ -842,8 +838,7 @@ async function openProduct(productId) {
 
 function renderProductPopup(p) {
   const basePrice = parseFloat(p.base_price) || 0;
-  const defaultComm = defaultCommission(basePrice);
-  const sellingPrice = basePrice + defaultComm;
+  const defaultComm = calculateCommission(basePrice);
   const outStock = parseInt(p.stock) === 0;
   const imgUrl = fixImageUrl(p.image_url);
   const isFav = favoriteIds.includes(String(p.product_id));
@@ -864,19 +859,27 @@ function renderProductPopup(p) {
     <p style="color:#aaa;font-size:14px;margin:10px 0;line-height:1.6">${escapeHtml(p.description || 'لا يوجد وصف')}</p>
 
     <div style="background:#1a1a1a;padding:15px;border-radius:12px;margin:10px 0">
-      <div style="display:flex;justify-content:space-between"><span>💰 سعر المنتج:</span><span style="color:#00ff88">${sellingPrice} ج</span></div>
+      <div style="display:flex;justify-content:space-between"><span>💰 سعر المنتج:</span><span style="color:#00ff88">${basePrice} ج</span></div>
     </div>
 
-    ${sizes ? `<div style="margin:10px 0"><div style="color:#aaa;font-size:13px;margin-bottom:5px">📏 المقاسات المشحونة:</div>${sizes}</div>` : ''}
+    ${sizes ? `<div style="margin:10px 0"><div style="color:#aaa;font-size:13px;margin-bottom:5px">📏 المقاسات المتوفرة:</div>${sizes}</div>` : ''}
     ${colors ? `<div style="margin:10px 0"><div style="color:#aaa;font-size:13px;margin-bottom:5px">🎨 الألوان المتوفرة:</div>${colors}</div>` : ''}
 
     <div style="background:#1a1a1a;padding:10px;border-radius:10px;margin:10px 0">
-      <div style="display:flex;justify-content:space-between"><span>📦 المخزون:</span><span style="color:${outStock ? '#ff4444' : '#00ff88'}">${p.stock || 0} قطعة</span></div>
+      <div style="display:flex;justify-content:space-between"><span>📦 المخزون:</span>
+        <span style="color:${outStock ? '#ff4444' : '#00ff88'}">
+          ${outStock ? '❌ نفذ من المخزون' : `${p.stock} قطعة`}
+        </span>
+      </div>
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-green" onclick="openOrderForm()" ${outStock ? 'disabled' : ''}>🛍️ شراء</button>
-      <button class="btn" onclick="addToCart()" ${outStock ? 'disabled' : ''}>🛒 سلة</button>
+      <button class="btn btn-green" onclick="openOrderForm()" ${outStock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+        ${outStock ? '❌ غير متوفر' : '🛍️ شراء'}
+      </button>
+      <button class="btn" onclick="addToCart()" ${outStock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+        ${outStock ? '❌ غير متوفر' : '🛒 سلة'}
+      </button>
       <button class="btn ${isFav ? 'btn-fav' : ''}" onclick="toggleFavorite()">${isFav ? '⭐ مفضلة' : '☆ مفضلة'}</button>
       ${galleryLink ? `<button class="btn gallery-btn-style" onclick="window.open('${galleryLink}', '_blank')">📸 المعرض</button>` : ''}
     </div>
@@ -934,7 +937,9 @@ function renderCart() {
   body.innerHTML = '';
   let total = 0;
   cartItems.forEach(item => {
-    const sellingPrice = calcSellingPrice(item.base_price, defaultCommission(item.base_price));
+    const basePrice = parseFloat(item.base_price) || 0;
+    const commission = calculateCommission(basePrice);
+    const sellingPrice = basePrice + commission;
     const subTotal = sellingPrice * item.qty;
     total += subTotal;
     const div = document.createElement('div');
@@ -996,7 +1001,9 @@ async function openFavorites() {
     grid.style.gridTemplateColumns = 'repeat(2,1fr)';
     grid.style.gap = '10px';
     favs.forEach(p => {
-      const sellingPrice = calcSellingPrice(p.base_price, defaultCommission(p.base_price));
+      const basePrice = parseFloat(p.base_price) || 0;
+      const commission = calculateCommission(basePrice);
+      const sellingPrice = basePrice + commission;
       const card = document.createElement('div');
       card.style.background = '#1a1a1a';
       card.style.borderRadius = '12px';
@@ -1027,8 +1034,9 @@ function openOrderForm() {
   closeCart();
   const p = currentProduct;
   const basePrice = parseFloat(p.base_price) || 0;
-  const defaultComm = defaultCommission(basePrice);
+  const defaultComm = calculateCommission(basePrice);
   const sellingPrice = basePrice + defaultComm;
+  const availableStock = p.stock || 0;
   
   const governors = Object.keys(CITIES_BY_GOV);
   const govOptions = governors.map(g => `<option value="${g}">${g}</option>`).join('');
@@ -1037,6 +1045,9 @@ function openOrderForm() {
     <div style="background:#1a1a1a;padding:15px;border-radius:12px;margin-bottom:15px">
       <div style="font-weight:bold;margin-bottom:5px">${escapeHtml(p.name)}</div>
       <div style="font-size:13px;color:#aaa">كود المنتج: ${p.product_id}</div>
+      <div style="font-size:13px;color:${availableStock > 0 ? 'var(--green)' : 'var(--red)'};margin-top:5px;">
+        📦 المخزون المتاح: ${availableStock} قطعة
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>💰 سعر البيع</label><input type="number" id="orderPrice" value="${sellingPrice}" oninput="updateCommissionFromPrice()"></div>
@@ -1062,17 +1073,22 @@ function openOrderForm() {
     </div>
     <div class="form-group"><label>📍 العنوان بالتفصيل *</label><textarea id="customerAddress" rows="2" placeholder="الشارع - رقم المبنى - الدور وعلامة مميزة"></textarea></div>
     <div class="form-row">
-      <div class="form-group"><label>📏 المقاص</label><input type="text" id="orderSize" placeholder="M, L.."></div>
+      <div class="form-group"><label>📏 المقاس</label><input type="text" id="orderSize" placeholder="M, L.."></div>
       <div class="form-group"><label>🎨 اللون</label><input type="text" id="orderColor" placeholder="أحمر، أسود.."></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>🔢 الكمية</label><input type="number" id="orderQty" value="1" min="1" oninput="updateOrderSummary()"></div>
+      <div class="form-group"><label>🔢 الكمية</label>
+        <input type="number" id="orderQty" value="1" min="1" max="${availableStock}" oninput="updateOrderSummary()">
+        <small style="color:var(--muted);font-size:11px;">الحد الأقصى: ${availableStock}</small>
+      </div>
       <div class="form-group"><label>🚚 الشحن</label><input type="number" id="orderShipping" value="70" oninput="updateOrderSummary()"></div>
     </div>
     <div class="form-group"><label>📝 ملاحظات الشحن</label><textarea id="orderNotes" rows="2" placeholder="أي تفاصيل إضافية للمندوب"></textarea></div>
     <div class="order-summary" id="orderSummary"></div>
     <div class="btn-row">
-      <button class="btn btn-green" id="submitOrderBtn" onclick="submitOrder()">✅ تأكيد الطلب</button>
+      <button class="btn btn-green" id="submitOrderBtn" onclick="submitOrder()" ${availableStock === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+        ${availableStock === 0 ? '❌ نفذ من المخزون' : '✅ تأكيد الطلب'}
+      </button>
       <button class="btn" onclick="closeOrder()">إلغاء</button>
     </div>
   `;
@@ -1137,20 +1153,41 @@ async function submitOrder() {
   const city = document.getElementById('customerCity')?.value;
   const address = document.getElementById('customerAddress')?.value.trim();
   
-  if (!name || !phone || !gov || !city || !address) { alert('⚠️ من فضلك اكمل جميع البيانات المطلوبة'); return; }
+  if (!name || !phone || !gov || !city || !address) { 
+    alert('⚠️ من فضلك اكمل جميع البيانات المطلوبة'); 
+    return; 
+  }
 
   const price = parseFloat(document.getElementById('orderPrice').value) || 0;
   const commission = parseFloat(document.getElementById('orderCommission').value) || 0;
   const qty = parseInt(document.getElementById('orderQty').value) || 1;
   const shipping = parseFloat(document.getElementById('orderShipping').value) || 70;
 
+  // ✅ التحقق من أن الكمية المطلوبة متوفرة في المخزون
+  if (qty > (currentProduct.stock || 0)) {
+    alert(`❌ الكمية المطلوبة (${qty}) أكبر من المخزون المتاح (${currentProduct.stock || 0})`);
+    return;
+  }
+
   const orderData = {
     product_id: currentProduct.product_id,
-    customer_name: name, phone: phone, phone2: document.getElementById('customerPhone2')?.value || '',
-    governorate: gov, city: city, address: address, qty: qty,
-    size: document.getElementById('orderSize')?.value || '', color: document.getElementById('orderColor')?.value || '',
-    price: price, shipping: shipping, total_price: (price * qty + shipping), commission: commission,
-    notes: document.getElementById('orderNotes')?.value || '', marketer_username: marketerName, marketer_id: marketerId,
+    product_name: currentProduct.name,
+    product_price: price,
+    product_quantity: qty,
+    customer_name: name, 
+    phone: phone, 
+    phone2: document.getElementById('customerPhone2')?.value || '',
+    governorate: gov, 
+    city: city, 
+    address: address, 
+    size: document.getElementById('orderSize')?.value || '', 
+    color: document.getElementById('orderColor')?.value || '',
+    shipping: shipping, 
+    total_price: (price * qty + shipping), 
+    commission: commission,
+    notes: document.getElementById('orderNotes')?.value || '', 
+    marketer_username: marketerName, 
+    marketer_id: marketerId,
     order_status: 'جديد'
   };
 
@@ -1158,14 +1195,39 @@ async function submitOrder() {
   btn.disabled = true; btn.textContent = '⏳ جاري الإرسال...';
 
   try {
+    // 1️⃣ تسجيل الطلب
     const result = await callApi('place_order', orderData);
+    
     if (result.status !== 'error') {
+      // 2️⃣ تقليل المخزون بعد نجاح الطلب
+      const newStock = Math.max(0, (currentProduct.stock || 0) - qty);
+      
+      // تحديث المخزون في قاعدة البيانات
+      await supabaseApi(`products?product_id=eq.${currentProduct.product_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ stock: newStock })
+      });
+      
+      // تحديث المخزون في الكائن الحالي
+      currentProduct.stock = newStock;
+      
+      // تحديث واجهة المنتج
+      renderProductPopup(currentProduct);
+      
+      // إعادة تحميل المنتجات
+      await loadProducts();
+      
       alert(`✅ تم تسجيل الطلب بنجاح!`);
       closeOrder();
-      loadProducts();
-    } else alert(`❌ خطأ: ${result.message}`);
-  } catch(err) { alert(`❌ خطأ: ${err.message}`); }
-  finally { btn.disabled = false; btn.textContent = '✅ تأكيد الطلب'; }
+    } else {
+      alert(`❌ خطأ: ${result.message}`);
+    }
+  } catch(err) { 
+    alert(`❌ خطأ: ${err.message}`); 
+  } finally { 
+    btn.disabled = false; 
+    btn.textContent = '✅ تأكيد الطلب'; 
+  }
 }
 
 function openWhatsApp() { window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank'); }
