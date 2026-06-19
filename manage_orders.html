@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>طلبات منتجاتي - المورد</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght=400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0a;
@@ -331,14 +331,14 @@ body {
 <div id="ordersList" class="orders-list"></div>
 
 <script>
-// ===== دوال السليدر =====
+// ===== دوال السليدر والتنقل (تم تعديلها لتصبح غير حساسة للأحرف) =====
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
 
 function goToPage(pageName) {
-  let lowerPage = pageName.toLowerCase();
+  let lowerPage = pageName.toLowerCase().trim();
   let correctPageName = pageName + '.html'; 
 
   if (lowerPage.includes("data_page") || lowerPage.includes("dashboard")) {
@@ -351,7 +351,8 @@ function goToPage(pageName) {
     correctPageName = "manage_orders.html";
   }
 
-  const currentUser = localStorage.getItem('username') || currentUserVar;
+  // معالجة اسم المستخدم بشكل آمن وغير حساس لحالة الأحرف
+  const currentUser = (localStorage.getItem('username') || currentUserVar || '').toLowerCase().trim();
   window.location.href = `${correctPageName}?user=${encodeURIComponent(currentUser)}&type=supplier`;
 }
 
@@ -367,8 +368,9 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 const urlParams = new URLSearchParams(window.location.search);
-let currentUserVar = urlParams.get('user') || localStorage.getItem('username') || '';
-let userType = 'supplier'; // المورد
+// تحويل المعطيات من الرابط تلقائياً إلى حروف صغيرة لتوحيد البيانات
+let currentUserVar = (urlParams.get('user') || localStorage.getItem('username') || '').toLowerCase().trim();
+let userType = 'supplier'; 
 let allOrders = [];
 let currentFilter = 'all';
 let currentSearch = '';
@@ -404,14 +406,12 @@ async function callApi(action, data = {}) {
   try {
     switch(action) {
       case 'getOrders':
-        // للمورد: جلب طلبات المنتجات اللي بتاعته
-        // 1. جلب منتجات المورد
-        const products = await supabaseApi(`products?username=eq.${currentUserVar}&select=product_id`);
+        // تعديل الاستعلام للمورد باستخدام ilike ليكون غير حساس لحالة الأحرف
+        const products = await supabaseApi(`products?username=ilike.${currentUserVar}&select=product_id`);
         const productIds = products.map(p => `'${p.product_id}'`).join(',');
         
         if(productIds.length === 0) return [];
         
-        // 2. جلب الطلبات اللي فيها المنتجات دي
         return await supabaseApi(`orders?product_id=in.(${productIds})&select=*`);
         
       case 'updateOrderStatus':
@@ -457,7 +457,6 @@ async function loadOrders() {
     const result = await callApi('getOrders');
     let orders = result || [];
     
-    // جلب تفاصيل المنتج لكل طلب
     for(let i = 0; i < orders.length; i++) {
       const order = orders[i];
       const productResult = await callApi('getProduct', { product_id: order.product_id });
@@ -466,7 +465,6 @@ async function loadOrders() {
       }
     }
     
-    // تحديث الحالات تلقائياً
     orders = orders.map(order => {
       const autoStage = getAutoStage(order.created_at, order.order_status);
       const autoStatus = getStageName(autoStage);
@@ -513,7 +511,7 @@ function setFilter(filter) {
 }
 
 function filterOrders() {
-  currentSearch = document.getElementById('searchInput').value.toLowerCase();
+  currentSearch = document.getElementById('searchInput').value.toLowerCase().trim();
   filterAndDisplay();
 }
 
