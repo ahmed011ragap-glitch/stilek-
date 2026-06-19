@@ -121,7 +121,7 @@ body {
 }
 .overlay.active { display: block; }
 
-/* ===== بار معلومات المستخدم الثابت والمحمي ===== */
+/* ===== بار معلومات المستخدم ===== */
 .user-bar {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -320,16 +320,12 @@ h2 {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <!-- روابط المسوق الأربعة -->
     <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات الرئيسية</a>
     <a href="#" onclick="goToPage('displayed_products')">🛍️ المنتجات المعروضة</a>
     <a href="#" onclick="goToPage('manage_orders_market')">📋 إدارة الطلبات</a>
     <a href="#" class="active">💰 المحفظة والسحوبات</a>
 
-    <!-- زر الدعم الفني عبر واتساب -->
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
-
-    <!-- زر تسجيل الخروج -->
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -485,9 +481,9 @@ let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'mark
 let currentUser = rawUser.toLowerCase().trim();
 localStorage.setItem('username', currentUser);
 
-// دالة التنقل الموحدة للمسوق - تستقبل اسم الصفحة بدون امتداد
+// دالة التنقل الموحدة للمسوق
 function goToPage(pageName) {
-  toggleSidebar(); // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
@@ -515,26 +511,39 @@ async function supabaseApi(endpoint, options = {}) {
 
 let globalAvailableBalance = 0;
 
+// ===== دالة تحميل البيانات الرئيسية =====
 async function loadDashboard() {
   try {
     document.getElementById('userName').textContent = currentUser;
     document.getElementById('usernameInput').value = currentUser;
 
-    // جلب الطلبات الخاصة بالمسوق (marketer_id)
+    // ✅ استخدام marketer_id (الفريد) للبحث عن طلبات المسوق
     const allOrders = await supabaseApi(`orders?select=order_status,commission,marketer_id`);
-    const marketerOrders = allOrders.filter(o => (o.marketer_id || '').toLowerCase().trim() === currentUser);
+    
+    const marketerOrders = allOrders.filter(o => {
+      const id = (o.marketer_id || '').toLowerCase().trim();
+      return id === currentUser;
+    });
+
+    console.log('🔍 عدد طلبات المسوق (باستخدام marketer_id):', marketerOrders.length);
 
     let deliveredCommissionTotal = 0, shippingCommissionTotal = 0, preparingCommissionTotal = 0, deliveredCount = 0;
 
     marketerOrders.forEach(o => {
       const commission = parseFloat(o.commission) || 0;
       const status = (o.order_status || '').trim();
-      if (status === 'تم التسليم' || status === 'delivered') { 
+      
+      // الحالات المكتملة
+      if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
         deliveredCommissionTotal += commission; 
         deliveredCount++; 
-      } else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
+      } 
+      // حالات الشحن
+      else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
         shippingCommissionTotal += commission; 
-      } else if (status === 'تغليف') { 
+      } 
+      // حالات التحضير
+      else if (status === 'تغليف') { 
         preparingCommissionTotal += commission; 
       }
     });
@@ -559,9 +568,13 @@ async function loadDashboard() {
     document.getElementById('delivered').textContent = deliveredCount;
     document.getElementById('shipping').textContent = shippingCommissionTotal.toFixed(2);
 
-  } catch(err) { console.error(err); }
+  } catch(err) { 
+    console.error('❌ خطأ في تحميل البيانات:', err);
+    alert('حدث خطأ أثناء جلب البيانات، تحقق من الاتصال بقاعدة البيانات.');
+  }
 }
 
+// ===== تقديم طلب سحب =====
 document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const phone = document.getElementById('w_phone').value.trim();
@@ -603,6 +616,7 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
   } catch(err) { alert('❌ خطأ: ' + err.message); }
 });
 
+// ===== تفعيل لوحة الأدمن =====
 document.getElementById('searchInput').addEventListener('input', e => {
   const val = e.target.value;
   if(val === ADMIN_CODE && !isAdmin) {
@@ -619,6 +633,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
   }
 });
 
+// ===== لوحة الأدمن =====
 async function loadAdminPanel() {
   try {
     const data = await supabaseApi('withdrawals?select=*');
@@ -696,6 +711,7 @@ function openWithdrawModal() { document.getElementById('withdrawModal').style.di
 function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 function openHistory() { alert('السجل المالي يظهر للأدمن تلقائياً عند البحث بكود الإدارة.'); }
 
+// تشغيل التحميل الأولي
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>
