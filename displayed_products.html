@@ -303,7 +303,7 @@ body {
 }
 .product-commission {
   color: var(--gold);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 .product-stock {
@@ -501,6 +501,15 @@ body {
   border-radius: 8px;
   color: #fff;
   font-size: 13px;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--green);
+  outline: none;
+}
+.form-group input[readonly] {
+  background: #0a0a0a;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .order-summary {
@@ -793,6 +802,7 @@ function renderProducts(products) {
     const outStock = parseInt(p.stock) === 0;
     const basePrice = parseFloat(p.base_price) || 0;
     const commission = calculateCommission(basePrice);
+    const sellingPrice = basePrice + commission;
     const imgUrl = fixImageUrl(p.image_url);
     const isFav = favoriteIds.includes(String(p.product_id));
 
@@ -807,7 +817,7 @@ function renderProducts(products) {
       </div>
       <div class="product-info">
         <div class="product-name">${escapeHtml(p.name)}</div>
-        <div class="product-price">💰 ${basePrice} ج</div>
+        <div class="product-price">💰 ${sellingPrice} ج</div>
         <div class="product-commission">⭐ عمولتك: ${commission} ج</div>
         <div class="product-stock" style="color:${outStock ? '#ff4444' : '#00ff88'}">${outStock ? '❌ نفذ' : '✅ متوفر'}</div>
       </div>
@@ -839,6 +849,7 @@ async function openProduct(productId) {
 function renderProductPopup(p) {
   const basePrice = parseFloat(p.base_price) || 0;
   const defaultComm = calculateCommission(basePrice);
+  const sellingPrice = basePrice + defaultComm;
   const outStock = parseInt(p.stock) === 0;
   const imgUrl = fixImageUrl(p.image_url);
   const isFav = favoriteIds.includes(String(p.product_id));
@@ -851,16 +862,24 @@ function renderProductPopup(p) {
     <img class="popup-img" src="${imgUrl}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x250/1a1a1a/444?text=No+Image'">
     <h2>${escapeHtml(p.name)}</h2>
 
-    <div class="commission-box">
-      💰 عمولتك: <span>${defaultComm} ج</span><br>
-      <small style="color:#aaa">(قابلة للتعديل عند الشراء)</small>
+    <div style="background:linear-gradient(135deg, #0a2a0a, #0d1e0d);border:1px solid var(--green);border-radius:12px;padding:15px;margin:12px 0;text-align:center;">
+      <div style="color:#aaa;font-size:13px;">💰 سعر البيع النهائي</div>
+      <div style="color:var(--green);font-size:28px;font-weight:bold;">${sellingPrice} ج</div>
+      <small style="color:var(--gold);">(شامل العمولة)</small>
+    </div>
+
+    <div style="background:#1a1a1a;padding:12px;border-radius:10px;margin:10px 0;">
+      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222;">
+        <span style="color:#aaa;">سعر المنتج الأساسي</span>
+        <span style="color:#fff;">${basePrice} ج</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;">
+        <span style="color:#aaa;">⭐ عمولتك الافتراضية</span>
+        <span style="color:var(--gold);">${defaultComm} ج</span>
+      </div>
     </div>
 
     <p style="color:#aaa;font-size:14px;margin:10px 0;line-height:1.6">${escapeHtml(p.description || 'لا يوجد وصف')}</p>
-
-    <div style="background:#1a1a1a;padding:15px;border-radius:12px;margin:10px 0">
-      <div style="display:flex;justify-content:space-between"><span>💰 سعر المنتج:</span><span style="color:#00ff88">${basePrice} ج</span></div>
-    </div>
 
     ${sizes ? `<div style="margin:10px 0"><div style="color:#aaa;font-size:13px;margin-bottom:5px">📏 المقاسات المتوفرة:</div>${sizes}</div>` : ''}
     ${colors ? `<div style="margin:10px 0"><div style="color:#aaa;font-size:13px;margin-bottom:5px">🎨 الألوان المتوفرة:</div>${colors}</div>` : ''}
@@ -1043,16 +1062,29 @@ function openOrderForm() {
 
   document.getElementById('orderBody').innerHTML = `
     <div style="background:#1a1a1a;padding:15px;border-radius:12px;margin-bottom:15px">
-      <div style="font-weight:bold;margin-bottom:5px">${escapeHtml(p.name)}</div>
-      <div style="font-size:13px;color:#aaa">كود المنتج: ${p.product_id}</div>
+      <div style="font-weight:bold;margin-bottom:5px;font-size:18px;">${escapeHtml(p.name)}</div>
+      <div style="font-size:13px;color:#aaa;">كود المنتج: ${p.product_id}</div>
       <div style="font-size:13px;color:${availableStock > 0 ? 'var(--green)' : 'var(--red)'};margin-top:5px;">
         📦 المخزون المتاح: ${availableStock} قطعة
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>💰 سعر البيع</label><input type="number" id="orderPrice" value="${sellingPrice}" oninput="updateCommissionFromPrice()"></div>
-      <div class="form-group"><label>👤 عمولتك (ج)</label><input type="number" id="orderCommission" value="${defaultComm}" oninput="updatePriceFromCommission()"></div>
+
+    <!-- ✅ سعر البيع مقفول (readonly) -->
+    <div class="form-group">
+      <label style="color:var(--green);font-size:14px;font-weight:bold;">💰 سعر البيع النهائي (غير قابل للتعديل)</label>
+      <input type="number" id="orderPrice" value="${sellingPrice}" readonly 
+             style="background:#0a0a0a;color:var(--green);font-size:18px;font-weight:bold;border:2px solid var(--green);">
     </div>
+
+    <!-- ✅ العمولة قابلة للتعديل -->
+    <div class="form-group">
+      <label style="color:var(--gold);font-size:14px;font-weight:bold;">⭐ عمولتك (قابلة للتعديل)</label>
+      <input type="number" id="orderCommission" value="${defaultComm}" 
+             oninput="updatePriceFromCommission()" 
+             style="background:#1a1a1a;color:var(--gold);font-size:16px;font-weight:bold;border:1px solid var(--gold);">
+      <small style="color:var(--muted);">(عدل العمولة حسب رغبتك وسعر البيع هيتغير تلقائياً)</small>
+    </div>
+
     <div class="form-group"><label>👤 اسم العميل *</label><input type="text" id="customerName" placeholder="الاسم بالكامل"></div>
     <div class="form-row">
       <div class="form-group"><label>📱 رقم الهاتف *</label><input type="tel" id="customerPhone" placeholder="01xxxxxxxxx"></div>
@@ -1119,7 +1151,8 @@ function updateCities() {
 function updatePriceFromCommission() {
   const basePrice = parseFloat(currentProduct.base_price) || 0;
   const commission = parseFloat(document.getElementById('orderCommission').value) || 0;
-  document.getElementById('orderPrice').value = basePrice + commission;
+  const sellingPrice = basePrice + commission;
+  document.getElementById('orderPrice').value = sellingPrice;
   updateOrderSummary();
 }
 
