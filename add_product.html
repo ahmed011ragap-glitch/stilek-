@@ -295,9 +295,11 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// سحب الـ username المكتوب أو المخزن تلقائياً من نظام تسجيل الدخول أو الرابط
+// جلب الـ username وتحويله فوراً إلى حروف صغيرة لتوحيد البيانات ومنع حساسية الأحرف
 const urlParams = new URLSearchParams(window.location.search);
-let CURRENT_USER = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
+let CURRENT_USER = rawUser.trim().toLowerCase(); 
+
 localStorage.setItem('username', CURRENT_USER);
 
 // تعبئة حقل اسم المستخدم تلقائياً وحمايته
@@ -352,7 +354,6 @@ function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-// وظيفة التعامل الحصري والمباشر مع الجدول الأساسي المعتمد products
 async function postProductToSupabase(productData) {
   const url = `${SUPABASE_URL}/rest/v1/products`;
   const headers = {
@@ -417,7 +418,8 @@ document.getElementById('addBtn').onclick = async function() {
   const name = document.getElementById('productName').value.trim();
   const price = document.getElementById('price').value;
   const stock = document.getElementById('stock').value;
-  const usernameValue = document.getElementById('supplierUsername').value.trim();
+  // تحويل حقل الإدخال أيضاً للتأكيد والتحصين التام ضد الأحرف الكبيرة والصغيرة
+  const usernameValue = document.getElementById('supplierUsername').value.trim().toLowerCase();
   const supplierPhone = document.getElementById('supplierPhone').value.trim();
   const galleryLink = document.getElementById('galleryLink').value.trim();
   let desc = document.getElementById('productDesc').value.trim();
@@ -442,11 +444,9 @@ document.getElementById('addBtn').onclick = async function() {
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
-    // حماية إضافية: ندمج رقم الهاتف ولينك المعرض بالوصف لتجنب فقدانها لو لم تكن متوفرة كأعمدة في الهيكل الحالي
     const extraDetails = `\n\n📞 هاتف واتساب المورد: ${supplierPhone}\n🔗 المعرض الإضافي: ${galleryLink || 'لا يوجد'}`;
     const finalDescription = desc ? (desc + extraDetails) : `منتج المورد: ${usernameValue} ${extraDetails}`;
 
-    // بناء الكائن متطابقاً تماماً وحرفياً مع أعمدة جدول `products` المستلم في الاسكريبت
     const finalProductPayload = {
       product_id: productCode,
       name: name,
@@ -454,14 +454,13 @@ document.getElementById('addBtn').onclick = async function() {
       stock: parseInt(stock),
       image_url: imageUrl,
       description: finalDescription,
-      username: usernameValue, // الإرسال المباشر والمنفصل للعمود الجديد لفلترة المنتجات بدقة
+      username: usernameValue, // يتم حفظه برمجياً بأحرف صغيرة موحدة تماماً
       gallery_link: galleryLink || null,
       sizes: '',
       colors: '',
       slider: []
     };
 
-    // الإرسال والتدوين الفوري بداخل الشيت المطلوب
     await postProductToSupabase(finalProductPayload);
 
     hideLoading();
