@@ -582,8 +582,9 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
+// ✅ حل مشكلة GitHub Pages: مطابقة وتصحيح أسماء الملفات بدقة وبشكل غير حساس لحالة الحروف المدخلة
 function goToPage(pageName) {
-  let lowerPage = pageName.toLowerCase();
+  let lowerPage = pageName.toLowerCase().trim();
   let correctPageName = pageName + '.html'; 
 
   if (lowerPage.includes("data_page") || lowerPage.includes("dashboard")) {
@@ -611,13 +612,15 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 const urlParams = new URLSearchParams(window.location.search);
-let marketerId = urlParams.get('user') || localStorage.getItem('username') || '';
+let rawUser = urlParams.get('user') || localStorage.getItem('username') || '';
+// ✅ جعل كود المسوق غير حساس تماماً لحالة الأحرف عن طريق توحيده لـ lowercase
+let marketerId = rawUser.trim().toLowerCase(); 
 let marketerName = localStorage.getItem('userName') || 'مسوق';
 
 if(!marketerId) {
   marketerId = 'marketer_' + Math.random().toString(36).substr(2, 6);
-  localStorage.setItem('username', marketerId);
 }
+localStorage.setItem('username', marketerId);
 document.getElementById('userInfo').innerHTML = `👤 ${marketerName}`;
 
 const WHATSAPP_NUMBER = '201108712091';
@@ -697,25 +700,23 @@ async function supabaseApi(endpoint, options = {}) {
   return JSON.parse(textData);
 }
 
-// ===== التعديل الأساسي: جلب المنتجات من جدول products بدلاً من Marketer_Products =====
 async function callApi(action, data = {}) {
   try {
-    // ✅ تم التعديل هنا: استخدام جدول products
     const tableEndpoint = 'products';
     switch(action) {
       case 'get_products':
-        // جلب كل المنتجات من جدول products
         return await supabaseApi(`${tableEndpoint}?select=*`);
       case 'get_product':
         return await supabaseApi(`${tableEndpoint}?product_id=eq.${data.product_id}&select=*`);
+      // ✅ تم استبدال eq بـ ilike في استعلامات الاسترجاع لضمان عدم الحساسية للمدخلات بقاعدة البيانات
       case 'get_favorites':
-        return await supabaseApi(`favorites?marketer_id=eq.${data.marketer_id}&select=*`);
+        return await supabaseApi(`favorites?marketer_id=ilike.${data.marketer_id}&select=*`);
       case 'add_to_favorites':
-        return await supabaseApi('favorites', { method: 'POST', body: JSON.stringify({ marketer_id: data.marketer_id, product_id: data.product_id, fav_id: 'F' + Date.now() }) });
+        return await supabaseApi('favorites', { method: 'POST', body: JSON.stringify({ marketer_id: data.marketer_id.toLowerCase(), product_id: data.product_id, fav_id: 'F' + Date.now() }) });
       case 'remove_from_favorites':
-        return await supabaseApi(`favorites?marketer_id=eq.${data.marketer_id}&product_id=eq.${data.product_id}`, { method: 'DELETE' });
+        return await supabaseApi(`favorites?marketer_id=ilike.${data.marketer_id}&product_id=eq.${data.product_id}`, { method: 'DELETE' });
       case 'get_cart':
-        const cartRes = await supabaseApi(`cart?marketer_id=eq.${data.marketer_id}&select=*`);
+        const cartRes = await supabaseApi(`cart?marketer_id=ilike.${data.marketer_id}&select=*`);
         if(Array.isArray(cartRes)) {
           const freshProducts = await supabaseApi(`${tableEndpoint}?select=*`);
           return cartRes.map(item => {
@@ -725,7 +726,7 @@ async function callApi(action, data = {}) {
         }
         return cartRes;
       case 'add_to_cart':
-        return await supabaseApi('cart', { method: 'POST', body: JSON.stringify({ marketer_id: data.marketer_id, product_id: data.product_id, qty: 1, cart_id: 'C' + Date.now() }) });
+        return await supabaseApi('cart', { method: 'POST', body: JSON.stringify({ marketer_id: data.marketer_id.toLowerCase(), product_id: data.product_id, qty: 1, cart_id: 'C' + Date.now() }) });
       case 'update_cart_qty':
         return await supabaseApi(`cart?cart_id=eq.${data.cart_id}`, { method: 'PATCH', body: JSON.stringify({ qty: data.qty }) });
       case 'delete_cart':
@@ -810,7 +811,7 @@ function renderProducts(products) {
 }
 
 function searchProducts() {
-  const term = document.getElementById('searchInput').value.toLowerCase();
+  const term = document.getElementById('searchInput').value.toLowerCase().trim();
   productCards.forEach(card => {
     card.style.display = card.dataset.name.includes(term) ? '' : 'none';
   });
@@ -835,7 +836,7 @@ function renderProductPopup(p) {
   const outStock = parseInt(p.stock) === 0;
   const imgUrl = fixImageUrl(p.image_url);
   const isFav = favoriteIds.includes(String(p.product_id));
-  const galleryLink = p.gallery_link || p.drive_link || '';
+  const galleryLink = p.drive_link || p.gallery_link || '';
   
   const sizes = p.sizes ? p.sizes.split(',').map(s => `<span class="tag">${s.trim()}</span>`).join('') : '';
   const colors = p.colors ? p.colors.split(',').map(c => `<span class="tag">${c.trim()}</span>`).join('') : '';
