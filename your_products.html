@@ -21,13 +21,37 @@
 body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100vh; }
 .container { max-width: 1000px; margin: 0 auto; }
 
+/* ===== شريط المستخدم العلوي ===== */
+.user-bar {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 12px 20px;
+  margin-top: 55px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.user-bar span { font-size: 14px; color: #b0b0b0; }
+.user-bar strong { color: var(--green); }
+.user-type {
+  padding: 4px 12px;
+  background: #0a1a2a;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #00aaff;
+  border: 1px solid #00aaff;
+}
+
 /* ===== الهيدر والعناوين ===== */
 .header {
   padding: 10px 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
 }
 .header h2 {
   font-size: 22px;
@@ -227,6 +251,13 @@ body { background: var(--bg); color: var(--text); padding: 15px; min-height: 100
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
 <div class="container">
+  <!-- شريط المستخدم العلوي -->
+  <div id="userBar" class="user-bar">
+    <span>🏭 المورد: <strong id="userName">-</strong></span>
+    <span>كود المستخدم: <strong id="userCode">-</strong></span>
+    <span class="user-type">🏭 مورد</span>
+  </div>
+
   <div class="header">
     <h2>📦 منتجاتي</h2>
     <button class="add-btn" onclick="goToPage('add_product')">➕ ضيف منتج</button>
@@ -324,6 +355,10 @@ const username = rawUser.toLowerCase().trim();
 if(username) {
   localStorage.setItem('username', username);
 }
+
+// عرض اسم المستخدم في الشريط العلوي
+document.getElementById('userName').textContent = username || 'غير معروف';
+document.getElementById('userCode').textContent = username || '-';
 
 // دوال السلايدر والتنقل الموحدة
 function toggleSidebar() {
