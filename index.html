@@ -111,7 +111,7 @@ window.onload = function() {
   const pass = urlParams.get('pass');
   if(email && pass) {
     showPage('loginPage');
-    document.getElementById('loginEmail').value = decodeURIComponent(email);
+    document.getElementById('loginEmail').value = decodeURIComponent(email).toLowerCase();
     document.getElementById('loginPassword').value = decodeURIComponent(pass);
     history.replaceState(null, null, window.location.pathname);
   }
@@ -120,8 +120,8 @@ window.onload = function() {
 // ===== إنشاء حساب جديد =====
 document.getElementById("create").onclick=async function(){
 let name=document.getElementById("name").value.trim();
-let username=document.getElementById("username").value.trim();
-let email=document.getElementById("email").value.trim();
+let username=document.getElementById("username").value.trim().toLowerCase(); // تحويل الأحرف لصغيرة
+let email=document.getElementById("email").value.trim().toLowerCase(); // تحويل الأحرف لصغيرة
 let password=document.getElementById("password").value;
 let type=document.getElementById("type").value;
 let error=document.getElementById("error");
@@ -137,7 +137,8 @@ if(type===""){error.innerHTML="اختر نوع الحساب";return;}
 this.disabled=true; this.innerText="جاري الإرسال...";
 
 try {
-  const checkUser = await supabaseApi(`stylek_password?or=(username.eq.${username},email.eq.${email})&select=*`);
+  // استخدام ilike للبحث غير الحساس لحالة الأحرف
+  const checkUser = await supabaseApi(`stylek_password?or=(username.ilike.${username},email.ilike.${email})&select=*`);
   if(checkUser && checkUser.length > 0) {
     error.innerHTML="اسم المستخدم أو البريد الإلكتروني مسجل بالفعل";
     this.disabled=false; this.innerText="إنشاء حساب";
@@ -175,10 +176,11 @@ try {
 this.disabled=false; this.innerText="إنشاء حساب";
 };
 
-// ===== تسجيل الدخول عبر الإيميل وتعديل المسارات الحقيقية =====
+// ===== تسجيل الدخول عبر الإيميل =====
 document.getElementById("login").onclick=async function(){
-let email=document.getElementById("loginEmail").value.trim();
-let password=document.getElementById("loginPassword").value;
+let email=document.getElementById("loginEmail").value.trim().toLowerCase(); // تحويل الأحرف لصغيرة لعدم الحساسية
+let password=document.getElementById("passwordBox" ? document.getElementById('loginPassword').value : "");
+password = document.getElementById('loginPassword').value;
 let error=document.getElementById("loginError");
 error.innerHTML="";
 
@@ -187,7 +189,8 @@ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length<3){error.innerHT
 this.disabled=true; this.innerText="جاري الدخول...";
 
 try {
-  const users = await supabaseApi(`stylek_password?email=eq.${email}&select=*`);
+  // استخدام ilike بدلاً من eq لضمان البحث العابر لحالة الأحرف العلوية والسفلية
+  const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
   
   if(!users || users.length === 0) {
     error.innerHTML="البريد الإلكتروني غير مسجل لدينا";
@@ -211,8 +214,7 @@ try {
   localStorage.setItem('userType', userType);
   localStorage.setItem('userName', user.name || user.username);
 
-  // تصليح التوجيه بناءً على ملفاتك المرفوعة الحقيقية بالملي لعدم حدوث خطأ 404
-  if(userType === 'تاجر' || userType === 'تاجر'){
+  if(userType === 'تاجر'){
     window.location.href = 'Data_Page.html?user=' + encodeURIComponent(user.username);
   } else {
     window.location.href = 'Displayed_Products.html?user=' + encodeURIComponent(user.username);
@@ -226,7 +228,7 @@ this.disabled=false; this.innerText="دخول";
 
 // ===== استعادة كلمة السر =====
 document.getElementById("sendOtp").onclick=async function(){
-let email=document.getElementById("forgotEmail").value.trim();
+let email=document.getElementById("forgotEmail").value.trim().toLowerCase(); // تحويل الأحرف لصغيرة
 let error=document.getElementById("forgotError");
 let success=document.getElementById("forgotSuccess");
 error.innerHTML=""; success.innerHTML="";
@@ -236,7 +238,7 @@ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error.innerHTML="البريد غي
 this.disabled=true; this.innerText="جاري الإرسال...";
 
 try {
-  const users = await supabaseApi(`stylek_password?email=eq.${email}&select=*`);
+  const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
   
   if(!users || users.length === 0) {
     error.innerHTML="البريد الإلكتروني غير مسجل";
@@ -246,7 +248,8 @@ try {
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   
-  await supabaseApi(`stylek_password?email=eq.${email}`, {
+  // نحدث السجل بناءً على المعرف الفعلي للمستخدم المجلوب لضمان الدقة
+  await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
     method: 'PATCH',
     body: JSON.stringify({ otp_temp: otp })
   });
@@ -264,7 +267,7 @@ this.disabled=false; this.innerText="إرسال الكود";
 
 // ===== تغيير كلمة السر =====
 document.getElementById("resetPass").onclick=async function(){
-let email=document.getElementById("forgotEmail").value.trim();
+let email=document.getElementById("forgotEmail").value.trim().toLowerCase(); // تحويل الأحرف لصغيرة
 let otp=document.getElementById("otpCode").value.trim();
 let newpass=document.getElementById("newPass").value;
 let error=document.getElementById("forgotError");
@@ -277,7 +280,7 @@ if(newpass.length<8){error.innerHTML="كلمة السر 8 أحرف أو أكثر
 this.disabled=true; this.innerText="جاري التغيير...";
 
 try {
-  const users = await supabaseApi(`stylek_password?email=eq.${email}&otp_temp=eq.${otp}&select=*`);
+  const users = await supabaseApi(`stylek_password?email=ilike.${email}&otp_temp=eq.${otp}&select=*`);
   
   if(!users || users.length === 0) {
     error.innerHTML="الكود غير صحيح أو منتهي الصلاحية";
@@ -285,7 +288,7 @@ try {
     return;
   }
 
-  await supabaseApi(`stylek_password?email=eq.${email}`, {
+  await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
     method: 'PATCH',
     body: JSON.stringify({ 
       password: newpass,
