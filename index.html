@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stylek</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo', sans-serif;}
 body{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;background:linear-gradient(135deg,#0a0a0a,#121212);color:#e0e0e0;}
 .container{width:100%;max-width:420px;background:#1a1a1a;padding:35px 30px;border-radius:25px;box-shadow:0 15px 50px rgba(0,0,0,0.7);border:1px solid #2a2a2a;}
@@ -33,6 +33,7 @@ button{width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;fo
 <input id="name" placeholder="الاسم الكامل">
 <input id="username" placeholder="اسم المستخدم">
 <input id="email" placeholder="البريد الإلكتروني">
+<input id="whatsapp" placeholder="رقم الواتساب (مثال: 01108712171)" type="tel" dir="ltr">
 <div class="passwordBox">
 <input id="password" type="password" placeholder="كلمة المرور">
 <span class="eye" onclick="togglePass('password',this)">👁️</span>
@@ -81,8 +82,9 @@ button{width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;fo
 <script>
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
-// رابط الـ API الجديد الخاص بجوجل أب سكربت للمزامنة المباشرة
-const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbz0GSrNNQtmm3W9jSBUJdcmmF55VFg4Xka9Kys69liJx19rfBVyp9JTfhkRhDQU5_UM/exec';
+
+// 🔥 رابط API الجديد - حط الرابط بتاعك هنا
+const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbytFnaLoD5kcQiEG9vrZLRwXaM2UmwIe76hpHX0cJRgCzf43OEH1mYDULnYy4KwV2VT/exec';
 
 function togglePass(id,eye){let pass=document.getElementById(id);pass.type=pass.type==="password"?"text":"password";eye.innerHTML=pass.type==="password"?"👁️":"🙈";}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.error,.success').forEach(e=>e.innerHTML="");document.getElementById("otpBox").style.display="none";}
@@ -107,17 +109,55 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
-// دالة إرسال ومزامنة البيانات مع شيت جوجل (تجنب مشاكل الـ CORS)
+// =============================================
+// ✅ دالة الإرسال إلى جوجل شيت (مع انتظار الرد والتحقق)
+// =============================================
 async function sendToGoogleSheet(actionType, payload) {
   try {
-    await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+    const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
       method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
       body: JSON.stringify({ action: actionType, ...payload })
     });
+    
+    // ✅ التحقق من استجابة جوجل شيت
+    if (!response.ok) {
+      throw new Error(`فشل الحفظ في جوجل شيت: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log("✅ تم الإرسال إلى جوجل شيت:", result);
+    
+    // ✅ التحقق من وجود status success في الرد
+    if (result.status !== 'success') {
+      throw new Error('فشل الحفظ في جوجل شيت: ' + (result.message || 'خطأ غير معروف'));
+    }
+    
+    return result;
+    
   } catch(e) {
-    console.error("فشل إرسال البيانات إلى جوجل شيت:", e);
+    console.error("❌ فشل إرسال البيانات إلى جوجل شيت:", e);
+    throw new Error(`❌ فشل الحفظ في جوجل شيت: ${e.message}`);
+  }
+}
+
+// =============================================
+// ✅ دالة الحفظ في Supabase (مع انتظار الرد)
+// =============================================
+async function saveToSupabase(table, data) {
+  try {
+    const result = await supabaseApi(table, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    console.log("✅ تم الحفظ في Supabase:", result);
+    return result;
+  } catch(e) {
+    console.error("❌ فشل الحفظ في Supabase:", e);
+    throw new Error(`❌ فشل الحفظ في Supabase: ${e.message}`);
   }
 }
 
@@ -133,202 +173,276 @@ window.onload = function() {
   }
 }
 
-// ===== إنشاء حساب جديد =====
-document.getElementById("create").onclick=async function(){
-let name=document.getElementById("name").value.trim();
-let username=document.getElementById("username").value.trim().toLowerCase();
-let email=document.getElementById("email").value.trim().toLowerCase();
-let password=document.getElementById("password").value;
-let type=document.getElementById("type").value;
-let error=document.getElementById("error");
-let success=document.getElementById("success");
-error.innerHTML=""; success.innerHTML="";
+// =============================================
+// 🔥 إنشاء حساب جديد (مع التحقق من جوجل شيت أولاً)
+// =============================================
+document.getElementById("create").onclick = async function() {
+  let name = document.getElementById("name").value.trim();
+  let username = document.getElementById("username").value.trim().toLowerCase();
+  let email = document.getElementById("email").value.trim().toLowerCase();
+  let password = document.getElementById("password").value;
+  let type = document.getElementById("type").value;
+  let whatsapp = document.getElementById("whatsapp").value.trim();
+  let error = document.getElementById("error");
+  let success = document.getElementById("success");
+  error.innerHTML = "";
+  success.innerHTML = "";
 
-if(name.length<3){error.innerHTML="اكتب اسم صحيح";return;}
-if(username.length<3){error.innerHTML="اسم المستخدم 3 أحرف أو أكثر";return;}
-if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error.innerHTML="البريد غير صحيح";return;}
-if(password.length<8){error.innerHTML="كلمة المرور 8 أحرف أو أكثر";return;}
-if(type===""){error.innerHTML="اختر نوع الحساب";return;}
+  if (name.length < 3) { error.innerHTML = "اكتب اسم صحيح"; return; }
+  if (username.length < 3) { error.innerHTML = "اسم المستخدم 3 أحرف أو أكثر"; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { error.innerHTML = "البريد غير صحيح"; return; }
+  if (password.length < 8) { error.innerHTML = "كلمة المرور 8 أحرف أو أكثر"; return; }
+  if (type === "") { error.innerHTML = "اختر نوع الحساب"; return; }
 
-this.disabled=true; this.innerText="جاري الحفظ والتفعيل...";
+  this.disabled = true;
+  this.innerText = "جاري الحفظ والتفعيل...";
 
-try {
-  const checkUser = await supabaseApi(`stylek_password?or=(username.ilike.${username},email.ilike.${email})&select=*`);
-  if(checkUser && checkUser.length > 0) {
-    error.innerHTML="اسم المستخدم أو البريد الإلكتروني مسجل بالفعل";
-    this.disabled=false; this.innerText="إنشاء حساب";
-    return;
+  try {
+    // ✅ الخطوة 1: التحقق من عدم وجود المستخدم
+    success.innerHTML = "⏳ جاري التحقق من البيانات...";
+    const checkUser = await supabaseApi(`stylek_password?or=(username.ilike.${username},email.ilike.${email})&select=*`);
+    if (checkUser && checkUser.length > 0) {
+      error.innerHTML = "اسم المستخدم أو البريد الإلكتروني مسجل بالفعل";
+      this.disabled = false;
+      this.innerText = "إنشاء حساب";
+      return;
+    }
+
+    // ✅ الخطوة 2: الحفظ في جوجل شيت أولاً (مع التحقق من النجاح)
+    success.innerHTML = "⏳ جاري الحفظ في جوجل شيت...";
+    const googleResult = await sendToGoogleSheet("signup", { 
+      name, username, email, password, role: type, whatsapp 
+    });
+    
+    // ✅ التحقق من نجاح جوجل شيت
+    if (!googleResult || googleResult.status !== 'success') {
+      throw new Error("❌ فشل الحفظ في جوجل شيت، تم إلغاء العملية");
+    }
+    
+    success.innerHTML = "✅ تم الحفظ في جوجل شيت بنجاح!";
+
+    // ✅ الخطوة 3: الحفظ في Supabase (بعد نجاح جوجل شيت)
+    success.innerHTML = "⏳ جاري الحفظ في قاعدة البيانات...";
+    const newUser = {
+      username: username,
+      password: password,
+      email: email,
+      role: type,
+      name: name,
+      whatsapp: whatsapp
+    };
+    await saveToSupabase('stylek_password', newUser);
+    
+    success.innerHTML = "✅ تم الحفظ في قاعدة البيانات بنجاح!";
+
+    // ✅ تم بنجاح
+    success.innerHTML = "✅ تم إنشاء الحساب بنجاح! جاري التوجيه...";
+    document.getElementById("name").value = "";
+    document.getElementById("username").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("type").value = "";
+    document.getElementById("whatsapp").value = "";
+
+    setTimeout(() => {
+      showPage('loginPage');
+      document.getElementById('loginEmail').value = email;
+    }, 2000);
+
+  } catch (e) {
+    error.innerHTML = "❌ " + e.message;
+    console.error("❌ خطأ:", e);
   }
-
-  // 1. مزامنة البيانات وتوثيقها أولاً في شيت جوجل لجميع المستخدمين
-  await sendToGoogleSheet("signup", { name, username, email, password, role: type });
-
-  // 2. الحفظ الفعلي والنهائي داخل جدول stylek_password في قاعدة البيانات
-  const newUser = {
-    username: username,
-    password: password,
-    email: email,
-    role: type,
-    name: name
-  };
-
-  await supabaseApi('stylek_password', {
-    method: 'POST',
-    body: JSON.stringify(newUser)
-  });
-
-  success.innerHTML="تم إنشاء الحساب ومزامنته بنجاح! جاري التوجيه... ✅";
-  document.getElementById("name").value="";
-  document.getElementById("username").value="";
-  document.getElementById("email").value="";
-  document.getElementById("password").value="";
-  document.getElementById("type").value="";
-  
-  setTimeout(() => {
-    showPage('loginPage');
-    document.getElementById('loginEmail').value = email;
-  }, 2000);
-
-} catch(e) {
-  error.innerHTML="خطأ: " + e.message;
-}
-this.disabled=false; this.innerText="إنشاء حساب";
+  this.disabled = false;
+  this.innerText = "إنشاء حساب";
 };
 
-// ===== تسجيل الدخول عبر الإيميل =====
-document.getElementById("login").onclick=async function(){
-let email=document.getElementById("loginEmail").value.trim().toLowerCase();
-let password=document.getElementById('loginPassword').value;
-let error=document.getElementById("loginError");
-error.innerHTML="";
+// =============================================
+// 🔥 تسجيل الدخول
+// =============================================
+document.getElementById("login").onclick = async function() {
+  let email = document.getElementById("loginEmail").value.trim().toLowerCase();
+  let password = document.getElementById('loginPassword').value;
+  let error = document.getElementById("loginError");
+  error.innerHTML = "";
 
-if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length<3){error.innerHTML="اكتب بيانات البريد وكلمة السر بشكل صحيح";return;}
-
-this.disabled=true; this.innerText="جاري الدخول...";
-
-try {
-  const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
-  
-  if(!users || users.length === 0) {
-    error.innerHTML="البريد الإلكتروني غير مسجل لدينا";
-    this.disabled=false; this.innerText="دخول";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 3) {
+    error.innerHTML = "اكتب بيانات البريد وكلمة السر بشكل صحيح";
     return;
   }
 
-  const user = users[0];
-  
-  if(user.password !== password) {
-    error.innerHTML="كلمة المرور غير صحيحة";
-    this.disabled=false; this.innerText="دخول";
-    return;
+  this.disabled = true;
+  this.innerText = "جاري الدخول...";
+
+  try {
+    const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
+
+    if (!users || users.length === 0) {
+      error.innerHTML = "البريد الإلكتروني غير مسجل لدينا";
+      this.disabled = false;
+      this.innerText = "دخول";
+      return;
+    }
+
+    const user = users[0];
+
+    if (user.password !== password) {
+      error.innerHTML = "كلمة المرور غير صحيحة";
+      this.disabled = false;
+      this.innerText = "دخول";
+      return;
+    }
+
+    // تسجيل دخول في جوجل شيت (بدون انتظار عشان ما يوقفش العملية)
+    try {
+      await sendToGoogleSheet("login_success", { 
+        name: user.name, 
+        username: user.username, 
+        email: user.email, 
+        role: user.role 
+      });
+    } catch(e) {
+      console.warn("⚠️ فشل تسجيل الدخول في جوجل شيت:", e);
+    }
+
+    const userType = user.role || 'مسوق';
+    sessionStorage.setItem('username', user.username);
+    sessionStorage.setItem('userType', userType);
+    sessionStorage.setItem('userName', user.name || user.username);
+    localStorage.setItem('username', user.username);
+    localStorage.setItem('userType', userType);
+    localStorage.setItem('userName', user.name || user.username);
+
+    if (userType === 'تاجر') {
+      window.location.href = 'data_page.html?user=' + encodeURIComponent(user.username);
+    } else {
+      window.location.href = 'displayed_products.html?user=' + encodeURIComponent(user.username);
+    }
+
+  } catch (e) {
+    error.innerHTML = "خطأ في الاتصال: " + e.message;
   }
-
-  // توثيق وإرسال حركة تسجيل الدخول الناجحة لشيت المراقبة مع جلب بيانات الاسم والصلاحية
-  await sendToGoogleSheet("login_success", { name: user.name, username: user.username, email: user.email, role: user.role });
-
-  const userType = user.role || 'مسوق';
-  sessionStorage.setItem('username', user.username);
-  sessionStorage.setItem('userType', userType);
-  sessionStorage.setItem('userName', user.name || user.username);
-  localStorage.setItem('username', user.username);
-  localStorage.setItem('userType', userType);
-  localStorage.setItem('userName', user.name || user.username);
-
-  if(userType === 'تاجر'){
-    window.location.href = 'data_page.html?user=' + encodeURIComponent(user.username);
-  } else {
-    window.location.href = 'displayed_products.html?user=' + encodeURIComponent(user.username);
-  }
-
-} catch(e) {
-  error.innerHTML="خطأ في الاتصال: " + e.message;
-}
-this.disabled=false; this.innerText="دخول";
+  this.disabled = false;
+  this.innerText = "دخول";
 };
 
-// ===== استعادة كلمة السر =====
-document.getElementById("sendOtp").onclick=async function(){
-let email=document.getElementById("forgotEmail").value.trim().toLowerCase();
-let error=document.getElementById("forgotError");
-let success=document.getElementById("forgotSuccess");
-error.innerHTML=""; success.innerHTML="";
+// =============================================
+// 🔥 استعادة كلمة السر
+// =============================================
+document.getElementById("sendOtp").onclick = async function() {
+  let email = document.getElementById("forgotEmail").value.trim().toLowerCase();
+  let error = document.getElementById("forgotError");
+  let success = document.getElementById("forgotSuccess");
+  error.innerHTML = "";
+  success.innerHTML = "";
 
-if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error.innerHTML="البريد غير صحيح";return;}
-
-this.disabled=true; this.innerText="جاري توليد الكود...";
-
-try {
-  const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
-  
-  if(!users || users.length === 0) {
-    error.innerHTML="البريد الإلكتروني غير مسجل";
-    this.disabled=false; this.innerText="إرسال الكود";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    error.innerHTML = "البريد غير صحيح";
     return;
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  
-  await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ otp_temp: otp })
-  });
+  this.disabled = true;
+  this.innerText = "جاري توليد الكود...";
 
-  // مزامنة وإرسال كود الـ OTP صامتاً إلى جوجل شيت للتحقق
-  await sendToGoogleSheet("forgot_password_otp", { name: users[0].name, username: users[0].username, email: email, otp: otp });
-  
-  success.innerHTML="تم إرسال كود التحقق الآمن إلى بريدك الإلكتروني بنجاح 📧";
-  document.getElementById("otpBox").style.display="block";
+  try {
+    const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
 
-} catch(e) {
-  error.innerHTML="خطأ: " + e.message;
-}
-this.disabled=false; this.innerText="إرسال الكود";
+    if (!users || users.length === 0) {
+      error.innerHTML = "البريد الإلكتروني غير مسجل";
+      this.disabled = false;
+      this.innerText = "إرسال الكود";
+      return;
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // ✅ حفظ OTP في Supabase
+    await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ otp_temp: otp })
+    });
+
+    // ✅ إرسال OTP إلى جوجل شيت
+    try {
+      await sendToGoogleSheet("forgot_password_otp", { 
+        name: users[0].name, 
+        username: users[0].username, 
+        email: email, 
+        otp: otp 
+      });
+    } catch(e) {
+      console.warn("⚠️ فشل إرسال OTP إلى جوجل شيت:", e);
+    }
+
+    success.innerHTML = "✅ تم إرسال كود التحقق إلى بريدك الإلكتروني 📧";
+    document.getElementById("otpBox").style.display = "block";
+
+  } catch (e) {
+    error.innerHTML = "خطأ: " + e.message;
+  }
+  this.disabled = false;
+  this.innerText = "إرسال الكود";
 };
 
-// ===== تغيير كلمة السر =====
-document.getElementById("resetPass").onclick=async function(){
-let email=document.getElementById("forgotEmail").value.trim().toLowerCase();
-let otp=document.getElementById("otpCode").value.trim();
-let newpass=document.getElementById("newPass").value;
-let error=document.getElementById("forgotError");
-let success=document.getElementById("forgotSuccess");
-error.innerHTML=""; success.innerHTML="";
+// =============================================
+// 🔥 تغيير كلمة السر
+// =============================================
+document.getElementById("resetPass").onclick = async function() {
+  let email = document.getElementById("forgotEmail").value.trim().toLowerCase();
+  let otp = document.getElementById("otpCode").value.trim();
+  let newpass = document.getElementById("newPass").value;
+  let error = document.getElementById("forgotError");
+  let success = document.getElementById("forgotSuccess");
+  error.innerHTML = "";
+  success.innerHTML = "";
 
-if(otp.length<6){error.innerHTML="اكتب الكود كامل";return;}
-if(newpass.length<8){error.innerHTML="كلمة السر 8 أحرف أو أكثر";return;}
+  if (otp.length < 6) { error.innerHTML = "اكتب الكود كامل"; return; }
+  if (newpass.length < 8) { error.innerHTML = "كلمة السر 8 أحرف أو أكثر"; return; }
 
-this.disabled=true; this.innerText="جاري معالجة التحديث...";
+  this.disabled = true;
+  this.innerText = "جاري معالجة التحديث...";
 
-try {
-  const users = await supabaseApi(`stylek_password?email=ilike.${email}&otp_temp=eq.${otp}&select=*`);
-  
-  if(!users || users.length === 0) {
-    error.innerHTML="الكود غير صحيح أو منتهي الصلاحية";
-    this.disabled=false; this.innerText="تغيير كلمة السر";
-    return;
+  try {
+    const users = await supabaseApi(`stylek_password?email=ilike.${email}&otp_temp=eq.${otp}&select=*`);
+
+    if (!users || users.length === 0) {
+      error.innerHTML = "الكود غير صحيح أو منتهي الصلاحية";
+      this.disabled = false;
+      this.innerText = "تغيير كلمة السر";
+      return;
+    }
+
+    // ✅ تحديث كلمة السر في Supabase
+    await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        password: newpass,
+        otp_temp: null
+      })
+    });
+
+    // ✅ توثيق في جوجل شيت
+    try {
+      await sendToGoogleSheet("password_changed_success", {
+        name: users[0].name,
+        username: users[0].username,
+        email: email
+      });
+    } catch(e) {
+      console.warn("⚠️ فشل توثيق تغيير كلمة السر في جوجل شيت:", e);
+    }
+
+    success.innerHTML = "✅ تم تغيير كلمة السر بنجاح!";
+    setTimeout(() => {
+      showPage('loginPage');
+      document.getElementById("loginEmail").value = email;
+    }, 2000);
+
+  } catch (e) {
+    error.innerHTML = "خطأ: " + e.message;
   }
-
-  await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ 
-      password: newpass,
-      otp_temp: null 
-    })
-  });
-
-  // توثيق نجاح العملية في شيت المستخدمين
-  await sendToGoogleSheet("password_changed_success", { name: users[0].name, username: users[0].username, email: email });
-
-  success.innerHTML="تم تغيير كلمة السر بنجاح! ✅";
-  setTimeout(()=>{
-    showPage('loginPage'); 
-    document.getElementById("loginEmail").value=email;
-  }, 2000);
-
-} catch(e) {
-  error.innerHTML="خطأ: " + e.message;
-}
-this.disabled=false; this.innerText="تغيير كلمة السر";
+  this.disabled = false;
+  this.innerText = "تغيير كلمة السر";
 };
 </script>
 </body>
