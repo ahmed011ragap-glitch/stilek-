@@ -83,7 +83,7 @@ button{width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;fo
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
-// 🔥 رابط API الجديد - حط الرابط بتاعك هنا
+// ✅ الرابط الجديد - استبدله بالرابط اللي هتاخده من النشر
 const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbytFnaLoD5kcQiEG9vrZLRwXaM2UmwIe76hpHX0cJRgCzf43OEH1mYDULnYy4KwV2VT/exec';
 
 function togglePass(id,eye){let pass=document.getElementById(id);pass.type=pass.type==="password"?"text":"password";eye.innerHTML=pass.type==="password"?"👁️":"🙈";}
@@ -110,10 +110,12 @@ async function supabaseApi(endpoint, options = {}) {
 }
 
 // =============================================
-// ✅ دالة الإرسال إلى جوجل شيت (مع انتظار الرد والتحقق)
+// ✅ دالة الإرسال إلى جوجل شيت
 // =============================================
 async function sendToGoogleSheet(actionType, payload) {
   try {
+    console.log("📤 جاري الإرسال إلى جوجل شيت:", actionType, payload);
+    
     const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
       method: "POST",
       headers: { 
@@ -123,29 +125,29 @@ async function sendToGoogleSheet(actionType, payload) {
       body: JSON.stringify({ action: actionType, ...payload })
     });
     
-    // ✅ التحقق من استجابة جوجل شيت
+    console.log("📥 استجابة الخادم:", response.status);
+    
     if (!response.ok) {
-      throw new Error(`فشل الحفظ في جوجل شيت: ${response.status}`);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
     const result = await response.json();
-    console.log("✅ تم الإرسال إلى جوجل شيت:", result);
+    console.log("✅ رد جوجل شيت:", result);
     
-    // ✅ التحقق من وجود status success في الرد
     if (result.status !== 'success') {
-      throw new Error('فشل الحفظ في جوجل شيت: ' + (result.message || 'خطأ غير معروف'));
+      throw new Error(result.message || 'فشل الحفظ في جوجل شيت');
     }
     
     return result;
     
   } catch(e) {
-    console.error("❌ فشل إرسال البيانات إلى جوجل شيت:", e);
+    console.error("❌ فشل الإرسال:", e);
     throw new Error(`❌ فشل الحفظ في جوجل شيت: ${e.message}`);
   }
 }
 
 // =============================================
-// ✅ دالة الحفظ في Supabase (مع انتظار الرد)
+// ✅ دالة الحفظ في Supabase
 // =============================================
 async function saveToSupabase(table, data) {
   try {
@@ -174,7 +176,7 @@ window.onload = function() {
 }
 
 // =============================================
-// 🔥 إنشاء حساب جديد (مع التحقق من جوجل شيت أولاً)
+// 🔥 إنشاء حساب جديد
 // =============================================
 document.getElementById("create").onclick = async function() {
   let name = document.getElementById("name").value.trim();
@@ -198,7 +200,7 @@ document.getElementById("create").onclick = async function() {
   this.innerText = "جاري الحفظ والتفعيل...";
 
   try {
-    // ✅ الخطوة 1: التحقق من عدم وجود المستخدم
+    // ✅ التحقق من عدم وجود المستخدم
     success.innerHTML = "⏳ جاري التحقق من البيانات...";
     const checkUser = await supabaseApi(`stylek_password?or=(username.ilike.${username},email.ilike.${email})&select=*`);
     if (checkUser && checkUser.length > 0) {
@@ -208,20 +210,19 @@ document.getElementById("create").onclick = async function() {
       return;
     }
 
-    // ✅ الخطوة 2: الحفظ في جوجل شيت أولاً (مع التحقق من النجاح)
+    // ✅ الحفظ في جوجل شيت أولاً
     success.innerHTML = "⏳ جاري الحفظ في جوجل شيت...";
     const googleResult = await sendToGoogleSheet("signup", { 
       name, username, email, password, role: type, whatsapp 
     });
     
-    // ✅ التحقق من نجاح جوجل شيت
     if (!googleResult || googleResult.status !== 'success') {
-      throw new Error("❌ فشل الحفظ في جوجل شيت، تم إلغاء العملية");
+      throw new Error("فشل الحفظ في جوجل شيت");
     }
     
-    success.innerHTML = "✅ تم الحفظ في جوجل شيت بنجاح!";
+    success.innerHTML = "✅ تم الحفظ في جوجل شيت!";
 
-    // ✅ الخطوة 3: الحفظ في Supabase (بعد نجاح جوجل شيت)
+    // ✅ الحفظ في Supabase
     success.innerHTML = "⏳ جاري الحفظ في قاعدة البيانات...";
     const newUser = {
       username: username,
@@ -233,10 +234,7 @@ document.getElementById("create").onclick = async function() {
     };
     await saveToSupabase('stylek_password', newUser);
     
-    success.innerHTML = "✅ تم الحفظ في قاعدة البيانات بنجاح!";
-
-    // ✅ تم بنجاح
-    success.innerHTML = "✅ تم إنشاء الحساب بنجاح! جاري التوجيه...";
+    success.innerHTML = "✅ تم إنشاء الحساب بنجاح!";
     document.getElementById("name").value = "";
     document.getElementById("username").value = "";
     document.getElementById("email").value = "";
@@ -293,7 +291,7 @@ document.getElementById("login").onclick = async function() {
       return;
     }
 
-    // تسجيل دخول في جوجل شيت (بدون انتظار عشان ما يوقفش العملية)
+    // تسجيل دخول في جوجل شيت
     try {
       await sendToGoogleSheet("login_success", { 
         name: user.name, 
@@ -356,13 +354,11 @@ document.getElementById("sendOtp").onclick = async function() {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // ✅ حفظ OTP في Supabase
     await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
       method: 'PATCH',
       body: JSON.stringify({ otp_temp: otp })
     });
 
-    // ✅ إرسال OTP إلى جوجل شيت
     try {
       await sendToGoogleSheet("forgot_password_otp", { 
         name: users[0].name, 
@@ -412,7 +408,6 @@ document.getElementById("resetPass").onclick = async function() {
       return;
     }
 
-    // ✅ تحديث كلمة السر في Supabase
     await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
       method: 'PATCH',
       body: JSON.stringify({
@@ -421,7 +416,6 @@ document.getElementById("resetPass").onclick = async function() {
       })
     });
 
-    // ✅ توثيق في جوجل شيت
     try {
       await sendToGoogleSheet("password_changed_success", {
         name: users[0].name,
@@ -429,7 +423,7 @@ document.getElementById("resetPass").onclick = async function() {
         email: email
       });
     } catch(e) {
-      console.warn("⚠️ فشل توثيق تغيير كلمة السر في جوجل شيت:", e);
+      console.warn("⚠️ فشل توثيق تغيير كلمة السر:", e);
     }
 
     success.innerHTML = "✅ تم تغيير كلمة السر بنجاح!";
