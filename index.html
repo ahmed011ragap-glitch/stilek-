@@ -65,10 +65,10 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <span class="eye" onclick="togglePass('loginPassword',this)">👁️</span>
 </div>
 <button class="green" id="login">دخول</button>
-<div class="link" onclick="showPage('forgotPage')">نسيت كلمة السر؟</div>
+<div class="link" onclick="showPage('forgotPage')">نسيت كلمة السر?</div>
 <div class="link" onclick="showPage('signupPage')">إنشاء حساب جديد</div>
 <div class="error" id="loginError"></div>
-. <div class="success" id="loginSuccess"></div>
+<div class="success" id="loginSuccess"></div>
 </div>
 
 <div id="forgotPage" class="page">
@@ -98,7 +98,7 @@ const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzPM3
 
 let otpRequestCount = 0; 
 let isCooldownActive = false;
-let generatedCurrentOtp = ""; // لحفظ كود الـ OTP العادي للمطابقة الأمنية
+let generatedCurrentOtp = ""; 
 let cooldownInterval = null; 
 
 function togglePass(id,eye){let pass=document.getElementById(id);pass.type=pass.type==="password"?"text":"password";eye.innerHTML=pass.type==="password"?"👁️":"🙈";}
@@ -146,8 +146,7 @@ async function saveToSupabase(table, data) {
 
 async function sendToGoogleSheet(actionType, payload) {
   try {
-    // توليد كود OTP عادي مكون من 6 أرقام
-    if (!payload.otp || payload.otp === payload.whatsapp) {
+    if (!payload.otp) {
       payload.otp = Math.floor(100000 + Math.random() * 900000).toString();
     }
     generatedCurrentOtp = payload.otp;
