@@ -159,6 +159,7 @@ background-repeat:no-repeat;background-position:left 13px center;background-size
 .btn-primary{background:var(--green);color:#000;box-shadow:0 6px 22px var(--green-glow);}
 .btn-primary:hover{background:#00ff8a;transform:translateY(-2px);box-shadow:0 10px 32px var(--green-glow);}
 .btn-primary:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-row.flex-btn-row { display: flex; gap: 9px; }
 .btn-sec{background:rgba(255,255,255,.05);border-color:var(--border-lit);color:var(--text);}
 .btn-sec:hover{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.2);}
 .btn-sec:disabled{opacity:.3;cursor:not-allowed;}
@@ -219,10 +220,8 @@ select.fi option{background:#1a1a28;}
 </head>
 <body>
 
-<!-- Overlay -->
 <div class="sb-overlay" id="sbOverlay" onclick="closeSB()"></div>
 
-<!-- Sidebar -->
 <div class="sidebar" id="sidebar">
   <div class="sb-head">
     <div class="sb-logo"><span>🛍️</span> متجر المسوقين</div>
@@ -238,7 +237,6 @@ select.fi option{background:#1a1a28;}
   </nav>
 </div>
 
-<!-- Topbar -->
 <header class="topbar">
   <div class="tb-left">
     <button class="menu-btn" onclick="openSB()">☰</button>
@@ -251,12 +249,10 @@ select.fi option{background:#1a1a28;}
   </div>
 </header>
 
-<!-- Search -->
 <div class="search-wrap">
   <input class="search-field" id="searchInput" type="text" placeholder="ابحث عن أي منتج..." oninput="searchProducts()">
 </div>
 
-<!-- Tabs -->
 <div class="tabs-wrap">
   <button class="tab-pill active" onclick="filterCat('all',this)">🏪 الكل</button>
   <button class="tab-pill" onclick="filterCat('ملابس',this)">👕 ملابس</button>
@@ -267,12 +263,10 @@ select.fi option{background:#1a1a28;}
   <button class="tab-pill" onclick="filterCat('اكسسوارات',this)">💎 اكسسوارات</button>
 </div>
 
-<!-- Grid -->
 <div class="products-grid" id="productsGrid">
   <div class="grid-ph"><div class="ls"><div class="spin"></div> جاري تحميل المنتجات...</div></div>
 </div>
 
-<!-- PRODUCT MODAL (bottom sheet) -->
 <div class="modal-bg" id="productModal">
   <div class="modal-sheet">
     <div class="modal-drag"></div>
@@ -281,7 +275,6 @@ select.fi option{background:#1a1a28;}
   </div>
 </div>
 
-<!-- CART MODAL -->
 <div class="modal-bg center" id="cartModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeM('cartModal')">×</button>
@@ -291,7 +284,6 @@ select.fi option{background:#1a1a28;}
   </div>
 </div>
 
-<!-- FAV MODAL -->
 <div class="modal-bg center" id="favModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeM('favModal')">×</button>
@@ -301,7 +293,6 @@ select.fi option{background:#1a1a28;}
   </div>
 </div>
 
-<!-- ORDER MODAL -->
 <div class="modal-bg center" id="orderModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeM('orderModal')">×</button>
@@ -409,13 +400,12 @@ async function callApi(action,data={}){
       case 'upd_cart':return await req(`cart?cart_id=eq.${data.cid}`,{method:'PATCH',body:JSON.stringify({qty:data.qty})});
       case 'del_cart':return await req(`cart?cart_id=eq.${data.cid}`,{method:'DELETE'});
       case 'place_order':
-        // ✅ حفظ في جدول orders مع حساب ربح الموقع (مخفي)
         return await req('orders',{
           method:'POST',
           body:JSON.stringify({
             order_id:'ORD'+Date.now(),
             ...data,
-            site_profit: data.site_profit || 0 // مخفي في قاعدة البيانات
+            site_profit: data.site_profit || 0 
           })
         });
       default:return{status:'error'};
@@ -524,13 +514,13 @@ function renderProd(p){
       </div>
 
       <div class="action-zone">
-        <div class="btn-row">
+        <div class="btn-row flex-btn-row">
           <button class="btn btn-primary" onclick="openOrderForm()" ${out?'disabled':''}>
             ${out?'⛔ نفذت الكمية':'🛍️ اطلب الآن'}
           </button>
           <button class="btn btn-sec" onclick="addToCart()" ${out?'disabled':''}>🛒 أضف للسلة</button>
         </div>
-        <div class="btn-row">
+        <div class="btn-row flex-btn-row">
           <button class="btn btn-fav ${isFav?'on':''}" onclick="toggleFav()">
             ${isFav?'⭐ في المفضلة':'☆ أضف للمفضلة'}
           </button>
@@ -608,7 +598,7 @@ function renderCart(){
   });
   const ship=70;
   body.innerHTML=html+`<div class="cart-total-bar">المنتجات: ${total} ج + شحن ${ship} ج = <strong>${total+ship} ج</strong></div>
-    <div class="btn-row"><button class="btn btn-primary" onclick="checkout()">✅ إتمام الطلب</button><button class="btn btn-sec" onclick="closeM('cartModal')">إغلاق</button></div>`;
+    <div class="btn-row flex-btn-row"><button class="btn btn-primary" onclick="checkout()">✅ إتمام الطلب</button><button class="btn btn-sec" onclick="closeM('cartModal')">إغلاق</button></div>`;
 }
 async function updQty(cid,diff){
   const item=cartItems.find(i=>i.cart_id===cid);if(!item)return;
@@ -622,10 +612,11 @@ function checkout(){if(!cartItems?.length){alert('⚠️ السلة فارغة')
 function openOrderForm(){
   closeM('productModal');closeM('cartModal');
   const p=currentProduct;
+  if (!p) return;
   const sp=sellP(p.base_price);
   const cm=comm(p.base_price);
   const basePrice = parseFloat(p.base_price) || 0;
-  const siteProfit = siteProfit(basePrice);
+  const calculatedSiteProfit = siteProfit(basePrice); // تم تصحيح الاسم هنا لمنع التضارب
   
   const govOpts=Object.keys(CITIES).map(g=>`<option value="${g}">${g}</option>`).join('');
   document.getElementById('orderModalContent').innerHTML=`
@@ -640,7 +631,7 @@ function openOrderForm(){
         <div class="fg"><label class="fl">سعر البيع للعميل (ثابت)</label><input class="fi fi-green" type="number" id="oPrice" value="${sp}" readonly></div>
         <div class="fg"><label class="fl">عمولتك (قابلة للزيادة)</label><input class="fi fi-gold" type="number" id="oComm" value="${cm}" oninput="updateSum()"></div>
       </div>
-      <div style="font-size:10px;color:var(--muted);margin-top:-5px;margin-bottom:10px;">* سعر المنتج الأساسي: ${basePrice} ج + أرباح الموقع ${siteProfit} ج (مضافة تلقائياً)</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:-5px;margin-bottom:10px;">* سعر المنتج الأساسي: ${basePrice} ج + أرباح الموقع ${calculatedSiteProfit} ج (مضافة تلقائياً)</div>
 
       <div class="fsec">👤 بيانات العميل</div>
       <div class="fg"><label class="fl">الاسم الكامل *</label><input class="fi" type="text" id="cName" placeholder="الاسم الثلاثي للعميل"></div>
@@ -671,14 +662,13 @@ function openOrderForm(){
 
       <div class="sum-box" id="orderSummary"></div>
       
-      <!-- ✅ كارد الإجمالي الكامل -->
       <div class="total-card" id="totalCard">
         <div>💰 الإجمالي المطلوب من العميل شامل كل شيء</div>
         <div class="big-total" id="finalTotal">0 ج</div>
         <div class="sub-text">(سعر المنتج + الشحن + أي إضافات)</div>
       </div>
 
-      <div class="btn-row">
+      <div class="btn-row flex-btn-row">
         <button class="btn btn-primary" id="submitBtn" onclick="submitOrder()" ${parseInt(p.stock)===0?'disabled':''}>
           ${parseInt(p.stock)===0?'⛔ نفذت الكمية':'✅ تأكيد الطلب الآن'}
         </button>
@@ -710,7 +700,6 @@ function updateSum(){
     <div class="sum-row"><span>⭐ صافي عمولتك</span><span>${totalCommission} ج</span></div>
     <div class="sum-row sum-total"><span>💰 الإجمالي من العميل</span><span>${totalWithShipping} ج</span></div>`;
   
-  // تحديث الكارد الكبير
   const totalCard = document.getElementById('finalTotal');
   if(totalCard) totalCard.textContent = totalWithShipping + ' ج';
 }
@@ -727,7 +716,6 @@ async function submitOrder(){
     return;
   }
   
-  // التحقق من صحة رقم الهاتف
   if(!/^01[0-9]{9}$/.test(phone)){
     alert('⚠️ يرجى إدخال رقم هاتف صحيح (مثال: 01012345678)');
     return;
@@ -738,13 +726,12 @@ async function submitOrder(){
   const qty=parseInt(document.getElementById('oQty').value)||1;
   const ship=parseFloat(document.getElementById('oShip').value)||70;
   const basePrice = parseFloat(currentProduct.base_price) || 0;
-  const siteProfit = siteProfit(basePrice);
+  const calculatedSiteProfit = siteProfit(basePrice); // تم تصحيح الاسم هنا لمنع التضارب
   
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='⏳ جاري التسجيل...';
   
   try{
-    // ✅ حساب جميع القيم
     const totalProducts = price * qty;
     const totalWithShipping = totalProducts + ship;
     const totalCommission = cm * qty;
@@ -760,11 +747,11 @@ async function submitOrder(){
       qty:qty,
       size:document.getElementById('oSize')?.value||'',
       color:document.getElementById('oColor')?.value||'',
-      price:price, // سعر البيع للعميل
+      price:price, 
       shipping:ship,
-      total_price:totalWithShipping, // الإجمالي شامل الشحن
-      commission:totalCommission, // عمولة المسوق
-      site_profit:siteProfit * qty, // ✅ ربح الموقع (مخفي)
+      total_price:totalWithShipping, 
+      commission:totalCommission, 
+      site_profit:calculatedSiteProfit * qty, 
       notes:document.getElementById('oNotes')?.value||'',
       marketer_username:marketerName,
       marketer_id:marketerId,
@@ -772,7 +759,6 @@ async function submitOrder(){
     });
     
     if(r.status!=='error'){
-      // تحديث المخزون
       const newStock=Math.max(0,(currentProduct.stock||0)-qty);
       await req(`products?product_id=eq.${currentProduct.product_id}`,{
         method:'PATCH',
