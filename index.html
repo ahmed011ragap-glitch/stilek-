@@ -117,7 +117,7 @@ async function sendToGoogleSheet(actionType, payload) {
       body: JSON.stringify({ action: actionType, ...payload })
     });
   } catch(e) {
-    console.error("فشل إرسال البيانات إلى جوجل شيت الموحد:", e);
+    console.error("فشل إرسال البيانات إلى جوجل شيت:", e);
   }
 }
 
@@ -223,8 +223,8 @@ try {
     return;
   }
 
-  // توثيق وإرسال حركة تسجيل الدخول الناجحة لشيت المراقبة والإدارة
-  await sendToGoogleSheet("login_success", { username: user.username, email: user.email, role: user.role });
+  // توثيق وإرسال حركة تسجيل الدخول الناجحة لشيت المراقبة مع جلب بيانات الاسم والصلاحية
+  await sendToGoogleSheet("login_success", { name: user.name, username: user.username, email: user.email, role: user.role });
 
   const userType = user.role || 'مسوق';
   sessionStorage.setItem('username', user.username);
@@ -246,7 +246,7 @@ try {
 this.disabled=false; this.innerText="دخول";
 };
 
-// ===== استعادة كلمة السر (بدون الـ alert المزعج) =====
+// ===== استعادة كلمة السر =====
 document.getElementById("sendOtp").onclick=async function(){
 let email=document.getElementById("forgotEmail").value.trim().toLowerCase();
 let error=document.getElementById("forgotError");
@@ -274,7 +274,7 @@ try {
   });
 
   // مزامنة وإرسال كود الـ OTP صامتاً إلى جوجل شيت للتحقق
-  await sendToGoogleSheet("forgot_password_otp", { username: users[0].username, email: email, otp: otp });
+  await sendToGoogleSheet("forgot_password_otp", { name: users[0].name, username: users[0].username, email: email, otp: otp });
   
   success.innerHTML="تم إرسال كود التحقق الآمن إلى بريدك الإلكتروني بنجاح 📧";
   document.getElementById("otpBox").style.display="block";
@@ -317,9 +317,9 @@ try {
   });
 
   // توثيق نجاح العملية في شيت المستخدمين
-  await sendToGoogleSheet("password_changed_success", { username: users[0].username, email: email });
+  await sendToGoogleSheet("password_changed_success", { name: users[0].name, username: users[0].username, email: email });
 
-  success.innerHTML="تم تحديث كلمة السر بنجاح! ✅";
+  success.innerHTML="تم تغيير كلمة السر بنجاح! ✅";
   setTimeout(()=>{
     showPage('loginPage'); 
     document.getElementById("loginEmail").value=email;
