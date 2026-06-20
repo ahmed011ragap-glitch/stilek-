@@ -441,6 +441,7 @@ const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const urlParams = new URLSearchParams(window.location.search);
 let currentUserVar = (urlParams.get('user') || localStorage.getItem('username') || '').toLowerCase().trim();
 let allOrders = [];
+let allProducts = [];
 let currentFilter = 'all';
 let currentSearch = '';
 
@@ -457,7 +458,6 @@ const STATUS_STAGES = {
 // حالات الطلب المكتملة (للإحصائيات والتصفية)
 const COMPLETED_STATUSES = ['completed', 'تم التسليم', 'تم التوصيل'];
 const RETURNED_STATUSES = ['returned', 'مرتجع', 'مرفوض', 'cancelled'];
-const PENDING_STATUSES = ['pending', 'جديد', 'packing', 'تغليف', 'shipping', 'توصيل', 'received', 'تم الاستلام'];
 
 // ===== تهيئة الصفحة =====
 window.onload = function() {
@@ -502,13 +502,34 @@ async function loadOrders() {
   document.getElementById('userName').innerText = username;
   
   document.getElementById('loading').style.display = 'block';
-  document.getElementById('loading').innerHTML = '⏳ جاري تحميل طلبات منتجاتك...';
+  document.getElementById('loading').innerHTML = '⏳ جاري تحميل الطلبات...';
   
   try {
-    // استعلام دقيق: جلب الطلبات التي تحتوي على منتجات هذا المورد فقط
-    // باستخدام inner join مع جدول المنتجات وفلترة باسم المورد
-    const query = `orders?select=*,products!inner(*)&products.username=eq.${username}&order=created_at.desc`;
-    const orders = await supabaseApi(query);
+    // الخطوة 1: جلب جميع منتجات هذا المورد
+    const products = await supabaseApi(`products?username=eq.${username}&select=product_id,name,base_price,image_url`);
+    allProducts = products || [];
+    
+    if (allProducts.length === 0) {
+      document.getElementById('loading').innerHTML = '📭 لا توجد منتجات';
+      document.getElementById('ordersList').innerHTML = `
+        <div class="empty-orders">
+          <div class="empty-state-icon">📦</div>
+          <div>لا توجد منتجات مسجلة لهذا المورد</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;">أضف منتجاتك أولاً لتظهر طلباتها هنا</div>
+        </div>
+      `;
+      allOrders = [];
+      updateStats();
+      return;
+    }
+    
+    // استخراج معرفات المنتجات (product_id)
+    const productIds = allProducts.map(p => p.product_id);
+    
+    // الخطوة 2: جلب الطلبات التي تحتوي على هذه المنتجات فقط
+    // استخدام filter على product_id
+    const productFilter = productIds.map(id => `product_id.eq.${id}`).join(',');
+    const orders = await supabaseApi(`orders?or=(${productFilter})&order=created_at.desc`);
     
     if (!orders || orders.length === 0) {
       document.getElementById('loading').innerHTML = '📭 لا توجد طلبات';
@@ -524,10 +545,15 @@ async function loadOrders() {
       return;
     }
     
-    // معالجة البيانات وتوحيدها مع معلومات المنتج من جدول products
+    // الخطوة 3: ربط الطلبات بمعلومات المنتج من جدول products
+    // إنشاء خريطة (Map) للمنتجات للوصول السريع
+    const productsMap = {};
+    allProducts.forEach(p => {
+      productsMap[p.product_id] = p;
+    });
+    
     allOrders = orders.map(order => {
-      // استخراج بيانات المنتج من الجدول المرتبط
-      const product = order.products || {};
+      const product = productsMap[order.product_id] || {};
       
       return {
         ...order,
@@ -535,7 +561,6 @@ async function loadOrders() {
         product_name: product.name || 'منتج غير معروف',
         image_url: product.image_url || '',
         product_price: product.base_price || order.price || 0,
-        product_stock: product.stock || 0,
         // الاحتفاظ بالبيانات الأصلية للطلب
         order_qty: order.qty || 1,
         order_price: order.price || 0,
