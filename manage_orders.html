@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>طلبات منتجاتي - المورد</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght=400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0a;
@@ -331,6 +331,30 @@ body {
 
 .loading { text-align: center; padding: 50px; color: var(--muted); font-size: 16px; }
 .empty-orders { text-align: center; padding: 50px; color: var(--muted); }
+
+/* ===== تحسينات إضافية ===== */
+.supplier-product-tag {
+  display: inline-block;
+  background: #1a2a1a;
+  color: var(--green);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  border: 1px solid var(--green);
+  margin-right: 8px;
+}
+
+.order-count-badge {
+  background: var(--green);
+  color: #000;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.empty-state-icon { font-size: 48px; margin-bottom: 15px; }
 </style>
 </head>
 <body>
@@ -376,7 +400,7 @@ body {
 </div>
 
 <div class="header">
-  <h2 id="pageTitle">📋 طلبات منتجاتي</h2>
+  <h2 id="pageTitle">📋 طلبات منتجاتي <span id="orderCount" class="order-count-badge">0</span></h2>
   <input type="text" class="search-box" id="searchInput" placeholder="🔍 ابحث باسم العميل، رقم الهاتف أو كود الأوردر..." onkeyup="filterOrders()">
 </div>
 
@@ -420,9 +444,20 @@ let allOrders = [];
 let currentFilter = 'all';
 let currentSearch = '';
 
+// تعريف شامل للحالات مع المرادفات العربية والإنجليزية
 const STATUS_STAGES = {
-  'جديد': 0, 'تغليف': 1, 'توصيل': 2, 'تم الاستلام': 3, 'تم التسليم': 4, 'تم التوصيل': 4, 'مرتجع': -1, 'مرفوض': -1
+  'pending': 0, 'جديد': 0, 
+  'packing': 1, 'تغليف': 1, 
+  'shipping': 2, 'توصيل': 2, 
+  'received': 3, 'تم الاستلام': 3, 
+  'completed': 4, 'تم التسليم': 4, 'تم التوصيل': 4, 
+  'returned': -1, 'مرتجع': -1, 'مرفوض': -1, 'cancelled': -1
 };
+
+// حالات الطلب المكتملة (للإحصائيات والتصفية)
+const COMPLETED_STATUSES = ['completed', 'تم التسليم', 'تم التوصيل'];
+const RETURNED_STATUSES = ['returned', 'مرتجع', 'مرفوض', 'cancelled'];
+const PENDING_STATUSES = ['pending', 'جديد', 'packing', 'تغليف', 'shipping', 'توصيل', 'received', 'تم الاستلام'];
 
 // ===== تهيئة الصفحة =====
 window.onload = function() {
@@ -432,6 +467,7 @@ window.onload = function() {
   document.getElementById('userCode').innerText = currentUserVar || 'غير محدد';
   document.getElementById('userName').innerText = currentUserVar || 'غير محدد';
   loadOrders();
+  // تحديث الطلبات كل 30 ثانية
   setInterval(loadOrders, 30000);
 }
 
@@ -449,7 +485,7 @@ async function supabaseApi(endpoint, options = {}) {
   return await response.json();
 }
 
-// ===== الوظيفة الأساسية المعدلة: جلب البيانات من جدول orders مباشرة =====
+// ===== الوظيفة الأساسية - جلب طلبات المنتجات الخاصة بالمورد فقط =====
 async function loadOrders() {
   const input = document.getElementById('usernameInput');
   let username = input.value.trim().toLowerCase();
@@ -466,29 +502,45 @@ async function loadOrders() {
   document.getElementById('userName').innerText = username;
   
   document.getElementById('loading').style.display = 'block';
-  document.getElementById('loading').innerHTML = '⏳ جاري تحميل الطلبات من جدول orders...';
+  document.getElementById('loading').innerHTML = '⏳ جاري تحميل طلبات منتجاتك...';
   
   try {
-    // جلب البيانات من جدول orders بناءً على حقل الـ marketer_username
-    // ملاحظة: إذا كان هناك عمود آخر مخصص لاسم المورد مثل supplier_username يرجى كتابته بدلاً من marketer_username
-    const orders = await supabaseApi(`orders?marketer_username=ilike.${username}&select=*`);
+    // استعلام دقيق: جلب الطلبات التي تحتوي على منتجات هذا المورد فقط
+    // باستخدام inner join مع جدول المنتجات وفلترة باسم المورد
+    const query = `orders?select=*,products!inner(*)&products.username=eq.${username}&order=created_at.desc`;
+    const orders = await supabaseApi(query);
     
     if (!orders || orders.length === 0) {
-      document.getElementById('loading').innerHTML = '📭 لا توجد طلبات في الجدول';
-      document.getElementById('ordersList').innerHTML = '<div class="empty-orders">📭 لا توجد طلبات مسجلة لهذا المستخدم</div>';
+      document.getElementById('loading').innerHTML = '📭 لا توجد طلبات';
+      document.getElementById('ordersList').innerHTML = `
+        <div class="empty-orders">
+          <div class="empty-state-icon">📭</div>
+          <div>لا توجد طلبات لمنتجاتك حتى الآن</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;">سيظهر هنا طلبات العملاء التي تحتوي على منتجاتك</div>
+        </div>
+      `;
       allOrders = [];
       updateStats();
       return;
     }
     
-    // إعادة تهيئة مصفوفة البيانات ومطابقتها مع واجهة العرض بناءً على الأعمدة الموضحة بالصور (price, qty)
+    // معالجة البيانات وتوحيدها مع معلومات المنتج من جدول products
     allOrders = orders.map(order => {
+      // استخراج بيانات المنتج من الجدول المرتبط
+      const product = order.products || {};
+      
       return {
         ...order,
-        product_name: order.product_name || "منتج",
-        product_price: order.price || 0, // عمود price الرقمي الموضح بالصورة
-        product_quantity: order.qty || 1, // عمود qty الموضح بالصورة
-        order_status: order.order_status || "جديد"
+        // بيانات المنتج من جدول products (مصدر موثوق)
+        product_name: product.name || 'منتج غير معروف',
+        image_url: product.image_url || '',
+        product_price: product.base_price || order.price || 0,
+        product_stock: product.stock || 0,
+        // الاحتفاظ بالبيانات الأصلية للطلب
+        order_qty: order.qty || 1,
+        order_price: order.price || 0,
+        // التأكد من وجود order_status
+        order_status: order.order_status || 'pending'
       };
     });
     
@@ -499,24 +551,47 @@ async function loadOrders() {
     
   } catch(err) {
     console.error('❌ خطأ في التحميل:', err);
-    document.getElementById('loading').innerHTML = '❌ خطأ في التحميل من جدول orders: ' + err.message;
+    document.getElementById('loading').innerHTML = '❌ خطأ في التحميل: ' + err.message;
+    document.getElementById('ordersList').innerHTML = `
+      <div class="empty-orders">
+        <div style="color:var(--red);font-size:20px;">⚠️</div>
+        <div>حدث خطأ أثناء تحميل الطلبات</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;">${err.message}</div>
+      </div>
+    `;
   }
 }
 
+// ===== تحديث الإحصائيات =====
 function updateStats() {
   const total = allOrders.length;
-  const pending = allOrders.filter(o => o.order_status !== 'تم التسليم' && o.order_status !== 'تم التوصيل' && o.order_status !== 'مرتجع' && o.order_status !== 'مرفوض').length;
-  const completed = allOrders.filter(o => o.order_status === 'تم التسليم' || o.order_status === 'تم التوصيل').length;
+  
+  // الطلبات قيد التنفيذ (غير مكتملة وغير مرتجعة)
+  const pending = allOrders.filter(o => 
+    !COMPLETED_STATUSES.includes(o.order_status) && 
+    !RETURNED_STATUSES.includes(o.order_status)
+  ).length;
+  
+  // الطلبات المكتملة
+  const completed = allOrders.filter(o => 
+    COMPLETED_STATUSES.includes(o.order_status)
+  ).length;
+  
+  // إجمالي المبيعات (الطلبات المكتملة فقط)
   const totalSales = allOrders
-    .filter(o => o.order_status === 'تم التسليم' || o.order_status === 'تم التوصيل')
-    .reduce((sum, o) => sum + (parseFloat(o.product_price) || 0) * (parseInt(o.product_quantity) || 1), 0);
+    .filter(o => COMPLETED_STATUSES.includes(o.order_status))
+    .reduce((sum, o) => sum + (parseFloat(o.product_price) || 0) * (parseInt(o.order_qty) || 1), 0);
   
   document.getElementById('statTotal').innerText = total;
   document.getElementById('statPending').innerText = pending;
   document.getElementById('statCompleted').innerText = completed;
   document.getElementById('statCommission').innerText = totalSales.toFixed(2);
+  
+  // تحديث عدد الطلبات في الهيدر
+  document.getElementById('orderCount').innerText = total;
 }
 
+// ===== دوال التصفية والعرض =====
 function setFilter(filter) {
   currentFilter = filter;
   document.querySelectorAll('.filter-tab').forEach(tab => {
@@ -534,33 +609,52 @@ function filterOrders() {
 function filterAndDisplay() {
   let filtered = [...allOrders];
   
+  // تصفية حسب الحالة
   if(currentFilter === 'pending') {
-    filtered = filtered.filter(o => o.order_status !== 'تم التسليم' && o.order_status !== 'تم التوصيل' && o.order_status !== 'مرتجع' && o.order_status !== 'مرفوض');
+    filtered = filtered.filter(o => !COMPLETED_STATUSES.includes(o.order_status) && !RETURNED_STATUSES.includes(o.order_status));
   } else if(currentFilter === 'completed') {
-    filtered = filtered.filter(o => o.order_status === 'تم التسليم' || o.order_status === 'تم التوصيل');
+    filtered = filtered.filter(o => COMPLETED_STATUSES.includes(o.order_status));
   } else if(currentFilter === 'returned') {
-    filtered = filtered.filter(o => o.order_status === 'مرتجع' || o.order_status === 'مرفوض');
+    filtered = filtered.filter(o => RETURNED_STATUSES.includes(o.order_status));
   }
   
+  // تصفية حسب البحث
   if(currentSearch) {
     filtered = filtered.filter(o => 
       (o.customer_name || '').toLowerCase().includes(currentSearch) ||
       (o.phone || '').includes(currentSearch) ||
       (o.order_id || '').toLowerCase().includes(currentSearch) ||
-      (o.product_name || '').toLowerCase().includes(currentSearch)
+      (o.product_name || '').toLowerCase().includes(currentSearch) ||
+      (o.marketer_username || '').toLowerCase().includes(currentSearch)
     );
   }
   
   displayOrders(filtered);
 }
 
+// ===== دوال مساعدة للعرض =====
 function getStatusClass(status) {
   const classes = {
-    'جديد': 'status-new', 'تغليف': 'status-packing', 'توصيل': 'status-delivery',
-    'تم الاستلام': 'status-received', 'تم التسليم': 'status-completed', 'تم التوصيل': 'status-completed',
-    'مرتجع': 'status-returned', 'مرفوض': 'status-returned'
+    'pending': 'status-new', 'جديد': 'status-new', 
+    'packing': 'status-packing', 'تغليف': 'status-packing', 
+    'shipping': 'status-delivery', 'توصيل': 'status-delivery',
+    'received': 'status-received', 'تم الاستلام': 'status-received', 
+    'completed': 'status-completed', 'تم التسليم': 'status-completed', 'تم التوصيل': 'status-completed',
+    'returned': 'status-returned', 'مرتجع': 'status-returned', 'مرفوض': 'status-returned', 'cancelled': 'status-returned'
   };
   return classes[status] || 'status-new';
+}
+
+function getStatusArabicLabel(status) {
+  const labels = {
+    'pending': 'جديد', 'جديد': 'جديد',
+    'packing': 'تغليف', 'تغليف': 'تغليف',
+    'shipping': 'توصيل', 'توصيل': 'توصيل',
+    'received': 'تم الاستلام', 'تم الاستلام': 'تم الاستلام',
+    'completed': 'مكتمل', 'تم التسليم': 'مكتمل', 'تم التوصيل': 'مكتمل',
+    'returned': 'مرتجع', 'مرتجع': 'مرتجع', 'مرفوض': 'مرفوض', 'cancelled': 'ملغي'
+  };
+  return labels[status] || status;
 }
 
 function getProgressWidth(stage) {
@@ -568,8 +662,13 @@ function getProgressWidth(stage) {
   return (stage / 4) * 100 + '%';
 }
 
+function isOrderFinished(status) {
+  return COMPLETED_STATUSES.includes(status) || RETURNED_STATUSES.includes(status);
+}
+
+// ===== تحديث حالة الطلب =====
 async function updateStatus(orderId, newStatus) {
-  if(newStatus === 'مرتجع' && !confirm('⚠️ هل أنت متأكد من إرجاع هذا الطلب؟')) return;
+  if(RETURNED_STATUSES.includes(newStatus) && !confirm('⚠️ هل أنت متأكد من إرجاع هذا الطلب؟')) return;
   
   try {
     await supabaseApi(`orders?order_id=eq.${orderId}`, {
@@ -587,44 +686,55 @@ async function updateStatus(orderId, newStatus) {
   }
 }
 
+// ===== عرض الطلبات في واجهة المستخدم =====
 function displayOrders(orders) {
   const container = document.getElementById('ordersList');
   document.getElementById('loading').style.display = 'none';
   
   if(!orders || orders.length === 0) {
-    container.innerHTML = '<div class="empty-orders">📭 لا توجد طلبات مطابقة للبحث</div>';
+    container.innerHTML = `
+      <div class="empty-orders">
+        <div class="empty-state-icon">🔍</div>
+        <div>لا توجد طلبات مطابقة للبحث</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;">جرب تغيير كلمات البحث أو الفلتر</div>
+      </div>
+    `;
     return;
   }
   
   let html = '';
   orders.forEach(order => {
-    const stage = STATUS_STAGES[order.order_status] || 0;
+    const stage = STATUS_STAGES[order.order_status] !== undefined ? STATUS_STAGES[order.order_status] : 0;
     const progressWidth = getProgressWidth(stage);
     const statusClass = getStatusClass(order.order_status);
-    const isFinished = order.order_status === 'تم التسليم' || order.order_status === 'تم التوصيل' || order.order_status === 'مرتجع' || order.order_status === 'مرفوض';
+    const isFinished = isOrderFinished(order.order_status);
     
     const imgUrl = order.image_url || 'https://placehold.co/60x60/1a1a1a/444?text=Stylek';
     const productName = order.product_name;
     const productPrice = parseFloat(order.product_price) || 0;
-    const qty = parseInt(order.product_quantity) || 1;
+    const qty = parseInt(order.order_qty) || 1;
     const totalPrice = productPrice * qty;
     
     html += `
       <div class="order-card">
         <div class="order-header">
           <div>
-            <h4>👤 العميل: ${order.customer_name || 'غير مسجل'}</h4>
+            <h4>👤 ${order.customer_name || 'عميل غير مسجل'}</h4>
             <div class="order-id">🆔 كود الطلب: ${order.order_id || '-'}</div>
-            <div class="order-id" style="color:var(--blue);font-size:12px;">📦 المنتج: ${productName}</div>
+            <div class="order-id" style="color:var(--blue);font-size:12px;">
+              📦 ${productName}
+              <span class="supplier-product-tag">🏷️ منتجك</span>
+            </div>
           </div>
           <div style="text-align:left">
-            <span class="status-badge ${statusClass}">${order.order_status || 'جديد'}</span>
+            <span class="status-badge ${statusClass}">${getStatusArabicLabel(order.order_status)}</span>
             <div class="order-date">📅 ${order.created_at ? new Date(order.created_at).toLocaleDateString('ar-EG') : '-'}</div>
           </div>
         </div>
         
         <div class="customer-details">
           <div>📞 رقم الهاتف: ${order.phone || '-'}</div>
+          ${order.phone2 ? `<div>📞 رقم الهاتف الثاني: ${order.phone2}</div>` : ''}
           <div>📍 العنوان: ${order.governorate || ''}، ${order.city || ''}، ${order.address || ''}</div>
           <div>📝 ملاحظات: ${order.notes || 'لا توجد'}</div>
         </div>
@@ -663,9 +773,12 @@ function displayOrders(orders) {
         </div>
         
         <div class="status-controls">
-          ${order.order_status === 'توصيل' ? `<button class="status-btn btn-received" onclick="updateStatus('${order.order_id}', 'تم الاستلام')">📦 تأكيد الاستلام</button>` : ''}
-          ${order.order_status === 'تم الاستلام' ? `<button class="status-btn btn-completed" onclick="updateStatus('${order.order_id}', 'تم التسليم')">✅ إنهاء الطلب</button>` : ''}
-          ${!isFinished ? `<button class="status-btn btn-return" onclick="updateStatus('${order.order_id}', 'مرتجع')">↩️ إلغاء / مرتجع</button>` : ''}
+          ${(order.order_status === 'shipping' || order.order_status === 'توصيل') ? 
+            `<button class="status-btn btn-received" onclick="updateStatus('${order.order_id}', 'تم الاستلام')">📦 تأكيد الاستلام</button>` : ''}
+          ${(order.order_status === 'received' || order.order_status === 'تم الاستلام') ? 
+            `<button class="status-btn btn-completed" onclick="updateStatus('${order.order_id}', 'completed')">✅ إنهاء الطلب</button>` : ''}
+          ${!isFinished ? 
+            `<button class="status-btn btn-return" onclick="updateStatus('${order.order_id}', 'returned')">↩️ إلغاء / مرتجع</button>` : ''}
         </div>
       </div>
     `;
