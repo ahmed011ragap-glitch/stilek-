@@ -1013,29 +1013,29 @@ function openOrderForm(){
   
   const p = currentOrderProducts[0];
   const sp = sellP(p.base_price);
-  const cm = comm(p.base_price);
+  const defaultComm = comm(p.base_price);
   const govOpts = Object.keys(CITIES).map(g=>`<option value="${g}">${g}</option>`).join('');
   
   let totalProducts = 0;
-  let totalCommission = 0;
   let totalQty = 0;
   let orderSummaryHtml = '';
   
   currentOrderProducts.forEach(item => {
     const itemSp = sellP(item.base_price);
-    const itemCm = comm(item.base_price);
     const qty = item.qty || 1;
     const itemTotal = itemSp * qty;
-    const itemComm = itemCm * qty;
     totalProducts += itemTotal;
-    totalCommission += itemComm;
     totalQty += qty;
     const cleanNameItem = cleanText(item.name);
     orderSummaryHtml += `<div style="font-size:11px;color:var(--text-2);padding:2px 0;border-bottom:1px solid var(--border);">${esc(cleanNameItem)} ×${qty} = ${itemTotal} ج</div>`;
   });
 
   const ship = 70;
-  const finalTotal = totalProducts + totalCommission + ship;
+  // حساب الإجمالي مع العمولة المتغيرة
+  function calcTotal(commValue){
+    const totalComm = parseFloat(commValue) || 0;
+    return totalProducts + totalComm + ship;
+  }
 
   document.getElementById('orderModalContent').innerHTML=`
     <div class="order-modal">
@@ -1090,6 +1090,14 @@ function openOrderForm(){
         <input class="fi" id="oNotes" placeholder="أي ملاحظات للطلب...">
       </div>
 
+      <div class="fsec">💰 تعديل العمولة</div>
+      
+      <div class="fg">
+        <label class="fl">⭐ العمولة (ج) <span style="color:var(--gold);font-weight:900;">قابلة للتعديل</span></label>
+        <input class="fi fi-gold" id="oCommission" type="number" value="${defaultComm}" oninput="updateOrderTotal()" step="1" min="0">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">القيمة الافتراضية: ${defaultComm} ج - يمكنك تعديلها حسب الاتفاق مع العميل</div>
+      </div>
+
       <div class="fsec">📋 ملخص الطلب</div>
       
       <div class="sum-box">
@@ -1098,28 +1106,51 @@ function openOrderForm(){
           <span>إجمالي المنتجات</span>
           <span>${totalProducts} ج</span>
         </div>
-        <div class="sum-row">
-          <span>العمولة الإجمالية</span>
-          <span style="color:var(--gold);">${totalCommission} ج</span>
+        <div class="sum-row" id="commissionRow">
+          <span>العمولة</span>
+          <span style="color:var(--gold);" id="commissionDisplay">${defaultComm} ج</span>
         </div>
         <div class="sum-row">
           <span>رسوم الشحن</span>
           <span style="color:var(--muted);">${ship} ج</span>
         </div>
-        <div class="sum-total">
+        <div class="sum-total" id="finalTotal">
           <span>الإجمالي النهائي</span>
-          <span>${finalTotal} ج</span>
+          <span id="totalAmount">${calcTotal(defaultComm)} ج</span>
         </div>
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب (${finalTotal} ج)</button>
+        <button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب</button>
         <button class="btn btn-sec" onclick="closeM('orderModal')">إلغاء</button>
       </div>
     </div>
   `;
 
   openM('orderModal');
+}
+
+// دالة تحديث الإجمالي عند تغيير العمولة
+function updateOrderTotal(){
+  const commInput = document.getElementById('oCommission');
+  const commDisplay = document.getElementById('commissionDisplay');
+  const totalDisplay = document.getElementById('totalAmount');
+  
+  if(!commInput || !commDisplay || !totalDisplay) return;
+  
+  const commValue = parseFloat(commInput.value) || 0;
+  commDisplay.textContent = commValue + ' ج';
+  
+  // حساب الإجمالي
+  let totalProducts = 0;
+  currentOrderProducts.forEach(item => {
+    const itemSp = sellP(item.base_price);
+    const qty = item.qty || 1;
+    totalProducts += itemSp * qty;
+  });
+  const ship = 70;
+  const finalTotal = totalProducts + commValue + ship;
+  totalDisplay.textContent = finalTotal + ' ج';
 }
 
 function updateCities(){
@@ -1146,6 +1177,7 @@ async function submitOrder(){
   const city = document.getElementById('oCity').value;
   const address = document.getElementById('oAddress').value.trim();
   const notes = document.getElementById('oNotes').value.trim();
+  const customCommission = parseFloat(document.getElementById('oCommission').value) || 0;
 
   if(!name || !phone || !governorate || !city || !address){
     alert('⚠️ يرجى ملء جميع البيانات الأساسية');
@@ -1163,9 +1195,8 @@ async function submitOrder(){
     for(const item of currentOrderProducts){
       const basePrice=parseFloat(item.base_price)||0;
       const sp=sellP(basePrice);
-      const cm=comm(basePrice);
       const qty = item.qty || 1;
-      const totalPrice = ((sp + cm) * qty) + shippingCost;
+      const totalPrice = (sp * qty) + customCommission + shippingCost;
       const orderId = 'ORD-' + Date.now() + '-' + String(item.product_id);
 
       const orderData = {
@@ -1183,7 +1214,7 @@ async function submitOrder(){
         price: sp,
         shipping: shippingCost,
         total_price: totalPrice,
-        commission: cm,
+        commission: customCommission,
         site_profit: SITE_PROFIT,
         notes: notes,
         marketer_username: marketerName,
@@ -1201,7 +1232,6 @@ async function submitOrder(){
     }
 
     if(allSuccess){
-      // حذف من السلة (فقط العناصر اللي مش مؤقتة)
       for(const item of currentOrderProducts){
         if(item.cart_id && !item.cart_id.startsWith('temp_')){
           await callApi('del_cart',{cid:item.cart_id});
@@ -1209,7 +1239,7 @@ async function submitOrder(){
       }
       await updateCartBadge();
       
-      alert('✅ تم تسجيل الطلب بنجاح! عدد المنتجات: ' + currentOrderProducts.length + '\nرقم الطلب: ' + orderIds[0]);
+      alert('✅ تم تسجيل الطلب بنجاح! عدد المنتجات: ' + currentOrderProducts.length + '\nرقم الطلب: ' + orderIds[0] + '\nالعمولة: ' + customCommission + ' ج');
       closeM('orderModal');
       currentOrderProducts = [];
     }
