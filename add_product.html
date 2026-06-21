@@ -201,6 +201,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 .loading-overlay p { margin-top: 20px; color: #00ff88; font-size: 18px; font-weight: 600; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* تحسينات إضافية */
+.required-star { color: var(--red); margin-right: 4px; }
+.hint-text { font-size: 12px; color: var(--muted); margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -242,33 +246,34 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 <div class="price-row">
   <div class="form-group">
-    <label>👤 اسم المستخدم (المورد الحالي) *</label>
+    <label>👤 اسم المستخدم (المورد الحالي) <span class="required-star">*</span></label>
     <input id="supplierUsername" type="text" placeholder="اسم المستخدم" readonly style="background: #1a1a1a; color: #00ff88; font-weight: bold;">
   </div>
   <div class="form-group">
-    <label>📞 رقم واتساب المورد *</label>
-    <input id="supplierPhone" type="tel" placeholder="مثال: 01012345678">
+    <label>📞 رقم واتساب المورد <span class="required-star">*</span></label>
+    <input id="supplierPhone" type="tel" placeholder="01012345678" maxlength="11">
+    <div class="hint-text">⚠️ يجب أن يكون 11 رقم بالضبط (مثال: 01012345678)</div>
   </div>
 </div>
 
 <div class="form-group">
-  <label>📦 اسم المنتج *</label>
+  <label>📦 اسم المنتج <span class="required-star">*</span></label>
   <input id="productName" placeholder="مثال: سويت شيرت ميلتون">
 </div>
 
 <div class="price-row">
   <div class="form-group">
-    <label>💰 سعر التكلفة * (جنيه)</label>
+    <label>💰 سعر التكلفة <span class="required-star">*</span> (جنيه)</label>
     <input id="price" type="number" placeholder="250" min="1">
   </div>
   <div class="form-group">
-    <label>📊 كمية المخزون المتاحة *</label>
+    <label>📊 كمية المخزون المتاحة <span class="required-star">*</span></label>
     <input id="stock" type="number" placeholder="50" min="0" value="1">
   </div>
 </div>
 
 <div class="form-group">
-  <label>🖼️ صورة غلاف المنتج الأساسية *</label>
+  <label>🖼️ صورة غلاف المنتج الأساسية <span class="required-star">*</span></label>
   <input id="coverImg" type="file" accept="image/*">
   <img id="preview" style="max-width:100%;max-height:150px;margin-top:10px;border-radius:8px;display:none">
 </div>
@@ -419,11 +424,22 @@ document.getElementById('addBtn').onclick = async function() {
   const errorDiv = document.getElementById('error'), successDiv = document.getElementById('success');
   errorDiv.innerHTML = ''; successDiv.innerHTML = '';
 
+  // ✅ التحقق من اسم المستخدم
   if(!usernameValue || usernameValue === 'supplier_default') { 
     errorDiv.innerHTML = '❌ خطأ: اسم المستخدم غير معرف، يرجى إعادة تسجيل الدخول'; 
     return; 
   }
-  if(!supplierPhone) { errorDiv.innerHTML = '❌ من فضلك أدخل رقم واتساب الخاص بك للتواصل'; return; }
+
+  // ✅ التحقق من رقم واتساب (إجباري و11 رقم)
+  if(!supplierPhone) { 
+    errorDiv.innerHTML = '❌ من فضلك أدخل رقم واتساب الخاص بك للتواصل'; 
+    return; 
+  }
+  if(!/^\d{11}$/.test(supplierPhone)) {
+    errorDiv.innerHTML = '❌ رقم واتساب يجب أن يكون 11 رقم بالضبط (مثال: 01012345678)';
+    return;
+  }
+
   if(!name) { errorDiv.innerHTML = '❌ من فضلك أدخل اسم المنتج'; return; }
   if(!price || price <= 0) { errorDiv.innerHTML = '❌ من فضلك أدخل سعراً صحيحاً'; return; }
   if(!fileInput.files || !fileInput.files[0]) { errorDiv.innerHTML = '❌ من فضلك ارفع صورة الغلاف للمنتج'; return; }
@@ -435,6 +451,7 @@ document.getElementById('addBtn').onclick = async function() {
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
+    // إضافة رقم واتساب في وصف المنتج أيضاً للظهور في الواجهات
     const extraDetails = `\n\n📞 هاتف واتساب المورد: ${supplierPhone}\n🔗 المعرض الإضافي: ${galleryLink || 'لا يوجد'}`;
     const finalDescription = desc ? (desc + extraDetails) : `منتج المورد: ${usernameValue} ${extraDetails}`;
 
@@ -449,13 +466,14 @@ document.getElementById('addBtn').onclick = async function() {
       gallery_link: galleryLink || null,
       sizes: '',
       colors: '',
-      slider: []
+      slider: [],
+      whatsapp: supplierPhone  // ✅ العمود الجديد - 11 رقم بالضبط
     };
 
     await postProductToSupabase(finalProductPayload);
 
     hideLoading();
-    successDiv.innerHTML = `✅ تم الحفظ التام! تم إدراج المنتج بنجاح تحت اسم المستخدم الخاص بك (${usernameValue}) داخل جدول products الرئيسي.`;
+    successDiv.innerHTML = `✅ تم الحفظ التام! تم إدراج المنتج بنجاح تحت اسم المستخدم الخاص بك (${usernameValue}) داخل جدول products الرئيسي مع رقم واتساب ${supplierPhone}.`;
     resetForm();
     
   } catch(err) {
@@ -477,6 +495,11 @@ document.getElementById('coverImg').addEventListener('change', function(e) {
     };
     reader.readAsDataURL(file);
   }
+});
+
+// منع إدخال أكثر من 11 رقم في حقل رقم واتساب
+document.getElementById('supplierPhone').addEventListener('input', function(e) {
+  this.value = this.value.replace(/\D/g, '').slice(0, 11);
 });
 </script>
 </body>
