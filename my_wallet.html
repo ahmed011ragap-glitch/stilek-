@@ -121,7 +121,7 @@ body {
 }
 .overlay.active { display: block; }
 
-/* ===== بار معلومات المستخدم الثابت والمحمي ===== */
+/* ===== بار معلومات المستخدم ===== */
 .user-bar {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -136,7 +136,7 @@ body {
   gap: 10px;
 }
 .user-bar span { font-size: 14px; color: #b0b0b0; }
-.user-bar strong { color: var(--green); }
+.user-bar strong { color: var(--green); font-size: 16px; }
 .user-type {
   padding: 4px 12px;
   background: #0a1a2a;
@@ -146,33 +146,24 @@ body {
   border: 1px solid #00aaff;
 }
 
-.user-input-section {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-.user-input-section label {
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 14px;
-}
-.user-input-section input {
-  flex: 1;
-  min-width: 200px;
-  padding: 12px 16px;
-  border: 1px solid var(--card-border);
+/* ===== رسالة تأكيد الاسم الثابت ===== */
+.username-display {
+  background: #0a1a0a;
+  border: 1px solid var(--green);
   border-radius: 10px;
-  background: #1e1e1e;
-  color: #bbbbbb;
+  padding: 10px 16px;
+  margin-bottom: 15px;
+  text-align: center;
+  color: var(--green);
+  font-weight: 700;
   font-size: 14px;
-  outline: none;
-  cursor: not-allowed;
+}
+.username-display span {
+  color: #fff;
+  background: #1a2a1a;
+  padding: 4px 14px;
+  border-radius: 6px;
+  margin-right: 6px;
 }
 
 /* ===== الهيدر ومحتوى الصفحة ===== */
@@ -206,7 +197,7 @@ h2 {
 }
 .search-bar input:focus { outline: none; border-color: var(--green); }
 
-/* ===== شبكة المربعات الصغيرة والاحترافية ===== */
+/* ===== شبكة المربعات المالية ===== */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -320,7 +311,6 @@ h2 {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <!-- الروابط الخمسة المطلوبة -->
     <a href="#" onclick="goToPage('data_page')">🏠 لوحة البيانات الرئيسية</a>
     <a href="#" class="active">💼 المحفظة والسحوبات</a>
     <a href="#" onclick="goToPage('add_product')">➕ إضافة منتج جديد</a>
@@ -338,14 +328,15 @@ h2 {
 </div>
 
 <div class="container">
-  <div id="userBar" class="user-bar">
-    <span id="userLabel">المستعلم عنه: <strong id="userName">-</strong></span>
-    <span>نوع الحساب: <strong class="user-type">🏭 مورد</strong></span>
+  <!-- رسالة تأكيد الاسم الثابت -->
+  <div class="username-display">
+    👤 اسم المستخدم الحالي: <span id="userNameDisplay">-</span>
+    <span style="color: var(--muted); font-weight: 400; margin-right: 10px;">🔒 (ثابت لا يمكن تغييره)</span>
   </div>
 
-  <div class="user-input-section">
-    <label>👤 الحساب المسجل حالياً:</label>
-    <input type="text" id="usernameInput" readonly placeholder="جاري قراءة بيانات الحساب...">
+  <div id="userBar" class="user-bar">
+    <span>المورد: <strong id="userName">-</strong></span>
+    <span>نوع الحساب: <strong class="user-type">🏭 مورد</strong></span>
   </div>
 
   <h2>💼 المحفظة والملخص المالي</h2>
@@ -472,25 +463,38 @@ h2 {
 </div>
 
 <script>
+// ===== إعدادات Supabase =====
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+// ===== ثبات اسم المستخدم =====
+let currentUser = '';
+
+const storedUser = localStorage.getItem('username');
+const urlUser = new URLSearchParams(window.location.search).get('user');
+
+if (storedUser && storedUser.trim() !== '') {
+  currentUser = storedUser.toLowerCase().trim();
+} else if (urlUser && urlUser.trim() !== '') {
+  currentUser = urlUser.toLowerCase().trim();
+  localStorage.setItem('username', currentUser);
+} else {
+  currentUser = 'supplier_default';
+  localStorage.setItem('username', currentUser);
+}
+
+localStorage.setItem('username', currentUser);
+document.getElementById('userName').textContent = currentUser;
+document.getElementById('userNameDisplay').textContent = currentUser;
+
+// ===== دوال التنقل =====
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// معالجة اسم الحساب بدون حساسية لحالة الأحرف
-const urlParams = new URLSearchParams(window.location.search);
-let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
-let currentUser = rawUser.toLowerCase().trim();
-
-localStorage.setItem('username', currentUser);
-
-/**
- * دالة التنقل الموحدة - تستقبل اسم الصفحة بدون امتداد
- */
 function goToPage(pageName) {
-  // إغلاق السلايدر قبل التنقل
   toggleSidebar();
-  // بناء الرابط مع إضافة .html وتمرير user و type
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=supplier`;
 }
 
@@ -502,40 +506,85 @@ function logout() {
   }
 }
 
-const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
-
 let isAdmin = false;
 const ADMIN_CODE = 'Ahmed**##$$1';
+let globalAvailableBalance = 0;
+
+/*
+  ╔══════════════════════════════════════════╗
+  ║  SITE PROFIT = 20 ج.م (ربح الموقع الثابت) ║
+  ║  يتم خصمه تلقائياً من كل منتج في الخلفية ║
+  ║  المورد يرى فقط سعر منتجه بعد الخصم     ║
+  ╚══════════════════════════════════════════╝
+*/
+const SITE_PROFIT_PER_PRODUCT = 20;
 
 async function supabaseApi(endpoint, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-  const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', ...options.headers };
+  const headers = { 
+    'apikey': SUPABASE_KEY, 
+    'Authorization': `Bearer ${SUPABASE_KEY}`, 
+    'Content-Type': 'application/json', 
+    ...options.headers 
+  };
+  
+  if (options.method === 'POST') {
+    headers['Prefer'] = 'return=representation';
+  }
+
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) throw new Error(await response.text());
-  return await response.json();
+  
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
 }
 
-let globalAvailableBalance = 0;
-
+// ===== تحميل البيانات - المورد يسحب من price بعد خصم ربح الموقع =====
 async function loadDashboard() {
   try {
-    document.getElementById('userName').textContent = currentUser;
-    document.getElementById('usernameInput').value = currentUser;
+    // 1. نجيب كل المنتجات بتاعة المورد
+    const myProducts = await supabaseApi(`products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id`);
+    const myProductIds = myProducts.map(p => p.product_id);
+    
+    if (myProductIds.length === 0) {
+      document.getElementById('available').textContent = '0.00';
+      document.getElementById('pending').textContent = '0.00';
+      document.getElementById('withdrawn').textContent = '0.00';
+      document.getElementById('preparing').textContent = '0.00';
+      document.getElementById('delivered').textContent = '0';
+      document.getElementById('shipping').textContent = '0.00';
+      return;
+    }
 
-    const allOrders = await supabaseApi(`orders?select=order_status,product_cost,supplier_username`);
-    const supplierOrders = allOrders.filter(o => (o.supplier_username || '').toLowerCase().trim() === currentUser);
+    // 2. نجيب كل الطلبات الخاصة بمنتجات المورد
+    let allOrders = [];
+    for (const pid of myProductIds) {
+      const ordersForProduct = await supabaseApi(`orders?product_id=ilike.${encodeURIComponent(pid)}&select=*`);
+      allOrders = allOrders.concat(ordersForProduct);
+    }
 
-    let deliveredCostTotal = 0, shippingCostTotal = 0, preparingCostTotal = 0, deliveredCount = 0;
+    let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
-    supplierOrders.forEach(o => {
-      const cost = parseFloat(o.product_cost) || 0;
+    allOrders.forEach(o => {
+      // Rبح الموقع (20 ج.م) يتم خصمه من السعر
+      const fullPrice = parseFloat(o.price) || 0;
+      const supplierShare = Math.max(0, fullPrice - SITE_PROFIT_PER_PRODUCT);
+      
       const status = (o.order_status || '').trim();
-      if (status === 'تم التسليم' || status === 'delivered') { deliveredCostTotal += cost; deliveredCount++; }
-      else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { shippingCostTotal += cost; }
-      else if (status === 'تغليف') { preparingCostTotal += cost; }
+      
+      if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
+        deliveredPriceTotal += supplierShare; 
+        deliveredCount++; 
+      } 
+      else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
+        shippingPriceTotal += supplierShare; 
+      } 
+      else if (status === 'تغليف') { 
+        preparingPriceTotal += supplierShare; 
+      }
     });
 
+    // 3. نجيب طلبات السحب السابقة
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
@@ -545,19 +594,22 @@ async function loadDashboard() {
       else if (w.status === 'تم' || w.status === 'تم الدفع') withdrawn += amount;
     });
 
-    globalAvailableBalance = deliveredCostTotal - (pending + withdrawn);
+    globalAvailableBalance = deliveredPriceTotal - (pending + withdrawn);
     if(globalAvailableBalance < 0) globalAvailableBalance = 0;
 
     document.getElementById('available').textContent = globalAvailableBalance.toFixed(2);
     document.getElementById('pending').textContent = pending.toFixed(2);
     document.getElementById('withdrawn').textContent = withdrawn.toFixed(2);
-    document.getElementById('preparing').textContent = preparingCostTotal.toFixed(2);
+    document.getElementById('preparing').textContent = preparingPriceTotal.toFixed(2);
     document.getElementById('delivered').textContent = deliveredCount;
-    document.getElementById('shipping').textContent = shippingCostTotal.toFixed(2);
+    document.getElementById('shipping').textContent = shippingPriceTotal.toFixed(2);
 
-  } catch(err) { console.error(err); }
+  } catch(err) { 
+    console.error('❌ خطأ في تحميل البيانات:', err);
+  }
 }
 
+// ===== تقديم طلب سحب =====
 document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const phone = document.getElementById('w_phone').value.trim();
@@ -570,7 +622,7 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
   }
 
   if (requestedAmount > globalAvailableBalance) {
-    alert(`❌ خطأ: الرصيد المتاح غير كافٍ.`);
+    alert(`❌ خطأ: الرصيد المتاح غير كافٍ. الرصيد المتاح: ${globalAvailableBalance.toFixed(2)} ج.م`);
     return;
   }
 
@@ -599,6 +651,7 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
   } catch(err) { alert('❌ خطأ: ' + err.message); }
 });
 
+// ===== تفعيل لوحة الأدمن =====
 document.getElementById('searchInput').addEventListener('input', e => {
   const val = e.target.value;
   if(val === ADMIN_CODE && !isAdmin) {
@@ -615,6 +668,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
   }
 });
 
+// ===== لوحة الأدمن =====
 async function loadAdminPanel() {
   try {
     const data = await supabaseApi('withdrawals?select=*');
@@ -642,7 +696,7 @@ async function loadAdminPanel() {
           <td style="color:var(--orange); font-weight:900;">${w.amount || 0}</td>
           <td>${w.account || '-'}</td>
           <td>${cleanNotes}</td>
-          <td>${w.created_at ? new Date(w.created_at).toLocaleDateString('ar-EG') : '-'}</td>
+          <td>${w.date1 ? new Date(w.date1).toLocaleDateString('ar-EG') : '-'}</td>
           <td style="color:${w.status === 'قيد المراجعة'? 'var(--orange)' : w.status === 'تم'? 'var(--green)' : 'var(--red)'}; font-weight:700;">${w.status || 'قيد المراجعة'}</td>
           <td>
             ${w.status === 'قيد المراجعة'? `
@@ -692,6 +746,7 @@ function openWithdrawModal() { document.getElementById('withdrawModal').style.di
 function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 function openHistory() { alert('السجل المالي يظهر للأدمن تلقائياً عند البحث بكود الإدارة.'); }
 
+// ===== تشغيل التحميل الأولي =====
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>
