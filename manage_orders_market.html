@@ -316,14 +316,22 @@ body {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('data_page')">🏠 لوحة البيانات الرئيسية</a>
-    <a href="#" onclick="goToPage('my_wallet')">💼 المحفظة والسحوبات</a>
-    <a href="#" onclick="goToPage('add_product')">➕ إضافة منتج جديد</a>
-    <a href="#" onclick="goToPage('your_products')">📦 منتجاتي المعروضة</a>
-    <a href="#" class="active">📋 طلباتي</a>
+    <!-- 1. لوحة البيانات -->
+    <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات</a>
     
-    <a href="https://wa.me/201108712091" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#25d366;color:#fff !important;font-weight:700 !important;margin:20px 15px 5px !important;box-shadow:0 4px 15px rgba(37,211,102,0.3);">💬 تواصل مع الدعم الفني</a>
+    <!-- 2. المنتجات المعروضة -->
+    <a href="#" onclick="goToPage('displayed_products')">🛍️ المنتجات المعروضة</a>
     
+    <!-- 3. المحفظة -->
+    <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
+    
+    <!-- 4. إدارة الأوردرات -->
+    <a href="#" onclick="goToPage('manage_orders_market')">📋 إدارة الأوردرات</a>
+    
+    <!-- 5. الدعم الفني (واتساب) -->
+    <a href="https://wa.me/201108712091" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#25d366;color:#fff !important;font-weight:700 !important;margin:20px 15px 5px !important;box-shadow:0 4px 15px rgba(37,211,102,0.3);">💬 الدعم الفني</a>
+    
+    <!-- 6. تسجيل الخروج -->
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -334,9 +342,6 @@ body {
   <span>🆔 كود المستخدم: <strong id="userCode">-</strong></span>
   <span class="user-type">🧑‍💼 مسوق</span>
 </div>
-
-<!-- تم إخفاء خانة إدخال اسم المستخدم لأنها بتتعبأ أوتوماتيك -->
-<!-- <div class="user-input-section" style="display:none;"> -->
 
 <div class="stats-container">
   <div class="stat-card"><div class="number" id="statTotal">0</div><div class="label">إجمالي الطلبات</div></div>
@@ -376,7 +381,7 @@ function goToPage(pageName) {
 function logout() {
   if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
     localStorage.clear();
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   }
 }
 
