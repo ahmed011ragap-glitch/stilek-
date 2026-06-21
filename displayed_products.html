@@ -501,7 +501,35 @@ async function callApi(action, data={}){
       case 'add_cart':  return await req('cart',{method:'POST',body:JSON.stringify({marketer_id:data.mid.toLowerCase(),product_id:data.pid,qty:1,cart_id:'C'+Date.now()})});
       case 'upd_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'PATCH',body:JSON.stringify({qty:data.qty})});
       case 'del_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'DELETE'});
-      case 'place_order': return await req('orders',{method:'POST',body:JSON.stringify({order_id:'ORD'+Date.now(),...data})});
+      case 'place_order': {
+        // ✅ إرسال البيانات بالشكل الصحيح مع أسماء الأعمدة المتطابقة مع قاعدة البيانات
+        const orderBody = {
+          order_id: data.order_id,
+          product_id: String(data.product_id),
+          customer_name: data.customer_name,
+          phone: data.phone,
+          phone2: data.phone2 || '',
+          governorate: data.governorate,
+          city: data.city,
+          address: data.address,
+          qty: data.qty || 1,
+          size: data.size || '',
+          color: data.color || '',
+          price: data.price,
+          shipping: data.shipping || 70,
+          total_price: data.total_price,
+          commission: data.commission,
+          site_profit: data.site_profit || 0,
+          notes: data.notes || '',
+          marketer_username: data.marketer_username,
+          marketer_id: data.marketer_id,
+          order_status: data.order_status || 'pending'
+        };
+        return await req('orders', {
+          method: 'POST',
+          body: JSON.stringify(orderBody)
+        });
+      }
       default: return {status:'error'};
     }
   }catch(e){return{status:'error',message:e.message};}
@@ -623,7 +651,6 @@ function renderProducts(products){
 /* ── QUICK FAV (from card) ── */
 async function quickFav(pid, btn){
   const isFav = favoriteIds.includes(String(pid));
-  const p = allProducts.find(x=>String(x.product_id)===String(pid));
   await callApi(isFav?'del_fav':'add_fav',{mid:marketerId,pid});
   await loadFavs();
   if(btn){btn.classList.toggle('on',!isFav);btn.innerHTML=(!isFav)?'❤️':'🤍';}
@@ -899,43 +926,72 @@ function updateSum(){
   document.getElementById('sumTotal').textContent=(price+cmVal+70)+' ج';
 }
 
+/* ── SUBMIT ORDER (المعدل) ── */
 async function submitOrder(){
-  const name=document.getElementById('oName').value.trim();
-  const phone=document.getElementById('oPhone').value.trim();
-  const gov=document.getElementById('oGov').value;
-  const city=document.getElementById('oCity').value;
-  const addr=document.getElementById('oAddr').value.trim();
-  const note=document.getElementById('oNote').value.trim();
-  const commVal=parseFloat(document.getElementById('oComm').value)||0;
-  const price=parseFloat(document.getElementById('oPrice').value)||0;
+  const name = document.getElementById('oName').value.trim();
+  const phone = document.getElementById('oPhone').value.trim();
+  const gov = document.getElementById('oGov').value;
+  const city = document.getElementById('oCity').value;
+  const addr = document.getElementById('oAddr').value.trim();
+  const note = document.getElementById('oNote').value.trim();
+  const commVal = parseFloat(document.getElementById('oComm').value) || 0;
+  const price = parseFloat(document.getElementById('oPrice').value) || 0;
 
-  if(!name||!phone||!gov||!city||!addr){alert('⚠️ يرجى ملء جميع البيانات الأساسية');return;}
-  if(phone.length<11){alert('⚠️ رقم الهاتف يجب أن يكون 11 رقمًا على الأقل');return;}
+  if (!name || !phone || !gov || !city || !addr) {
+    alert('⚠️ يرجى ملء جميع البيانات الأساسية');
+    return;
+  }
+  if (phone.length < 11) {
+    alert('⚠️ رقم الهاتف يجب أن يكون 11 رقمًا على الأقل');
+    return;
+  }
 
+  // ✅ البيانات متطابقة مع أسماء الأعمدة في جدول orders
   const orderData = {
-    marketer_id: marketerId,
-    product_id: currentProduct.product_id,
-    product_name: currentProduct.name,
-    base_price: currentProduct.base_price,
-    seller_price: price,
-    marketer_commission: commVal,
-    client_name: name,
-    client_phone: phone,
+    order_id: 'ORD' + Date.now(),
+    product_id: String(currentProduct.product_id),
+    customer_name: name,
+    phone: phone,
+    phone2: '',
     governorate: gov,
     city: city,
     address: addr,
-    notes: note,
-    order_status: 'جديد',
-    shipping_cost: 70
+    qty: 1,
+    size: '',
+    color: '',
+    price: price,
+    shipping: 70,
+    total_price: price + commVal + 70,
+    commission: commVal,
+    site_profit: price - parseFloat(currentProduct.base_price || 0),
+    notes: note || '',
+    marketer_username: marketerId,
+    marketer_id: marketerId,
+    order_status: 'pending'
   };
 
-  const r=await callApi('place_order',orderData);
-  if(r.status==='error'){alert('❌ فشل تسجيل الطلب: '+r.message);return;}
-  alert('✅ تم تسجيل الطلب بنجاح!');
-  closeM('orderModal');
-  // Clear cart if needed
-  cartItems.forEach(i=>delCart(i.cart_id));
-  await updateCartBadge();
+  try {
+    const r = await callApi('place_order', orderData);
+    if (r.status === 'error') {
+      console.error('❌ تفاصيل الخطأ:', r.message);
+      alert('❌ فشل تسجيل الطلب: ' + r.message);
+      return;
+    }
+    alert('✅ تم تسجيل الطلب بنجاح!');
+    closeM('orderModal');
+    
+    // تفريغ السلة بعد الطلب
+    if (cartItems.length > 0) {
+      for (let item of cartItems) {
+        await delCart(item.cart_id);
+      }
+    }
+    await updateCartBadge();
+    
+  } catch (error) {
+    console.error('❌ خطأ:', error);
+    alert('❌ حدث خطأ: ' + error.message);
+  }
 }
 
 /* ── INIT ── */
