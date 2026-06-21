@@ -460,6 +460,15 @@ const CITIES = {
   'جنوب سيناء':['طور سيناء','شرم الشيخ','دهب','نويبع','طابا']
 };
 
+/* ── دالة تنظيف النص من جميع العلامات ── */
+function cleanText(text) {
+    if (!text) return '';
+    return text
+        .replace(/[«»""''()\[\]{}]/g, '')  // شيل كل الأقواس والعلامات
+        .replace(/\s+/g, ' ')               // توحيد المسافات
+        .trim();
+}
+
 /* ── PRICING ── */
 function calcSiteProfit(bp) { return Math.round((parseFloat(bp)||0) * (SITE_PROFIT_PERCENT/100)); }
 function sellP(bp) { const b=parseFloat(bp)||0; return b + calcSiteProfit(b); }
@@ -502,7 +511,6 @@ async function callApi(action, data={}){
       case 'upd_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'PATCH',body:JSON.stringify({qty:data.qty})});
       case 'del_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'DELETE'});
       case 'place_order': {
-        // ✅ إرسال البيانات بالشكل الصحيح مع أسماء الأعمدة المتطابقة مع قاعدة البيانات
         const orderBody = {
           order_id: data.order_id,
           product_id: String(data.product_id),
@@ -593,11 +601,9 @@ function applyFilters(){
     return true;
   });
 
-  // Sort
   if(currentSort==='comm')       list.sort((a,b)=>comm(b.base_price)-comm(a.base_price));
   else if(currentSort==='price_asc')  list.sort((a,b)=>sellP(a.base_price)-sellP(b.base_price));
   else if(currentSort==='price_desc') list.sort((a,b)=>sellP(b.base_price)-sellP(a.base_price));
-  // newest = default desc from API
 
   filteredProducts = list;
   document.getElementById('resultNum').textContent = list.length;
@@ -615,19 +621,23 @@ function renderProducts(products){
   products.forEach(p=>{
     const out=parseInt(p.stock)===0, sp=sellP(p.base_price), cm=comm(p.base_price);
     const isFav=favoriteIds.includes(String(p.product_id));
+    // تنظيف اسم المنتج من العلامات
+    const cleanName = cleanText(p.name);
+    const cleanCategory = cleanText(p.category);
+    
     const card=document.createElement('div');
     card.className='product-card';
     card.innerHTML=`
       <div class="card-img-wrap">
-        <img src="${iurl(p.image_url)}" loading="lazy" onerror="this.src='https://placehold.co/300x300/2a2a2a/808080?text=🛍️'" alt="${esc(p.name)}">
+        <img src="${iurl(p.image_url)}" loading="lazy" onerror="this.src='https://placehold.co/300x300/2a2a2a/808080?text=🛍️'" alt="${esc(cleanName)}">
         ${out?'<div class="out-ribbon">نفذ</div>':''}
         <div class="fav-btn-card ${isFav?'on':''}" onclick="event.stopPropagation();quickFav(${p.product_id},this)">
           ${isFav?'❤️':'🤍'}
         </div>
       </div>
       <div class="card-body">
-        ${p.category?`<div class="card-cat-tag">${esc(p.category)}</div>`:''}
-        <div class="card-name">${esc(p.name)}</div>
+        ${cleanCategory?`<div class="card-cat-tag">${esc(cleanCategory)}</div>`:''}
+        <div class="card-name">${esc(cleanName)}</div>
         <div class="card-price-row">
           <div class="card-price">${sp}</div>
           <div class="card-price-cur">جنيه</div>
@@ -648,7 +658,7 @@ function renderProducts(products){
   });
 }
 
-/* ── QUICK FAV (from card) ── */
+/* ── QUICK FAV ── */
 async function quickFav(pid, btn){
   const isFav = favoriteIds.includes(String(pid));
   await callApi(isFav?'del_fav':'add_fav',{mid:marketerId,pid});
@@ -656,14 +666,13 @@ async function quickFav(pid, btn){
   if(btn){btn.classList.toggle('on',!isFav);btn.innerHTML=(!isFav)?'❤️':'🤍';}
 }
 
-/* ── QUICK ADD (from card) ── */
+/* ── QUICK ADD ── */
 async function quickAdd(pid){
   const p = allProducts.find(x=>String(x.product_id)===String(pid));
   if(!p) return;
   const r = await callApi('add_cart',{mid:marketerId,pid});
   if(r.status==='error'){alert('❌ '+r.message);return;}
   await updateCartBadge();
-  // small visual feedback
   const btns = document.querySelectorAll('.card-add-btn');
   btns.forEach(b=>{
     if(b.onclick?.toString().includes(pid)){
@@ -686,10 +695,16 @@ function renderProd(p){
   const sp=sellP(p.base_price), cm=comm(p.base_price), out=parseInt(p.stock)===0;
   const isFav=favoriteIds.includes(String(p.product_id));
   const galleryLink=p.drive_link||p.gallery_link||'';
-  const sizes=p.sizes?p.sizes.split(',').filter(s=>s.trim()).map(s=>`<span class="spec-tag">${esc(s.trim())}</span>`).join(''):'';
-  const colors=p.colors?p.colors.split(',').filter(c=>c.trim()).map(c=>`<span class="spec-tag">${esc(c.trim())}</span>`).join(''):'';
+  
+  // تنظيف كل النصوص من العلامات
+  const cleanName = cleanText(p.name);
+  const cleanDesc = cleanText(p.description);
+  const cleanCategory = cleanText(p.category);
+  const cleanSupplier = cleanText(p.supplier);
+  
+  const sizes=p.sizes?p.sizes.split(',').filter(s=>s.trim()).map(s=>`<span class="spec-tag">${esc(cleanText(s.trim()))}</span>`).join(''):'';
+  const colors=p.colors?p.colors.split(',').filter(c=>c.trim()).map(c=>`<span class="spec-tag">${esc(cleanText(c.trim()))}</span>`).join(''):'';
 
-  // Build slider images array
   const imgs = [];
   if(p.image_url) imgs.push(p.image_url);
   if(p.image_url2) imgs.push(p.image_url2);
@@ -697,12 +712,12 @@ function renderProd(p){
   if(p.image_url4) imgs.push(p.image_url4);
   if(imgs.length===0) imgs.push('');
 
-  let desc=p.description||'';
-  desc=desc.replace(/📞[^\n]*/g,'').replace(/هاتف[^\n]*/g,'').replace(/واتساب المورد[^\n]*/g,'').trim();
+  let desc = cleanDesc;
+  desc = desc.replace(/📞[^\n]*/g,'').replace(/هاتف[^\n]*/g,'').replace(/واتساب المورد[^\n]*/g,'').trim();
 
   const slides = imgs.map(src=>`
     <div class="slider-slide">
-      <img src="${iurl(src)}" onerror="this.src='https://placehold.co/540x400/2a2a2a/808080?text=🛍️'" alt="${esc(p.name)}">
+      <img src="${iurl(src)}" onerror="this.src='https://placehold.co/540x400/2a2a2a/808080?text=🛍️'" alt="${esc(cleanName)}">
     </div>`).join('');
   const dots = imgs.length>1 ? imgs.map((_,i)=>`<div class="slider-dot ${i===0?'on':''}" onclick="goSlide(${i})"></div>`).join('') : '';
   const navBtns = imgs.length>1 ? `
@@ -717,9 +732,11 @@ function renderProd(p){
     </div>
     <div class="prod-body">
       <div class="prod-head">
-        <div class="prod-name">${esc(p.name)}</div>
+        <div class="prod-name">${esc(cleanName)}</div>
       </div>
       <div class="prod-code">🔖 كود: #${esc(String(p.product_id))}</div>
+
+      ${cleanSupplier ? `<div class="spec-row"><span class="spec-lbl">🏷️ المورد</span><span class="spec-val">${esc(cleanSupplier)}</span></div>` : ''}
 
       <div class="prod-price-zone">
         <div class="price-tile sell">
@@ -759,7 +776,6 @@ function renderProd(p){
       </div>
     </div>`;
 
-  // Init slider
   window._sliderIdx = 0;
   window._sliderTotal = imgs.length;
 }
@@ -797,13 +813,14 @@ async function openFavorites(){
   g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:9px;';
   favs.forEach(p=>{
     const sp=sellP(p.base_price), cm=comm(p.base_price);
+    const cleanName = cleanText(p.name);
     const d=document.createElement('div');
     d.style.cssText='background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:10px;cursor:pointer;transition:all .2s;';
     d.onmouseenter=()=>d.style.borderColor='var(--green)';
     d.onmouseleave=()=>d.style.borderColor='var(--border)';
     d.onclick=()=>{closeM('favModal');openProduct(p.product_id);};
     d.innerHTML=`<img src="${iurl(p.image_url)}" style="width:100%;height:88px;object-fit:contain;border-radius:9px;background:var(--white)" onerror="this.src='https://placehold.co/200x200/2a2a2a/808080?text=🛍️'">
-      <div style="font-size:11px;font-weight:800;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.name)}</div>
+      <div style="font-size:11px;font-weight:800;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(cleanName)}</div>
       <div style="color:var(--green);font-size:13px;font-weight:900;margin-top:3px;">${sp} ج</div>
       <div style="color:var(--gold);font-size:10px;margin-top:2px;font-weight:700;">⭐ ${cm} ج عمولة</div>`;
     g.appendChild(d);
@@ -836,9 +853,10 @@ function renderCart(){
   let total=0,html='';
   cartItems.forEach(item=>{
     const sp=sellP(item.base_price);total+=sp*item.qty;
+    const cleanName = cleanText(item.name);
     html+=`<div class="cart-item">
       <img src="${iurl(item.image_url)}" onerror="this.src='https://placehold.co/60x60/2a2a2a/808080?text=?'">
-      <div class="cart-info"><div class="cart-name">${esc(item.name)}</div><div class="cart-price">${sp} ج × ${item.qty} = ${sp*item.qty} ج</div></div>
+      <div class="cart-info"><div class="cart-name">${esc(cleanName)}</div><div class="cart-price">${sp} ج × ${item.qty} = ${sp*item.qty} ج</div></div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
         <div class="qty-row">
           <button class="qty-btn" onclick="updQty('${item.cart_id}',-1)">−</button>
@@ -865,137 +883,207 @@ function checkout(){if(!cartItems?.length){alert('⚠️ السلة فارغة')
 function openOrderForm(){
   closeM('productModal');closeM('cartModal');
   const p=currentProduct;
+  if(!p){alert('❌ يرجى اختيار منتج أولاً');return;}
   const sp=sellP(p.base_price);
   const cm=comm(p.base_price);
   const basePrice=parseFloat(p.base_price)||0;
   const siteProfitAmt=calcSiteProfit(basePrice);
   const govOpts=Object.keys(CITIES).map(g=>`<option value="${g}">${g}</option>`).join('');
+  const cleanName = cleanText(p.name);
+  const orderId = 'ORD-' + Date.now();
 
   document.getElementById('orderModalContent').innerHTML=`
     <div class="order-modal">
       <div class="order-badge">
-        <img src="${iurl(p.image_url)}" onerror="this.src='https://placehold.co/60x60/2a2a2a/808080?text=?'">
-        <div><div class="ob-name">${esc(p.name)}</div><div class="ob-id">كود: #${esc(String(p.product_id))}</div></div>
-      </div>
-
-      <div class="fsec">💰 الأسعار والعمولة</div>
-      <div class="fgrid">
-        <div class="fg"><label class="fl">سعر البيع للعميل</label><input class="fi fi-green" type="number" id="oPrice" value="${sp}" readonly></div>
-        <div class="fg"><label class="fl">عمولتك (قابلة للزيادة)</label><input class="fi fi-gold" type="number" id="oComm" value="${cm}" oninput="updateSum()"></div>
+        <img src="${iurl(p.image_url)}" onerror="this.src='https://placehold.co/60x60/2a2a2a/808080?text=🛍️'">
+        <div>
+          <div class="ob-name">${esc(cleanName)}</div>
+          <div class="ob-id">كود المنتج: #${esc(String(p.product_id))}</div>
+        </div>
       </div>
 
       <div class="fsec">👤 بيانات العميل</div>
-      <div class="fg"><label class="fl">الاسم الكامل</label><input class="fi" type="text" id="oName" placeholder="أدخل اسم العميل"></div>
-      <div class="fg"><label class="fl">📞 رقم التليفون</label><input class="fi" type="text" id="oPhone" placeholder="مثال: 01012345678"></div>
-      <div class="fg"><label class="fl">📍 المحافظة</label>
-        <select class="fi" id="oGov" onchange="updateCities()"><option value="">اختر المحافظة</option>${govOpts}</select>
+      
+      <div class="fg">
+        <label class="fl">👤 اسم العميل</label>
+        <input class="fi" id="oName" placeholder="أدخل اسم العميل">
       </div>
-      <div class="fg"><label class="fl">🏙️ المدينة</label>
-        <select class="fi" id="oCity"><option value="">اختر المدينة</option></select>
+      
+      <div class="fg">
+        <label class="fl">📱 رقم الهاتف 1</label>
+        <input class="fi" id="oPhone" type="tel" placeholder="مثال: 01012345678">
       </div>
-      <div class="fg"><label class="fl">📍 العنوان التفصيلي</label><input class="fi" type="text" id="oAddr" placeholder="الشارع، المنطقة، الرقم"></div>
-      <div class="fg"><label class="fl">🗒️ ملاحظات</label><input class="fi" type="text" id="oNote" placeholder="أي تفاصيل إضافية (اختياري)"></div>
+      
+      <div class="fg">
+        <label class="fl">📱 رقم هاتف إضافي (اختياري)</label>
+        <input class="fi" id="oPhone2" type="tel" placeholder="رقم آخر للتواصل">
+      </div>
 
-      <div class="fsec">📦 ملخص الطلب</div>
+      <div class="fgrid">
+        <div class="fg">
+          <label class="fl">🏙️ المحافظة</label>
+          <select class="fi" id="oGovernorate" onchange="updateCities()">
+            <option value="">اختر المحافظة</option>
+            ${govOpts}
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">🏘️ المدينة</label>
+          <select class="fi" id="oCity">
+            <option value="">اختر المدينة</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">📍 العنوان بالتفصيل</label>
+        <input class="fi" id="oAddress" placeholder="اسم الشارع، المنطقة، الرقم...">
+      </div>
+
+      <div class="fg">
+        <label class="fl">📦 الكمية</label>
+        <input class="fi" id="oQty" type="number" value="1" min="1" max="${p.stock}">
+      </div>
+
+      <div class="fgrid">
+        <div class="fg">
+          <label class="fl">📏 المقاس</label>
+          <input class="fi" id="oSize" placeholder="مثال: XL">
+        </div>
+        <div class="fg">
+          <label class="fl">🎨 اللون</label>
+          <input class="fi" id="oColor" placeholder="مثال: أسود">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">📝 ملاحظات إضافية</label>
+        <input class="fi" id="oNotes" placeholder="أي ملاحظات للطلب...">
+      </div>
+
+      <div class="fsec">💰 تفاصيل الفاتورة</div>
+      
       <div class="sum-box">
         <div class="sum-row"><span>سعر المنتج</span><span>${sp} ج</span></div>
-        <div class="sum-row"><span>عمولة المسوق</span><span id="sumComm">${cm} ج</span></div>
+        <div class="sum-row"><span>الكمية</span><span id="oQtyDisplay">1</span></div>
         <div class="sum-row"><span>رسوم الشحن</span><span>70 ج</span></div>
-        <div class="sum-total"><span>الإجمالي</span><span id="sumTotal">${sp+70} ج</span></div>
+        <div class="sum-row"><span>عمولتك</span><span style="color:var(--gold)">${cm} ج</span></div>
+        <div class="sum-row"><span>ربح الموقع</span><span style="color:var(--blue)">${siteProfitAmt} ج</span></div>
+        <div class="sum-total"><span>الإجمالي</span><span id="oTotalDisplay">${sp + 70} ج</span></div>
       </div>
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب</button>
         <button class="btn btn-sec" onclick="closeM('orderModal')">إلغاء</button>
       </div>
-    </div>`;
+    </div>
+  `;
+
+  document.getElementById('oQty').addEventListener('input', function(){
+    const qty = parseInt(this.value)||1;
+    document.getElementById('oQtyDisplay').textContent = qty;
+    const total = (sp * qty) + 70;
+    document.getElementById('oTotalDisplay').textContent = total + ' ج';
+  });
+
   openM('orderModal');
 }
 
 function updateCities(){
-  const gov=document.getElementById('oGov').value;
-  const citySel=document.getElementById('oCity');
-  citySel.innerHTML='<option value="">اختر المدينة</option>';
-  if(CITIES[gov]) CITIES[gov].forEach(c=>citySel.innerHTML+=`<option value="${c}">${c}</option>`);
+  const gov = document.getElementById('oGovernorate').value;
+  const citySelect = document.getElementById('oCity');
+  citySelect.innerHTML = '<option value="">اختر المدينة</option>';
+  if(gov && CITIES[gov]){
+    CITIES[gov].forEach(city => {
+      citySelect.innerHTML += `<option value="${city}">${city}</option>`;
+    });
+  }
 }
 
-function updateSum(){
-  const cmVal=parseFloat(document.getElementById('oComm').value)||0;
-  const price=parseFloat(document.getElementById('oPrice').value)||0;
-  document.getElementById('sumComm').textContent=cmVal+' ج';
-  document.getElementById('sumTotal').textContent=(price+cmVal+70)+' ج';
-}
-
-/* ── SUBMIT ORDER (المعدل) ── */
 async function submitOrder(){
+  const p=currentProduct;
+  if(!p){alert('❌ خطأ في المنتج');return;}
+  
   const name = document.getElementById('oName').value.trim();
   const phone = document.getElementById('oPhone').value.trim();
-  const gov = document.getElementById('oGov').value;
+  const phone2 = document.getElementById('oPhone2').value.trim();
+  const governorate = document.getElementById('oGovernorate').value;
   const city = document.getElementById('oCity').value;
-  const addr = document.getElementById('oAddr').value.trim();
-  const note = document.getElementById('oNote').value.trim();
-  const commVal = parseFloat(document.getElementById('oComm').value) || 0;
-  const price = parseFloat(document.getElementById('oPrice').value) || 0;
+  const address = document.getElementById('oAddress').value.trim();
+  const qty = parseInt(document.getElementById('oQty').value)||1;
+  const size = document.getElementById('oSize').value.trim();
+  const color = document.getElementById('oColor').value.trim();
+  const notes = document.getElementById('oNotes').value.trim();
 
-  if (!name || !phone || !gov || !city || !addr) {
+  if(!name || !phone || !governorate || !city || !address){
     alert('⚠️ يرجى ملء جميع البيانات الأساسية');
     return;
   }
-  if (phone.length < 11) {
-    alert('⚠️ رقم الهاتف يجب أن يكون 11 رقمًا على الأقل');
-    return;
-  }
 
-  // ✅ البيانات متطابقة مع أسماء الأعمدة في جدول orders
+  const basePrice=parseFloat(p.base_price)||0;
+  const sp=sellP(basePrice);
+  const cm=comm(basePrice);
+  const siteProfitAmt=calcSiteProfit(basePrice);
+  const totalPrice = (sp * qty) + 70;
+  const orderId = 'ORD-' + Date.now();
+
   const orderData = {
-    order_id: 'ORD' + Date.now(),
-    product_id: String(currentProduct.product_id),
+    order_id: orderId,
+    product_id: String(p.product_id),
     customer_name: name,
     phone: phone,
-    phone2: '',
-    governorate: gov,
+    phone2: phone2,
+    governorate: governorate,
     city: city,
-    address: addr,
-    qty: 1,
-    size: '',
-    color: '',
-    price: price,
+    address: address,
+    qty: qty,
+    size: size,
+    color: color,
+    price: sp,
     shipping: 70,
-    total_price: price + commVal + 70,
-    commission: commVal,
-    site_profit: price - parseFloat(currentProduct.base_price || 0),
-    notes: note || '',
-    marketer_username: marketerId,
+    total_price: totalPrice,
+    commission: cm,
+    site_profit: siteProfitAmt,
+    notes: notes,
+    marketer_username: marketerName,
     marketer_id: marketerId,
     order_status: 'pending'
   };
 
+  const btn = document.querySelector('#orderModalContent .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='⏳ جاري الإرسال...';}
+
   try {
-    const r = await callApi('place_order', orderData);
-    if (r.status === 'error') {
-      console.error('❌ تفاصيل الخطأ:', r.message);
-      alert('❌ فشل تسجيل الطلب: ' + r.message);
+    const result = await callApi('place_order', orderData);
+    if(result.status === 'error'){
+      alert('❌ فشل تسجيل الطلب: ' + (result.message||'خطأ غير معروف'));
+      if(btn){btn.disabled=false;btn.textContent='✅ تأكيد الطلب';}
       return;
     }
-    alert('✅ تم تسجيل الطلب بنجاح!');
-    closeM('orderModal');
-    
-    // تفريغ السلة بعد الطلب
-    if (cartItems.length > 0) {
-      for (let item of cartItems) {
-        await delCart(item.cart_id);
+
+    // حذف المنتج من السلة بعد الطلب
+    if(cartItems && cartItems.length){
+      for(const item of cartItems){
+        if(String(item.product_id) === String(p.product_id)){
+          await callApi('del_cart',{cid:item.cart_id});
+        }
       }
+      await updateCartBadge();
     }
-    await updateCartBadge();
-    
-  } catch (error) {
-    console.error('❌ خطأ:', error);
-    alert('❌ حدث خطأ: ' + error.message);
+
+    alert('✅ تم تسجيل الطلب بنجاح! رقم الطلب: ' + orderId);
+    closeM('orderModal');
+    if(btn){btn.disabled=false;btn.textContent='✅ تأكيد الطلب';}
+  } catch(e) {
+    alert('❌ حدث خطأ: ' + e.message);
+    if(btn){btn.disabled=false;btn.textContent='✅ تأكيد الطلب';}
   }
 }
 
-/* ── INIT ── */
+// ── INIT ──
 loadProducts();
+updateCartBadge();
+
 </script>
 </body>
 </html>
