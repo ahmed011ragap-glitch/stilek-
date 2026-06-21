@@ -510,15 +510,6 @@ let isAdmin = false;
 const ADMIN_CODE = 'Ahmed**##$$1';
 let globalAvailableBalance = 0;
 
-/*
-  ╔══════════════════════════════════════════╗
-  ║  SITE PROFIT = 20 ج.م (ربح الموقع الثابت) ║
-  ║  يتم خصمه تلقائياً من كل منتج في الخلفية ║
-  ║  المورد يرى فقط سعر منتجه بعد الخصم     ║
-  ╚══════════════════════════════════════════╝
-*/
-const SITE_PROFIT_PER_PRODUCT = 20;
-
 async function supabaseApi(endpoint, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = { 
@@ -539,7 +530,7 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
-// ===== تحميل البيانات - المورد يسحب من price بعد خصم ربح الموقع =====
+// ===== تحميل البيانات - المورد يشوف سعر منتجه كامل بدون خصم =====
 async function loadDashboard() {
   try {
     // 1. نجيب كل المنتجات بتاعة المورد
@@ -566,9 +557,8 @@ async function loadDashboard() {
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
     allOrders.forEach(o => {
-      // Rبح الموقع (20 ج.م) يتم خصمه من السعر
-      const fullPrice = parseFloat(o.price) || 0;
-      const supplierShare = Math.max(0, fullPrice - SITE_PROFIT_PER_PRODUCT);
+      // المورد ياخد سعر منتجه كامل بدون خصم
+      const supplierShare = parseFloat(o.price) || 0;
       
       const status = (o.order_status || '').trim();
       
