@@ -141,9 +141,7 @@ select.filter-input option{background:var(--white);}
 .card-stock{font-size:9px;font-weight:800;display:flex;align-items:center;gap:4px;}
 .stock-ok{color:var(--green);}
 .stock-out{color:var(--red);}
-.card-add-btn{margin-top:8px;width:100%;padding:9px;background:var(--green-light);border:1.5px solid rgba(0,184,107,.3);border-radius:9px;color:var(--green);font-size:11px;font-weight:800;cursor:pointer;font-family:"Tajawal",sans-serif;transition:all .2s;}
-.card-add-btn:hover{background:var(--green);color:#fff;}
-.card-add-btn:disabled{opacity:.4;cursor:not-allowed;}
+.card-add-btn{margin-top:8px;width:100%;padding:9px;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;color:var(--muted);font-size:10px;font-weight:700;cursor:default;text-align:center;font-family:"Tajawal",sans-serif;}
 
 .grid-ph{grid-column:1/-1;}
 
@@ -553,16 +551,17 @@ async function callApi(action, data={}){
         return c.map(i=>{const p=pr.find(x=>String(x.product_id)===String(i.product_id));return p?{...i,...p}:i;});
       }
       case 'add_cart':{
-        // Check if product already in cart
         const existing = cartItems.find(i => String(i.product_id) === String(data.pid));
         if(existing){
-          // Update quantity
           return await req(`cart?cart_id=eq.${existing.cart_id}`,{method:'PATCH',body:JSON.stringify({qty: existing.qty + 1})});
         }
         return await req('cart',{method:'POST',body:JSON.stringify({marketer_id:data.mid.toLowerCase(),product_id:data.pid,qty:1,cart_id:'C'+Date.now()})});
       }
       case 'upd_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'PATCH',body:JSON.stringify({qty:data.qty})});
       case 'del_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'DELETE'});
+      case 'update_stock': {
+        return await req(`products?product_id=eq.${data.product_id}`,{method:'PATCH',body:JSON.stringify({stock:data.stock})});
+      }
       case 'place_order': {
         const orderBody = {
           order_id: data.order_id,
@@ -701,9 +700,9 @@ function renderProducts(products){
         <div class="card-stock ${out?'stock-out':'stock-ok'}">
           ${out?'❌ نفذت الكمية':`✅ متوفر — ${p.stock} قطعة`}
         </div>
-        <button class="card-add-btn" onclick="event.stopPropagation();quickAdd(${p.product_id})" ${out?'disabled':''}>
-          ${out?'⛔ غير متوفر':'🛒 أضف للسلة'}
-        </button>
+        <div class="card-add-btn">
+          ${out?'⛔ غير متوفر':'👆 اضغط للتفاصيل'}
+        </div>
       </div>`;
     card.onclick = ()=>openProduct(p.product_id);
     grid.appendChild(card);
@@ -716,22 +715,6 @@ async function quickFav(pid, btn){
   await callApi(isFav?'del_fav':'add_fav',{mid:marketerId,pid});
   await loadFavs();
   if(btn){btn.classList.toggle('on',!isFav);btn.innerHTML=(!isFav)?'❤️':'🤍';}
-}
-
-/* ── QUICK ADD ── */
-async function quickAdd(pid){
-  const p = allProducts.find(x=>String(x.product_id)===String(pid));
-  if(!p) return;
-  const r = await callApi('add_cart',{mid:marketerId,pid});
-  if(r.status==='error'){alert('❌ '+r.message);return;}
-  await updateCartBadge();
-  const btns = document.querySelectorAll('.card-add-btn');
-  btns.forEach(b=>{
-    if(b.onclick?.toString().includes(pid)){
-      const orig=b.textContent;b.textContent='✅ أُضيف!';b.style.background='var(--green)';b.style.color='#fff';
-      setTimeout(()=>{b.textContent=orig;b.style.background='';b.style.color='';},1200);
-    }
-  });
 }
 
 /* ── PRODUCT MODAL ── */
@@ -878,8 +861,32 @@ async function openFavorites(){
 
 /* ── CART ── */
 async function addToCart(){
-  const r = await callApi('add_cart',{mid:marketerId,pid:currentProduct.product_id});
-  if(r.status==='error'){alert('❌ '+r.message);return;}
+  if(!currentProduct) return;
+  const pid = currentProduct.product_id;
+  const qty = 1;
+  
+  // 1. خصم المخزون
+  const newStock = parseInt(currentProduct.stock) - qty;
+  if(newStock < 0) { 
+    alert('❌ المخزون غير كافي'); 
+    return; 
+  }
+  
+  await callApi('update_stock', { 
+    product_id: pid, 
+    stock: newStock 
+  });
+  
+  // 2. تحديث المنتج الحالي
+  currentProduct.stock = newStock;
+  
+  // 3. إضافة للسلة
+  const r = await callApi('add_cart', { mid: marketerId, pid });
+  if(r.status==='error'){ 
+    alert('❌ '+r.message); 
+    return; 
+  }
+  
   await updateCartBadge();
   alert('✅ تمت الإضافة للسلة');
   closeM('productModal');
@@ -888,7 +895,6 @@ async function updateCartBadge(){
   const r = await callApi('get_cart',{mid:marketerId});
   if(Array.isArray(r)){
     cartItems=r;
-    // Calculate total quantity across all items
     let totalQty = 0;
     r.forEach(item => { totalQty += item.qty || 1; });
     document.getElementById('cartCount').textContent = totalQty;
@@ -928,7 +934,6 @@ function renderCart(){
     </div>`;
   });
   
-  // Use shipping cost based on governorate (default 70 if not selected yet)
   const ship = 70;
   const finalTotal = totalProducts + totalCommission + ship;
   
@@ -949,10 +954,27 @@ async function updQty(cid,diff){
   const nq=item.qty+diff;if(nq<1)return;
   await callApi('upd_cart',{cid,qty:nq});await openCart();await updateCartBadge();
 }
-async function delCart(cid){await callApi('del_cart',{cid});await openCart();await updateCartBadge();}
+async function delCart(cid){
+  // 1. جلب المنتج من السلة
+  const item = cartItems.find(i=>i.cart_id===cid);
+  if(item){
+    // 2. إعادة المخزون
+    const prod = allProducts.find(p=>String(p.product_id)===String(item.product_id));
+    if(prod){
+      const newStock = parseInt(prod.stock) + parseInt(item.qty);
+      await callApi('update_stock', { 
+        product_id: item.product_id, 
+        stock: newStock 
+      });
+    }
+  }
+  // 3. حذف من السلة
+  await callApi('del_cart',{cid});
+  await openCart();
+  await updateCartBadge();
+}
 function checkout(){
   if(!cartItems?.length){alert('⚠️ السلة فارغة');return;}
-  // Save all cart items for order
   currentOrderProducts = [...cartItems];
   closeM('cartModal');
   openOrderForm();
@@ -960,25 +982,40 @@ function checkout(){
 
 /* ── ORDER ── */
 function openOrderForm(){
-  closeM('productModal');closeM('cartModal');
+  // 1. لو في منتج مفتوح حالياً، استخدمه
+  if(currentProduct && !currentOrderProducts?.length){
+    currentOrderProducts = [{
+      ...currentProduct,
+      qty: 1,
+      cart_id: 'temp_' + Date.now()
+    }];
+  }
+  
+  // 2. لو مفيش منتج ولا حاجة في السلة
+  if(!currentOrderProducts?.length && !cartItems?.length){
+    alert('⚠️ يرجى اختيار منتج أولاً');
+    return;
+  }
+  
+  // 3. لو السلة فيها منتجات استخدمها (لو currentOrderProducts فاضي)
   if(!currentOrderProducts?.length && cartItems?.length){
     currentOrderProducts = [...cartItems];
   }
+  
+  closeM('productModal');
+  closeM('cartModal');
+  
+  // لو لسه مفيش منتج بعد كل ده
   if(!currentOrderProducts?.length){
-    alert('❌ يرجى اختيار منتج أولاً');
+    alert('⚠️ يرجى اختيار منتج أولاً');
     return;
   }
   
   const p = currentOrderProducts[0];
-  const sp=sellP(p.base_price);
-  const cm=comm(p.base_price);
-  const basePrice=parseFloat(p.base_price)||0;
-  const siteProfitAmt=calcSiteProfit();
-  const govOpts=Object.keys(CITIES).map(g=>`<option value="${g}">${g}</option>`).join('');
-  const cleanName = cleanText(p.name);
-  const orderId = 'ORD-' + Date.now();
-
-  // Calculate order summary
+  const sp = sellP(p.base_price);
+  const cm = comm(p.base_price);
+  const govOpts = Object.keys(CITIES).map(g=>`<option value="${g}">${g}</option>`).join('');
+  
   let totalProducts = 0;
   let totalCommission = 0;
   let totalQty = 0;
@@ -1164,9 +1201,11 @@ async function submitOrder(){
     }
 
     if(allSuccess){
-      // Delete all items from cart
+      // حذف من السلة (فقط العناصر اللي مش مؤقتة)
       for(const item of currentOrderProducts){
-        await callApi('del_cart',{cid:item.cart_id});
+        if(item.cart_id && !item.cart_id.startsWith('temp_')){
+          await callApi('del_cart',{cid:item.cart_id});
+        }
       }
       await updateCartBadge();
       
