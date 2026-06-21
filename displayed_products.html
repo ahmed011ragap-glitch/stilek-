@@ -247,13 +247,18 @@ select.filter-input option{background:var(--white);}
 .del-btn{background:var(--red-light);border:1px solid rgba(232,51,74,.3);color:var(--red);font-size:11px;padding:5px 9px;border-radius:8px;cursor:pointer;transition:all .2s;font-family:"Tajawal",sans-serif;font-weight:800;}
 .del-btn:hover{background:var(--red);color:#fff;}
 .cart-total-bar{background:var(--green-light);border:1.5px solid rgba(0,184,107,.25);border-radius:12px;padding:13px;text-align:center;color:var(--green);font-size:14px;font-weight:900;margin:12px 0;}
+.cart-total-bar .total-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;font-weight:700;}
+.cart-total-bar .total-row .green{color:var(--green);}
+.cart-total-bar .total-row .gold{color:var(--gold);}
+.cart-total-bar .total-row .muted{color:var(--muted);}
+.cart-total-bar .final-total{border-top:1px solid rgba(0,184,107,.2);margin-top:6px;padding-top:8px;font-size:16px;}
 
 /* ── ORDER ── */
 .order-modal{padding:18px;}
 .order-badge{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px;margin-bottom:16px;}
 .order-badge img{width:44px;height:44px;object-fit:contain;border-radius:9px;background:var(--white);border:1px solid var(--border);}
 .ob-name{font-size:13px;font-weight:900;margin-bottom:2px;}
-.fsec{font-size:10px;color:var(--green);font-weight:900;letter-spacing:.6px;text-transform:uppercase;margin:14px 0 8px;padding-bottom:5px;border-bottom:1.5px solid var(--border);}
+.fsec{font-size:10px;font-weight:900;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin:14px 0 8px;padding-bottom:5px;border-bottom:1.5px solid var(--border);}
 .fg{margin-bottom:10px;}
 .fl{font-size:10px;color:var(--muted);font-weight:800;display:block;margin-bottom:4px;letter-spacing:.3px;}
 .fi{width:100%;padding:11px 13px;background:var(--surface);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-size:13px;font-family:"Tajawal",sans-serif;outline:none;transition:all .2s;}
@@ -418,6 +423,41 @@ const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const WA_NUM = '201108712091';
 const SITE_PROFIT = 20;
 
+// ── SHIPPING COSTS PER GOVERNORATE ──
+const SHIPPING_COSTS = {
+  'القاهرة': 60,
+  'الجيزة': 60,
+  'الإسكندرية': 70,
+  'القليوبية': 70,
+  'الشرقية': 75,
+  'الدقهلية': 75,
+  'الغربية': 75,
+  'المنوفية': 75,
+  'البحيرة': 75,
+  'دمياط': 70,
+  'بورسعيد': 70,
+  'الإسماعيلية': 70,
+  'السويس': 70,
+  'كفر الشيخ': 75,
+  'الفيوم': 85,
+  'بني سويف': 85,
+  'المنيا': 85,
+  'أسيوط': 85,
+  'سوهاج': 85,
+  'قنا': 85,
+  'الأقصر': 85,
+  'أسوان': 85,
+  'مطروح': 100,
+  'الوادي الجديد': 100,
+  'البحر الأحمر': 100,
+  'شمال سيناء': 100,
+  'جنوب سيناء': 100
+};
+
+function getShippingCost(governorate) {
+  return SHIPPING_COSTS[governorate] || 70;
+}
+
 const urlP = new URLSearchParams(window.location.search);
 let rawUser = urlP.get('user') || localStorage.getItem('username') || '';
 let marketerId = rawUser.trim().toLowerCase() || 'm_' + Math.random().toString(36).substr(2,6);
@@ -427,35 +467,37 @@ document.getElementById('userLabel').textContent = marketerName;
 
 let allProducts = [], favoriteIds = [], cartItems = [], currentProduct = null;
 let filteredProducts = [], currentCat = 'all', currentSort = 'newest';
+let currentOrderProducts = [];
 
+// ── ALL EGYPT CITIES (27 Governorates, 350+ Cities) ──
 const CITIES = {
-  'العاصمة':['القاهرة','حلوان','مصر الجديدة','المعادي','مدينة نصر','التجمع الخامس','شبرا','عين شمس','المرج','الزيتون'],
-  'الجيزة':['الجيزة','6 أكتوبر','الشيخ زايد','الهرم','فيصل','المهندسين','الدقي','إمبابة','البدرشين'],
-  'الإسكندرية':['الإسكندرية','العجمي','سموحة','سيدي بشر','المنتزه','السيوف','محرم بك','الرمل','برج العرب'],
-  'القليوبية':['بنها','شبرا الخيمة','قليوب','الخانكة','الخصوص','طوخ','قها','كفر شكر'],
-  'الشرقية':['الزقازيق','العاشر من رمضان','بلبيس','منيا القمح','فاقوس','أبو حماد','كفر صقر'],
-  'الدقهلية':['المنصورة','طلخا','ميت غمر','دكرنس','السنبلاوين','شربين','أجا','بلقاس'],
-  'الغربية':['طنطا','المحلة الكبرى','كفر الزيات','زفتى','بسيون','سمنود','قطور'],
-  'المنوفية':['شبين الكوم','قويسنا','أشمون','باجور','منوف','مدينة السادات'],
-  'البحيرة':['دمنهور','كفر الدوار','رشيد','إدكو','أبو حمص','إيتاي البارود'],
-  'دمياط':['دمياط','دمياط الجديدة','رأس البر','فارسكور'],
-  'بورسعيد':['بورسعيد','بورفؤاد'],
-  'الإسماعيلية':['الإسماعيلية','فايد','القنطرة شرق','التل الكبير'],
-  'السويس':['السويس','الأربعين','الجناين','عتاقة'],
-  'كفر الشيخ':['كفر الشيخ','دسوق','قلين','سيدي سالم','بلطيم','فوه'],
-  'الفيوم':['الفيوم','إطسا','سنورس','طامية','أبشواي'],
-  'بني سويف':['بني سويف','الواسطى','ناصر','ببا','الفشن'],
-  'المنيا':['المنيا','ملوي','بني مزار','مغاغة','سمالوط','أبو قرقاص'],
-  'أسيوط':['أسيوط','ديروط','منفلوط','القوصية','أبنوب','أبو تيج'],
-  'سوهاج':['سوهاج','أخميم','طهطا','جرجا','طما','البلينا'],
-  'قنا':['قنا','نجع حمادي','دشنا','أبو تشت','فرشوط','قوص'],
-  'الأقصر':['الأقصر','إسنا','أرمنت','القرنة'],
-  'أسوان':['أسوان','كوم أمبو','إدفو','نصر النوبة'],
-  'مطروح':['مرسى مطروح','الضبعة','العلمين','سيوة'],
-  'الوادي الجديد':['الخارجة','الداخلة','الفرافرة'],
-  'البحر الأحمر':['الغردقة','سفاجا','رأس غارب','مرسى علم'],
-  'شمال سيناء':['العريش','بئر العبد','الشيخ زويد','رفح'],
-  'جنوب سيناء':['طور سيناء','شرم الشيخ','دهب','نويبع','طابا']
+  'القاهرة': ['القاهرة', 'حلوان', 'مصر الجديدة', 'المعادي', 'مدينة نصر', 'التجمع الخامس', 'شبرا', 'عين شمس', 'المرج', 'الزيتون', 'السلام', 'العباسية', 'باب اللوق', 'جاردن سيتي', 'وسط البلد', 'مصر القديمة', 'المنيل', 'الوراق', 'إمبابة', 'بولاق', 'السيدة زينب', 'الدرب الأحمر', 'الخليفة', 'المقطم', 'الوايلي', 'الزاوية الحمراء', 'الساحل', 'روض الفرج', 'شبرا الخيمة'],
+  'الجيزة': ['الجيزة', '6 أكتوبر', 'الشيخ زايد', 'الهرم', 'فيصل', 'المهندسين', 'الدقي', 'إمبابة', 'البدرشين', 'العجوزة', 'بولاق الدكرور', 'كفر طهرمس', 'أبو رواش', 'منشأة القناطر', 'أوسيم', 'الواحدة', 'الواحات', 'حدائق الأهرام', 'نزلة السمان', 'المنيب', 'الطوابق', 'الملك الصالح', 'دهشور', 'سقارة', 'ميت رهينة'],
+  'الإسكندرية': ['الإسكندرية', 'العجمي', 'سموحة', 'سيدي بشر', 'المنتزه', 'السيوف', 'محرم بك', 'الرمل', 'برج العرب', 'الدخيلة', 'العامرية', 'مينا البصل', 'أنفوشي', 'جليم', 'ستانلي', 'رشدي', 'لوران', 'سيدي جابر', 'كليوباترا', 'فيكتوريا', 'جناكليس', 'الظاهرية', 'الحضرة', 'إبراهيمية', 'العطارين', 'القباري', 'السواحل'],
+  'القليوبية': ['بنها', 'شبرا الخيمة', 'قليوب', 'الخانكة', 'الخصوص', 'طوخ', 'قها', 'كفر شكر', 'شبين القناطر', 'القناطر الخيرية', 'العبور', 'قليوب البلد', 'كفر الجزار', 'سنديون', 'ميت نما', 'عرب العليقات', 'أبو زعبل', 'المنشية', 'سرياقوس', 'كفر سندبيس'],
+  'الشرقية': ['الزقازيق', 'العاشر من رمضان', 'بلبيس', 'منيا القمح', 'فاقوس', 'أبو حماد', 'كفر صقر', 'أبو كبير', 'ههيا', 'ديرب نجم', 'الإبراهيمية', 'الحسينية', 'أولاد صقر', 'مشتول السوق', 'القرين', 'الصالحية الجديدة', 'كفر سعد', 'العدلية', 'الرقازة', 'أبو حسين', 'كفر الجاويش', 'بني هلال'],
+  'الدقهلية': ['المنصورة', 'طلخا', 'ميت غمر', 'دكرنس', 'السنبلاوين', 'شربين', 'أجا', 'بلقاس', 'المطرية', 'منية النصر', 'الجمالية', 'تمي الأمديد', 'المنزلة', 'الستاموني', 'بني عبيد', 'ميت سلسيل', 'ديرب الخشب', 'كفر البدماص', 'نبروه', 'محلة دمنة', 'كفر سنجاب'],
+  'الغربية': ['طنطا', 'المحلة الكبرى', 'كفر الزيات', 'زفتى', 'بسيون', 'سمنود', 'قطور', 'السنطة', 'محلة الروح', 'الراهبين', 'ميت حلفا', 'شبرا النملة', 'كفر عوض', 'أبيار', 'كفر حجازي', 'حصة بارما', 'كوم الفرج', 'دسوق الجديدة'],
+  'المنوفية': ['شبين الكوم', 'قويسنا', 'أشمون', 'باجور', 'منوف', 'مدينة السادات', 'بركة السبع', 'تلا', 'الشهداء', 'سرس الليان', 'طوخ طنبشا', 'الكوم الأخضر', 'ميت خلف', 'شبرا بخوم', 'أبو رقبة', 'كفر شنوان'],
+  'البحيرة': ['دمنهور', 'كفر الدوار', 'رشيد', 'إدكو', 'أبو حمص', 'إيتاي البارود', 'كوم حمادة', 'المحمودية', 'نبروه', 'شبراخيت', 'حوش عيسى', 'بدر', 'أبو المطامير', 'الرحمانية', 'النجيلة', 'قرية الصيادين', 'القاهرة الجديدة', 'بني خالد', 'أبو غازي', 'كوم إسنا', 'كفر الزغبي', 'ميت فارس', 'سيدي سالم', 'بلطيم', 'فوه', 'بحر البقر'],
+  'دمياط': ['دمياط', 'دمياط الجديدة', 'رأس البر', 'فارسكور', 'الزرقا', 'كفر سعد', 'ميت أبو غالب', 'أولاد حمام', 'الروضة', 'شطا', 'عزب البرج', 'السرو', 'الرميلة'],
+  'بورسعيد': ['بورسعيد', 'بورفؤاد', 'الضاحية', 'المناخ', 'العرب', 'الجنوب', 'الشرق', 'الغرب', 'بورسعيد الجديدة'],
+  'الإسماعيلية': ['الإسماعيلية', 'فايد', 'القنطرة شرق', 'التل الكبير', 'أبو صوير', 'القصاصين', 'المناصرة', 'نفيشة', 'سرابيوم', 'القنطرة غرب', 'الإسماعيلية الجديدة'],
+  'السويس': ['السويس', 'الأربعين', 'الجناين', 'عتاقة', 'فيصل', 'السويس الجديدة', 'بور توفيق', 'الأدبية', 'الكيلو 6'],
+  'كفر الشيخ': ['كفر الشيخ', 'دسوق', 'قلين', 'سيدي سالم', 'بلطيم', 'فوه', 'الرياض', 'مطوبس', 'برج البرلس', 'الحامول', 'البرتقالة', 'منية المرشد', 'كفر الشيخ الجديدة'],
+  'الفيوم': ['الفيوم', 'إطسا', 'سنورس', 'طامية', 'أبشواي', 'يوسف الصديق', 'منشأة عبد الله', 'الفيوم الجديدة', 'قرية الحزام', 'قرية النزلة', 'عزبة عثمان', 'كوم أوشيم'],
+  'بني سويف': ['بني سويف', 'الواسطى', 'ناصر', 'ببا', 'الفشن', 'سمسطا', 'إهناسيا', 'الواسطى الجديدة', 'قرية الطريق', 'كوم أبو راضى', 'نزلة الفشن', 'أهناسيا المدينة'],
+  'المنيا': ['المنيا', 'ملوي', 'بني مزار', 'مغاغة', 'سمالوط', 'أبو قرقاص', 'دير مواس', 'العدوة', 'مطاي', 'المنيا الجديدة', 'قرية طحا', 'البرجاية', 'كوم اللوفي', 'نزلة عبيد', 'صفط الخمار', 'أبو جرج'],
+  'أسيوط': ['أسيوط', 'ديروط', 'منفلوط', 'القوصية', 'أبنوب', 'أبو تيج', 'الغنايم', 'صدفا', 'البداري', 'ساحل سليم', 'أسيوط الجديدة', 'نزلة عبد اللاه', 'بني مر', 'زاوية أبو شوشة', 'الخوالد', 'العتامنة'],
+  'سوهاج': ['سوهاج', 'أخميم', 'طهطا', 'جرجا', 'طما', 'البلينا', 'المراغة', 'ساقلته', 'المنشأة', 'دار السلام', 'جهينة', 'سوهاج الجديدة', 'الكولة', 'الصوامعة شرق', 'بني حميل', 'نزلة عمرو'],
+  'قنا': ['قنا', 'نجع حمادي', 'دشنا', 'أبو تشت', 'فرشوط', 'قوص', 'الوقف', 'نقادة', 'قنا الجديدة', 'قرية حجازة', 'الرزيقات', 'كوم إمبو', 'الأشراف', 'العضايمة'],
+  'الأقصر': ['الأقصر', 'إسنا', 'أرمنت', 'القرنة', 'البياضية', 'الطود', 'الكرنك', 'الأقصر الجديدة', 'الرياينة', 'الزينية', 'نجع الدير', 'الكلاحين'],
+  'أسوان': ['أسوان', 'كوم أمبو', 'إدفو', 'نصر النوبة', 'دراو', 'كشكول', 'أبو سمبل', 'أسوان الجديدة', 'الشلال', 'السباعية', 'الكوبانية', 'الرمادي', 'فارس', 'العلاقي'],
+  'مطروح': ['مرسى مطروح', 'الضبعة', 'العلمين', 'سيوة', 'النجيلة', 'سيدي براني', 'الحمام', 'راس الحكمة', 'فوكة', 'سيدي عبد الرحمن', 'مرسى مطروح الجديدة'],
+  'الوادي الجديد': ['الخارجة', 'الداخلة', 'الفرافرة', 'بلاط', 'موط', 'القصر', 'باريس', 'الخارجة الجديدة', 'منشية القصر', 'العوينات'],
+  'البحر الأحمر': ['الغردقة', 'سفاجا', 'رأس غارب', 'مرسى علم', 'القصير', 'الشلاتين', 'حلايب', 'شلاتين', 'أبو رماد', 'رأس بناس', 'سفاجا الجديدة', 'الغردقة الجديدة'],
+  'شمال سيناء': ['العريش', 'بئر العبد', 'الشيخ زويد', 'رفح', 'الحسنة', 'نخل', 'رمانة', 'العريش الجديدة', 'القرية', 'المزار', 'الخروبة', 'المساعيد'],
+  'جنوب سيناء': ['طور سيناء', 'شرم الشيخ', 'دهب', 'نويبع', 'طابا', 'سانت كاترين', 'رأس سدر', 'أبو رديس', 'أبو زنيمة', 'الطور الجديدة', 'نويبع الجديدة', 'شرم الشيخ الجديدة']
 };
 
 /* ── دالة تنظيف النص من جميع العلامات ── */
@@ -510,7 +552,15 @@ async function callApi(action, data={}){
         const pr = await req('products?select=*');
         return c.map(i=>{const p=pr.find(x=>String(x.product_id)===String(i.product_id));return p?{...i,...p}:i;});
       }
-      case 'add_cart':  return await req('cart',{method:'POST',body:JSON.stringify({marketer_id:data.mid.toLowerCase(),product_id:data.pid,qty:1,cart_id:'C'+Date.now()})});
+      case 'add_cart':{
+        // Check if product already in cart
+        const existing = cartItems.find(i => String(i.product_id) === String(data.pid));
+        if(existing){
+          // Update quantity
+          return await req(`cart?cart_id=eq.${existing.cart_id}`,{method:'PATCH',body:JSON.stringify({qty: existing.qty + 1})});
+        }
+        return await req('cart',{method:'POST',body:JSON.stringify({marketer_id:data.mid.toLowerCase(),product_id:data.pid,qty:1,cart_id:'C'+Date.now()})});
+      }
       case 'upd_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'PATCH',body:JSON.stringify({qty:data.qty})});
       case 'del_cart':  return await req(`cart?cart_id=eq.${data.cid}`,{method:'DELETE'});
       case 'place_order': {
@@ -836,7 +886,13 @@ async function addToCart(){
 }
 async function updateCartBadge(){
   const r = await callApi('get_cart',{mid:marketerId});
-  if(Array.isArray(r)){cartItems=r;document.getElementById('cartCount').textContent=r.length;}
+  if(Array.isArray(r)){
+    cartItems=r;
+    // Calculate total quantity across all items
+    let totalQty = 0;
+    r.forEach(item => { totalQty += item.qty || 1; });
+    document.getElementById('cartCount').textContent = totalQty;
+  }
 }
 async function openCart(){
   openM('cartModal');
@@ -847,13 +903,20 @@ async function openCart(){
 function renderCart(){
   const body=document.getElementById('cartModalContent');
   if(!cartItems?.length){body.innerHTML='<div class="empty-state"><div class="big">🛒</div><p>السلة فارغة حالياً</p></div>';return;}
-  let total=0,html='';
+  let totalProducts = 0;
+  let totalCommission = 0;
+  let html='';
   cartItems.forEach(item=>{
-    const sp=sellP(item.base_price);total+=sp*item.qty;
+    const sp=sellP(item.base_price);
+    const cm=comm(item.base_price);
+    const itemTotal = sp * item.qty;
+    const itemComm = cm * item.qty;
+    totalProducts += itemTotal;
+    totalCommission += itemComm;
     const cleanName = cleanText(item.name);
     html+=`<div class="cart-item">
       <img src="${iurl(item.image_url)}" onerror="this.src='https://placehold.co/60x60/2a2a2a/808080?text=?'">
-      <div class="cart-info"><div class="cart-name">${esc(cleanName)}</div><div class="cart-price">${sp} ج × ${item.qty} = ${sp*item.qty} ج</div></div>
+      <div class="cart-info"><div class="cart-name">${esc(cleanName)}</div><div class="cart-price">${sp} ج × ${item.qty} = ${itemTotal} ج</div></div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
         <div class="qty-row">
           <button class="qty-btn" onclick="updQty('${item.cart_id}',-1)">−</button>
@@ -864,9 +927,22 @@ function renderCart(){
       </div>
     </div>`;
   });
-  const ship=70;
-  body.innerHTML=html+`<div class="cart-total-bar">المنتجات: ${total} ج + شحن ${ship} ج = <strong>${total+ship} ج</strong></div>
-    <div class="btn-row"><button class="btn btn-primary" onclick="checkout()">✅ إتمام الطلب</button><button class="btn btn-sec" onclick="closeM('cartModal')">إغلاق</button></div>`;
+  
+  // Use shipping cost based on governorate (default 70 if not selected yet)
+  const ship = 70;
+  const finalTotal = totalProducts + totalCommission + ship;
+  
+  body.innerHTML=html+`
+    <div class="cart-total-bar">
+      <div class="total-row"><span>المنتجات</span><span class="green">${totalProducts} ج</span></div>
+      <div class="total-row"><span>العمولة</span><span class="gold">${totalCommission} ج</span></div>
+      <div class="total-row"><span>الشحن</span><span class="muted">${ship} ج</span></div>
+      <div class="final-total"><span>الإجمالي</span><span>${finalTotal} ج</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="checkout()">✅ إتمام الطلب</button>
+      <button class="btn btn-sec" onclick="closeM('cartModal')">إغلاق</button>
+    </div>`;
 }
 async function updQty(cid,diff){
   const item=cartItems.find(i=>i.cart_id===cid);if(!item)return;
@@ -874,13 +950,26 @@ async function updQty(cid,diff){
   await callApi('upd_cart',{cid,qty:nq});await openCart();await updateCartBadge();
 }
 async function delCart(cid){await callApi('del_cart',{cid});await openCart();await updateCartBadge();}
-function checkout(){if(!cartItems?.length){alert('⚠️ السلة فارغة');return;}closeM('cartModal');currentProduct=cartItems[0];openOrderForm();}
+function checkout(){
+  if(!cartItems?.length){alert('⚠️ السلة فارغة');return;}
+  // Save all cart items for order
+  currentOrderProducts = [...cartItems];
+  closeM('cartModal');
+  openOrderForm();
+}
 
 /* ── ORDER ── */
 function openOrderForm(){
   closeM('productModal');closeM('cartModal');
-  const p=currentProduct;
-  if(!p){alert('❌ يرجى اختيار منتج أولاً');return;}
+  if(!currentOrderProducts?.length && cartItems?.length){
+    currentOrderProducts = [...cartItems];
+  }
+  if(!currentOrderProducts?.length){
+    alert('❌ يرجى اختيار منتج أولاً');
+    return;
+  }
+  
+  const p = currentOrderProducts[0];
   const sp=sellP(p.base_price);
   const cm=comm(p.base_price);
   const basePrice=parseFloat(p.base_price)||0;
@@ -889,12 +978,35 @@ function openOrderForm(){
   const cleanName = cleanText(p.name);
   const orderId = 'ORD-' + Date.now();
 
+  // Calculate order summary
+  let totalProducts = 0;
+  let totalCommission = 0;
+  let totalQty = 0;
+  let orderSummaryHtml = '';
+  
+  currentOrderProducts.forEach(item => {
+    const itemSp = sellP(item.base_price);
+    const itemCm = comm(item.base_price);
+    const qty = item.qty || 1;
+    const itemTotal = itemSp * qty;
+    const itemComm = itemCm * qty;
+    totalProducts += itemTotal;
+    totalCommission += itemComm;
+    totalQty += qty;
+    const cleanNameItem = cleanText(item.name);
+    orderSummaryHtml += `<div style="font-size:11px;color:var(--text-2);padding:2px 0;border-bottom:1px solid var(--border);">${esc(cleanNameItem)} ×${qty} = ${itemTotal} ج</div>`;
+  });
+
+  const ship = 70;
+  const finalTotal = totalProducts + totalCommission + ship;
+
   document.getElementById('orderModalContent').innerHTML=`
     <div class="order-modal">
       <div class="order-badge">
         <img src="${iurl(p.image_url)}" onerror="this.src='https://placehold.co/60x60/2a2a2a/808080?text=🛍️'">
         <div>
-          <div class="ob-name">${esc(cleanName)}</div>
+          <div class="ob-name">${totalQty} منتج في الطلب</div>
+          <div style="font-size:10px;color:var(--muted);">${currentOrderProducts.length} منتج مختلف</div>
         </div>
       </div>
 
@@ -937,62 +1049,38 @@ function openOrderForm(){
       </div>
 
       <div class="fg">
-        <label class="fl">📦 الكمية</label>
-        <input class="fi" id="oQty" type="number" value="1" min="1" max="${p.stock}">
-      </div>
-
-      <div class="fgrid">
-        <div class="fg">
-          <label class="fl">📏 المقاس</label>
-          <input class="fi" id="oSize" placeholder="مثال: XL">
-        </div>
-        <div class="fg">
-          <label class="fl">🎨 اللون</label>
-          <input class="fi" id="oColor" placeholder="مثال: أسود">
-        </div>
-      </div>
-
-      <div class="fg">
         <label class="fl">📝 ملاحظات إضافية</label>
         <input class="fi" id="oNotes" placeholder="أي ملاحظات للطلب...">
       </div>
 
-      <div class="fsec">💰 تفاصيل الفاتورة</div>
+      <div class="fsec">📋 ملخص الطلب</div>
       
       <div class="sum-box">
-        <div class="sum-row"><span>سعر المنتج</span><span>${sp} ج</span></div>
-        <div class="sum-row"><span>الكمية</span><span id="oQtyDisplay">1</span></div>
-        <div class="sum-row"><span>رسوم الشحن</span><span>70 ج</span></div>
-        <div class="sum-total"><span>الإجمالي</span><span id="oTotalDisplay">${sp + 70} ج</span></div>
-      </div>
-
-      <div class="fg">
-        <label class="fl">⭐ عمولتك</label>
-        <input
-          class="fi fi-gold"
-          id="oCommission"
-          type="number"
-          value="${cm}"
-          min="0">
+        ${orderSummaryHtml}
+        <div class="sum-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
+          <span>إجمالي المنتجات</span>
+          <span>${totalProducts} ج</span>
+        </div>
+        <div class="sum-row">
+          <span>العمولة الإجمالية</span>
+          <span style="color:var(--gold);">${totalCommission} ج</span>
+        </div>
+        <div class="sum-row">
+          <span>رسوم الشحن</span>
+          <span style="color:var(--muted);">${ship} ج</span>
+        </div>
+        <div class="sum-total">
+          <span>الإجمالي النهائي</span>
+          <span>${finalTotal} ج</span>
+        </div>
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب</button>
+        <button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب (${finalTotal} ج)</button>
         <button class="btn btn-sec" onclick="closeM('orderModal')">إلغاء</button>
       </div>
     </div>
   `;
-
-  function updateOrderTotal(){
-    const qty = parseInt(document.getElementById('oQty').value) || 1;
-    const commission = parseFloat(document.getElementById('oCommission').value) || 0;
-    const total = ((sp + commission) * qty) + 70;
-    document.getElementById('oQtyDisplay').textContent = qty;
-    document.getElementById('oTotalDisplay').textContent = total + ' ج';
-  }
-
-  document.getElementById('oQty').addEventListener('input', updateOrderTotal);
-  document.getElementById('oCommission').addEventListener('input', updateOrderTotal);
 
   openM('orderModal');
 }
@@ -1009,8 +1097,10 @@ function updateCities(){
 }
 
 async function submitOrder(){
-  const p=currentProduct;
-  if(!p){alert('❌ خطأ في المنتج');return;}
+  if(!currentOrderProducts?.length){
+    alert('❌ لا توجد منتجات في الطلب');
+    return;
+  }
   
   const name = document.getElementById('oName').value.trim();
   const phone = document.getElementById('oPhone').value.trim();
@@ -1018,9 +1108,6 @@ async function submitOrder(){
   const governorate = document.getElementById('oGovernorate').value;
   const city = document.getElementById('oCity').value;
   const address = document.getElementById('oAddress').value.trim();
-  const qty = parseInt(document.getElementById('oQty').value)||1;
-  const size = document.getElementById('oSize').value.trim();
-  const color = document.getElementById('oColor').value.trim();
   const notes = document.getElementById('oNotes').value.trim();
 
   if(!name || !phone || !governorate || !city || !address){
@@ -1028,58 +1115,66 @@ async function submitOrder(){
     return;
   }
 
-  const basePrice=parseFloat(p.base_price)||0;
-  const sp=sellP(basePrice);
-  const cm = parseFloat(document.getElementById('oCommission').value) || 0;
-  const siteProfitAmt=calcSiteProfit();
-  const totalPrice = ((sp + cm) * qty) + 70;
-  const orderId = 'ORD-' + Date.now();
-
-  const orderData = {
-    order_id: orderId,
-    product_id: String(p.product_id),
-    customer_name: name,
-    phone: phone,
-    phone2: phone2,
-    governorate: governorate,
-    city: city,
-    address: address,
-    qty: qty,
-    size: size,
-    color: color,
-    price: sp,
-    shipping: 70,
-    total_price: totalPrice,
-    commission: cm,
-    site_profit: SITE_PROFIT,
-    notes: notes,
-    marketer_username: marketerName,
-    marketer_id: marketerId,
-    order_status: 'pending'
-  };
-
+  const shippingCost = getShippingCost(governorate);
   const btn = document.querySelector('#orderModalContent .btn-primary');
   if(btn){btn.disabled=true;btn.textContent='⏳ جاري الإرسال...';}
 
   try {
-    const result = await callApi('place_order', orderData);
-    if(result.status === 'error'){
-      alert('❌ فشل تسجيل الطلب: ' + (result.message||'خطأ غير معروف'));
-      if(btn){btn.disabled=false;btn.textContent='✅ تأكيد الطلب';}
-      return;
+    let allSuccess = true;
+    let orderIds = [];
+
+    for(const item of currentOrderProducts){
+      const basePrice=parseFloat(item.base_price)||0;
+      const sp=sellP(basePrice);
+      const cm=comm(basePrice);
+      const qty = item.qty || 1;
+      const totalPrice = ((sp + cm) * qty) + shippingCost;
+      const orderId = 'ORD-' + Date.now() + '-' + String(item.product_id);
+
+      const orderData = {
+        order_id: orderId,
+        product_id: String(item.product_id),
+        customer_name: name,
+        phone: phone,
+        phone2: phone2,
+        governorate: governorate,
+        city: city,
+        address: address,
+        qty: qty,
+        size: '',
+        color: '',
+        price: sp,
+        shipping: shippingCost,
+        total_price: totalPrice,
+        commission: cm,
+        site_profit: SITE_PROFIT,
+        notes: notes,
+        marketer_username: marketerName,
+        marketer_id: marketerId,
+        order_status: 'pending'
+      };
+
+      const result = await callApi('place_order', orderData);
+      if(result.status === 'error'){
+        allSuccess = false;
+        alert('❌ فشل تسجيل الطلب للمنتج: ' + (item.name || 'غير معروف') + '\n' + (result.message||'خطأ غير معروف'));
+        break;
+      }
+      orderIds.push(orderId);
     }
 
-    if(cartItems && cartItems.length){
-      for(const item of cartItems){
-        if(String(item.product_id) === String(p.product_id)){
-          await callApi('del_cart',{cid:item.cart_id});
-        }
+    if(allSuccess){
+      // Delete all items from cart
+      for(const item of currentOrderProducts){
+        await callApi('del_cart',{cid:item.cart_id});
       }
       await updateCartBadge();
+      
+      alert('✅ تم تسجيل الطلب بنجاح! عدد المنتجات: ' + currentOrderProducts.length + '\nرقم الطلب: ' + orderIds[0]);
+      closeM('orderModal');
+      currentOrderProducts = [];
     }
-
-    alert('✅ تم تسجيل الطلب بنجاح! رقم الطلب: ' + orderId);
-    closeM('orderModal');
+    
     if(btn){btn.disabled=false;btn.textContent='✅ تأكيد الطلب';}
   } catch(e) {
     alert('❌ حدث خطأ: ' + e.message);
