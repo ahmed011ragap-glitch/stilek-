@@ -316,22 +316,11 @@ body {
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <!-- 1. لوحة البيانات -->
     <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات</a>
-    
-    <!-- 2. المنتجات المعروضة -->
     <a href="#" onclick="goToPage('displayed_products')">🛍️ المنتجات المعروضة</a>
-    
-    <!-- 3. المحفظة -->
     <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
-    
-    <!-- 4. إدارة الأوردرات -->
     <a href="#" onclick="goToPage('manage_orders_market')">📋 إدارة الأوردرات</a>
-    
-    <!-- 5. الدعم الفني (واتساب) -->
     <a href="https://wa.me/201108712091" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#25d366;color:#fff !important;font-weight:700 !important;margin:20px 15px 5px !important;box-shadow:0 4px 15px rgba(37,211,102,0.3);">💬 الدعم الفني</a>
-    
-    <!-- 6. تسجيل الخروج -->
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -340,7 +329,7 @@ body {
 <div id="userBar" class="user-bar">
   <span>🧑‍💼 المسوق: <strong id="userName">-</strong></span>
   <span>🆔 كود المستخدم: <strong id="userCode">-</strong></span>
-  <span class="user-type">🧑‍💼 مسوق</span>
+  <span class="user-type" id="userTypeBadge">🧑‍💼 مسوق</span>
 </div>
 
 <div class="stats-container">
@@ -366,69 +355,49 @@ body {
 <div id="ordersList" class="orders-list"></div>
 
 <script>
-// ===== دوال السليدر والتنقل =====
+// ===== إعدادات Supabase =====
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+// ===== متغيرات عامة =====
+let currentUserVar = '';
+let currentUserType = 'marketer';
+let allOrders = [];
+let currentFilter = 'all';
+let currentSearch = '';
+
+// ===== دوال السليدر والتنقل (معدلة) =====
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
 
+// ===== دالة التنقل بين الصفحات (معدلة) =====
 function goToPage(pageName) {
   toggleSidebar();
-  const currentUser = (localStorage.getItem('username') || currentUserVar || '').toLowerCase().trim();
-  window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
+  
+  // نجيب اسم المستخدم من الرابط أو localStorage
+  const urlParams = new URLSearchParams(window.location.search);
+  let user = urlParams.get('user') || localStorage.getItem('username') || 'ragap';
+  let type = urlParams.get('type') || localStorage.getItem('userType') || 'marketer';
+  
+  // نضبط الـ page name
+  let targetPage = pageName;
+  if (!targetPage.includes('.html')) {
+    targetPage = targetPage + '.html';
+  }
+  
+  // نروح للصفحة الجديدة مع الباراميترات
+  window.location.href = `${targetPage}?user=${encodeURIComponent(user)}&type=${type}`;
 }
 
+// ===== دالة تسجيل الخروج =====
 function logout() {
   if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
     localStorage.clear();
+    sessionStorage.clear();
     window.location.href = "index.html";
   }
-}
-
-// ===== إعدادات Supabase =====
-const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
-
-const urlParams = new URLSearchParams(window.location.search);
-let currentUserVar = (urlParams.get('user') || localStorage.getItem('username') || '').toLowerCase().trim();
-let allOrders = [];
-let currentFilter = 'all';
-let currentSearch = '';
-
-// تعريف شامل للحالات مع المرادفات العربية والإنجليزية
-const STATUS_STAGES = {
-  'pending': 0, 'جديد': 0, 
-  'packing': 1, 'تغليف': 1, 
-  'shipping': 2, 'توصيل': 2, 
-  'received': 3, 'تم الاستلام': 3, 
-  'completed': 4, 'تم التسليم': 4, 'تم التوصيل': 4, 
-  'returned': -1, 'مرتجع': -1, 'مرفوض': -1, 'cancelled': -1
-};
-
-// حالات الطلب المكتملة (للإحصائيات والتصفية)
-const COMPLETED_STATUSES = ['completed', 'تم التسليم', 'تم التوصيل'];
-const RETURNED_STATUSES = ['returned', 'مرتجع', 'مرفوض', 'cancelled'];
-
-// ===== تهيئة الصفحة =====
-window.onload = function() {
-  // جلب اسم المستخدم تلقائياً من الرابط أو localStorage
-  if (currentUserVar) {
-    document.getElementById('userName').innerText = currentUserVar;
-    document.getElementById('userCode').innerText = currentUserVar;
-  } else {
-    // لو مفيش اسم مستخدم، نستخدم اسم افتراضي أو نطلب من المستخدم
-    const defaultUser = 'ragap';
-    currentUserVar = defaultUser;
-    localStorage.setItem('username', defaultUser);
-    document.getElementById('userName').innerText = defaultUser;
-    document.getElementById('userCode').innerText = defaultUser;
-  }
-  
-  // تحميل الطلبات تلقائياً
-  loadOrders();
-  
-  // تحديث الطلبات كل 30 ثانية
-  setInterval(loadOrders, 30000);
 }
 
 // ===== دوال API =====
@@ -445,14 +414,79 @@ async function supabaseApi(endpoint, options = {}) {
   return await response.json();
 }
 
-// ===== الوظيفة الأساسية - جلب طلبات المسوق (باستخدام marketer_id و marketer_username) =====
-async function loadOrders() {
-  const username = currentUserVar;
+// تعريف شامل للحالات
+const STATUS_STAGES = {
+  'pending': 0, 'جديد': 0, 
+  'packing': 1, 'تغليف': 1, 
+  'shipping': 2, 'توصيل': 2, 
+  'received': 3, 'تم الاستلام': 3, 
+  'completed': 4, 'تم التسليم': 4, 'تم التوصيل': 4, 
+  'returned': -1, 'مرتجع': -1, 'مرفوض': -1, 'cancelled': -1
+};
+
+const COMPLETED_STATUSES = ['completed', 'تم التسليم', 'تم التوصيل'];
+const RETURNED_STATUSES = ['returned', 'مرتجع', 'مرفوض', 'cancelled'];
+
+// ===== تهيئة الصفحة (معدلة) =====
+window.onload = function() {
+  // قراءة اسم المستخدم من الرابط أولاً
+  const urlParams = new URLSearchParams(window.location.search);
+  let userFromUrl = urlParams.get('user');
+  let userTypeFromUrl = urlParams.get('type') || 'marketer';
   
-  if (!username) {
-    alert('⚠️ لا يوجد اسم مستخدم');
-    return;
+  // إذا كان في الرابط، نستخدمه ونخزنه
+  if (userFromUrl) {
+    currentUserVar = userFromUrl.toLowerCase().trim();
+    currentUserType = userTypeFromUrl;
+    localStorage.setItem('username', currentUserVar);
+    localStorage.setItem('userType', currentUserType);
+  } else {
+    // لو مفيش في الرابط، نجيب من localStorage
+    currentUserVar = localStorage.getItem('username') || 'ragap';
+    currentUserType = localStorage.getItem('userType') || 'marketer';
   }
+  
+  // ✅ التأكد من أن المستخدم من نوع مسوق
+  if (currentUserType !== 'marketer') {
+    // لو المستخدم مش مسوق، نحوله للمسوق
+    currentUserType = 'marketer';
+    localStorage.setItem('userType', 'marketer');
+  }
+  
+  // عرض اسم المستخدم في الواجهة
+  document.getElementById('userName').innerText = currentUserVar;
+  document.getElementById('userCode').innerText = currentUserVar;
+  
+  // تحديث نوع المستخدم في الواجهة
+  const userTypeElement = document.getElementById('userTypeBadge');
+  userTypeElement.innerText = '🧑‍💼 مسوق';
+  userTypeElement.style.color = '#00ff88';
+  userTypeElement.style.borderColor = '#00ff88';
+  userTypeElement.style.background = '#0a2a0a';
+  
+  // تحميل الطلبات
+  loadOrders();
+  
+  // تحديث الطلبات كل 30 ثانية
+  setInterval(loadOrders, 30000);
+}
+
+// ===== الوظيفة الأساسية - جلب طلبات المسوق =====
+async function loadOrders() {
+  // ✅ ناخد المستخدم من الرابط أولاً
+  const urlParams = new URLSearchParams(window.location.search);
+  let username = urlParams.get('user') || localStorage.getItem('username') || 'ragap';
+  let userType = urlParams.get('type') || localStorage.getItem('userType') || 'marketer';
+  
+  // ✅ نتأكد أننا مسوق
+  if (userType !== 'marketer') {
+    userType = 'marketer';
+    localStorage.setItem('userType', 'marketer');
+  }
+  
+  // نخزنهم عشان نستخدمهم في أي مكان
+  currentUserVar = username;
+  currentUserType = userType;
   
   document.getElementById('loading').style.display = 'block';
   document.getElementById('loading').innerHTML = '⏳ جاري تحميل طلباتك...';
@@ -467,13 +501,11 @@ async function loadOrders() {
       marketerId = userData[0].id;
     }
     
-    // 2. نبني استعلام الطلبات بحيث يدور في الاتنين (marketer_id و marketer_username)
+    // 2. نبني استعلام الطلبات
     let ordersQuery;
     if (marketerId) {
-      // لو لقينا ID، نجيب الطلبات بالـ ID أو بالـ Username (احتياطي)
       ordersQuery = `orders?select=*&or=(marketer_id.eq.${marketerId},marketer_username.eq.${username})&order=created_at.desc`;
     } else {
-      // لو ملقناش ID، ندور بالـ Username بس
       ordersQuery = `orders?select=*&marketer_username=eq.${username}&order=created_at.desc`;
     }
     
@@ -493,38 +525,34 @@ async function loadOrders() {
       return;
     }
     
-    // 3. نجمع كل product_id من الطلبات عشان نجيب تفاصيل المنتجات
+    // 3. نجمع كل product_id من الطلبات
     const productIds = [...new Set(ordersData.map(o => o.product_id))];
     
-    // 4. نجيب تفاصيل المنتجات من جدول products
+    // 4. نجيب تفاصيل المنتجات
     let productMap = {};
     if (productIds.length > 0) {
       const productIdsStr = productIds.map(id => `"${id}"`).join(',');
       const productsQuery = `products?select=product_id,name,base_price,image_url&product_id=in.(${productIdsStr})`;
       const productsData = await supabaseApi(productsQuery);
       
-      // 5. نعمل Map للوصول السريع
       productsData.forEach(p => {
         productMap[p.product_id] = p;
       });
     }
     
-    // 6. ندمج بيانات الطلب مع بيانات المنتج
+    // 5. ندمج بيانات الطلب مع بيانات المنتج
     allOrders = ordersData.map(order => {
       const product = productMap[order.product_id] || {};
       
       return {
         ...order,
-        // بيانات المنتج من جدول products
         product_name: product.name || 'منتج غير معروف',
         image_url: product.image_url || '',
         product_price: product.base_price || order.price || 0,
         product_stock: product.stock || 0,
-        // بيانات الطلب
         order_qty: order.qty || 1,
         order_price: order.price || 0,
         order_status: order.order_status || 'pending',
-        // معلومات المسوق
         marketer_id: order.marketer_id,
         marketer_username: order.marketer_username || username
       };
@@ -548,22 +576,16 @@ async function loadOrders() {
   }
 }
 
-// ===== تحديث الإحصائيات =====
+// ===== باقي الدوال (نفسها بدون تغيير) =====
 function updateStats() {
   const total = allOrders.length;
-  
-  // الطلبات قيد التنفيذ (غير مكتملة وغير مرتجعة)
   const pending = allOrders.filter(o => 
     !COMPLETED_STATUSES.includes(o.order_status) && 
     !RETURNED_STATUSES.includes(o.order_status)
   ).length;
-  
-  // الطلبات المكتملة
   const completed = allOrders.filter(o => 
     COMPLETED_STATUSES.includes(o.order_status)
   ).length;
-  
-  // إجمالي المبيعات (الطلبات المكتملة فقط)
   const totalSales = allOrders
     .filter(o => COMPLETED_STATUSES.includes(o.order_status))
     .reduce((sum, o) => sum + (parseFloat(o.product_price) || 0) * (parseInt(o.order_qty) || 1), 0);
@@ -572,12 +594,9 @@ function updateStats() {
   document.getElementById('statPending').innerText = pending;
   document.getElementById('statCompleted').innerText = completed;
   document.getElementById('statCommission').innerText = totalSales.toFixed(2);
-  
-  // تحديث عدد الطلبات في الهيدر
   document.getElementById('orderCount').innerText = total;
 }
 
-// ===== دوال التصفية والعرض =====
 function setFilter(filter) {
   currentFilter = filter;
   document.querySelectorAll('.filter-tab').forEach(tab => {
@@ -595,7 +614,6 @@ function filterOrders() {
 function filterAndDisplay() {
   let filtered = [...allOrders];
   
-  // تصفية حسب الحالة
   if(currentFilter === 'pending') {
     filtered = filtered.filter(o => !COMPLETED_STATUSES.includes(o.order_status) && !RETURNED_STATUSES.includes(o.order_status));
   } else if(currentFilter === 'completed') {
@@ -604,7 +622,6 @@ function filterAndDisplay() {
     filtered = filtered.filter(o => RETURNED_STATUSES.includes(o.order_status));
   }
   
-  // تصفية حسب البحث
   if(currentSearch) {
     filtered = filtered.filter(o => 
       (o.customer_name || '').toLowerCase().includes(currentSearch) ||
@@ -617,7 +634,6 @@ function filterAndDisplay() {
   displayOrders(filtered);
 }
 
-// ===== دوال مساعدة للعرض =====
 function getStatusClass(status) {
   const classes = {
     'pending': 'status-new', 'جديد': 'status-new', 
@@ -651,7 +667,6 @@ function isOrderFinished(status) {
   return COMPLETED_STATUSES.includes(status) || RETURNED_STATUSES.includes(status);
 }
 
-// ===== تحديث حالة الطلب =====
 async function updateStatus(orderId, newStatus) {
   if(RETURNED_STATUSES.includes(newStatus) && !confirm('⚠️ هل أنت متأكد من إرجاع هذا الطلب؟')) return;
   
@@ -671,7 +686,6 @@ async function updateStatus(orderId, newStatus) {
   }
 }
 
-// ===== عرض الطلبات في واجهة المستخدم =====
 function displayOrders(orders) {
   const container = document.getElementById('ordersList');
   document.getElementById('loading').style.display = 'none';
