@@ -530,14 +530,14 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
-// ===== تحميل البيانات - المورد يشوف سعر منتجه كامل بدون خصم =====
+// ===== تحميل البيانات - المورد يشوف سعر منتجه كامل مع خصم 20 جنيه =====
 async function loadDashboard() {
   try {
-    // 1. نجيب كل المنتجات بتاعة المورد مع base_price (التعديل الجوهري)
+    // 1. نجيب كل المنتجات بتاعة المورد مع base_price
     const myProducts = await supabaseApi(`products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id,base_price`);
     const myProductIds = myProducts.map(p => p.product_id);
     
-    // 2. بناء خريطة product_id -> base_price (سعر المورد الحقيقي)
+    // 2. بناء خريطة product_id -> base_price (سعر المنتج كامل)
     const productPrices = {};
     myProducts.forEach(p => {
       productPrices[p.product_id] = parseFloat(p.base_price) || 0;
@@ -565,22 +565,25 @@ async function loadDashboard() {
     // ✅ خصم 20 جنيه على كل أوردر في أي حالة
     const ORDER_FEE = 20;
 
-    // 4. حساب الطلبات باستخدام base_price فقط مع خصم 20 جنيه من كل أوردر
+    // 4. حساب الطلبات باستخدام base_price كامل مع خصم 20 جنيه من كل أوردر
     allOrders.forEach(o => {
-      // سعر المورد الحقيقي من base_price
-      const supplierShare = productPrices[o.product_id] || 0;
+      // سعر المنتج كامل (base_price)
+      const productPrice = productPrices[o.product_id] || 0;
       
       const status = (o.order_status || '').trim();
       
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
-        deliveredPriceTotal += (supplierShare - ORDER_FEE);
+        deliveredPriceTotal += productPrice;     // نضيف السعر كامل (مثلاً 220)
+        deliveredPriceTotal -= ORDER_FEE;        // نخصم 20
         deliveredCount++; 
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
-        shippingPriceTotal += (supplierShare - ORDER_FEE);
+        shippingPriceTotal += productPrice;      // نضيف السعر كامل (مثلاً 220)
+        shippingPriceTotal -= ORDER_FEE;         // نخصم 20
       } 
       else if (status === 'تغليف') { 
-        preparingPriceTotal += (supplierShare - ORDER_FEE);
+        preparingPriceTotal += productPrice;     // نضيف السعر كامل (مثلاً 220)
+        preparingPriceTotal -= ORDER_FEE;        // نخصم 20
       }
     });
 
