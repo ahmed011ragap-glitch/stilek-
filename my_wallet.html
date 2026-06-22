@@ -562,24 +562,32 @@ async function loadDashboard() {
 
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
-    // ✅ 4. حساب الطلبات باستخدام base_price فقط (بدون أي زيادات أو عمولات)
+    // ✅ خصم 20 جنيه على كل أوردر في أي حالة
+    const ORDER_FEE = 20;
+
+    // 4. حساب الطلبات باستخدام base_price فقط مع خصم 20 جنيه من كل أوردر
     allOrders.forEach(o => {
-      // سعر المورد الحقيقي من base_price (product_price = base_price)
+      // سعر المورد الحقيقي من base_price
       const supplierShare = productPrices[o.product_id] || 0;
       
       const status = (o.order_status || '').trim();
       
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
-        deliveredPriceTotal += supplierShare; 
+        deliveredPriceTotal += (supplierShare - ORDER_FEE);
         deliveredCount++; 
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
-        shippingPriceTotal += supplierShare; 
+        shippingPriceTotal += (supplierShare - ORDER_FEE);
       } 
       else if (status === 'تغليف') { 
-        preparingPriceTotal += supplierShare; 
+        preparingPriceTotal += (supplierShare - ORDER_FEE);
       }
     });
+
+    // ✅ نتأكد إن الأرقام مش سالبة (لو في حالة غريبة)
+    if (deliveredPriceTotal < 0) deliveredPriceTotal = 0;
+    if (shippingPriceTotal < 0) shippingPriceTotal = 0;
+    if (preparingPriceTotal < 0) preparingPriceTotal = 0;
 
     // 5. نجيب طلبات السحب السابقة
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
