@@ -533,14 +533,14 @@ async function supabaseApi(endpoint, options = {}) {
 // ===== تحميل البيانات - المورد يشوف سعر منتجه كامل مع خصم 20 جنيه من كل أوردر =====
 async function loadDashboard() {
   try {
-    // 1. نجيب كل المنتجات بتاعة المورد مع base_price
-    const myProducts = await supabaseApi(`products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id,base_price`);
+    // 1. نجيب كل المنتجات بتاعة المورد مع price (السعر الأساسي)
+    const myProducts = await supabaseApi(`products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id,price`);
     const myProductIds = myProducts.map(p => p.product_id);
     
-    // 2. بناء خريطة product_id -> base_price (سعر المنتج كامل)
+    // 2. بناء خريطة product_id -> price (سعر المنتج كامل)
     const productPrices = {};
     myProducts.forEach(p => {
-      productPrices[p.product_id] = parseFloat(p.base_price) || 0;
+      productPrices[p.product_id] = parseFloat(p.price) || 0;
     });
     
     if (myProductIds.length === 0) {
@@ -565,9 +565,9 @@ async function loadDashboard() {
     // ✅ خصم 20 جنيه على كل أوردر في أي حالة (من كل منتج على حدة)
     const ORDER_FEE = 20;
 
-    // 4. حساب الطلبات باستخدام base_price مع خصم 20 جنيه من كل أوردر على حدة
+    // 4. حساب الطلبات باستخدام price مع خصم 20 جنيه من كل أوردر على حدة
     allOrders.forEach(o => {
-      // سعر المنتج كامل (base_price)
+      // سعر المنتج كامل (price)
       const productPrice = productPrices[o.product_id] || 0;
       
       // خصم 20 جنيه من كل منتج على حدة (إذا كان السعر أقل من 20 يكون صفر)
