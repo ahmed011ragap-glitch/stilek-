@@ -562,9 +562,9 @@ async function loadDashboard() {
 
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
-    // 4. حساب الطلبات باستخدام base_price فقط (بدون الـ 20 جنيه)
+    // ✅ 4. حساب الطلبات باستخدام base_price فقط (بدون أي زيادات أو عمولات)
     allOrders.forEach(o => {
-      // سعر المورد الحقيقي من base_price
+      // سعر المورد الحقيقي من base_price (product_price = base_price)
       const supplierShare = productPrices[o.product_id] || 0;
       
       const status = (o.order_status || '').trim();
