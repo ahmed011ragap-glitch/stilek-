@@ -271,17 +271,6 @@ h2 {
 .btn-green { background: var(--green); color: #000; }
 .btn-green:hover { transform: translateY(-1px); }
 
-.alert {
-  background: #15110a;
-  border: 1px solid #251f11;
-  color: var(--orange);
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  margin-bottom: 15px;
-  text-align: center;
-}
-
 /* المودال ولوحة الأدمن */
 .modal {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -401,9 +390,7 @@ h2 {
       <button class="btn btn-green" onclick="openWithdrawModal()">💵 طلب سحب</button>
     </div>
 
-    <div class="alert">
-      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط. (يتم خصم 20 جنيه من كل أوردر)
-    </div>
+    <!-- تم حذف رسالة الخصم (alert) نهائياً بناءً على الطلب -->
   </div>
 
   <div class="admin-panel" id="adminPanel">
@@ -533,14 +520,16 @@ async function supabaseApi(endpoint, options = {}) {
 // ===== تحميل البيانات - المورد يشوف سعر منتجه كامل مع خصم 20 جنيه من كل أوردر =====
 async function loadDashboard() {
   try {
-    // 1. نجيب كل المنتجات بتاعة المورد مع price (السعر الأساسي)
-    const myProducts = await supabaseApi(`products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id,price`);
+    // 1. نجيب كل المنتجات بتاعة المورد مع base_price
+    const myProducts = await supabaseApi(
+      `products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id,base_price`
+    );
     const myProductIds = myProducts.map(p => p.product_id);
     
-    // 2. بناء خريطة product_id -> price (سعر المنتج كامل)
+    // 2. بناء خريطة product_id -> base_price (السعر الأساسي)
     const productPrices = {};
     myProducts.forEach(p => {
-      productPrices[p.product_id] = parseFloat(p.price) || 0;
+      productPrices[p.product_id] = parseFloat(p.base_price) || 0;
     });
     
     if (myProductIds.length === 0) {
@@ -562,28 +551,23 @@ async function loadDashboard() {
 
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
-    // ✅ خصم 20 جنيه على كل أوردر في أي حالة (من كل منتج على حدة)
-    const ORDER_FEE = 20;
-
-    // 4. حساب الطلبات باستخدام price مع خصم 20 جنيه من كل أوردر على حدة
+    // استخدام base_price مباشرة بدون أي خصومات
+    // 4. حساب الطلبات باستخدام base_price مباشرة (بدون خصم)
     allOrders.forEach(o => {
-      // سعر المنتج كامل (price)
-      const productPrice = productPrices[o.product_id] || 0;
-      
-      // خصم 20 جنيه من كل منتج على حدة (إذا كان السعر أقل من 20 يكون صفر)
-      const priceAfterFee = Math.max(0, productPrice - ORDER_FEE);
+      // سعر المنتج الأساسي (base_price)
+      const productBasePrice = productPrices[o.product_id] || 0;
       
       const status = (o.order_status || '').trim();
       
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
-        deliveredPriceTotal += priceAfterFee;   // نضيف السعر بعد الخصم (مثلاً 220 - 20 = 200)
+        deliveredPriceTotal += productBasePrice;
         deliveredCount++; 
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
-        shippingPriceTotal += priceAfterFee;    // نضيف السعر بعد الخصم
+        shippingPriceTotal += productBasePrice;
       } 
       else if (status === 'تغليف') { 
-        preparingPriceTotal += priceAfterFee;   // نضيف السعر بعد الخصم
+        preparingPriceTotal += productBasePrice;
       }
     });
 
