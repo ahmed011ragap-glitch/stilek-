@@ -533,9 +533,15 @@ async function supabaseApi(endpoint, options = {}) {
 // ===== تحميل البيانات - المورد يشوف سعر منتجه كامل بدون خصم =====
 async function loadDashboard() {
   try {
-    // 1. نجيب كل المنتجات بتاعة المورد
-    const myProducts = await supabaseApi(`products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id`);
+    // 1. نجيب كل المنتجات بتاعة المورد مع base_price (التعديل الجوهري)
+    const myProducts = await supabaseApi(`products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id,base_price`);
     const myProductIds = myProducts.map(p => p.product_id);
+    
+    // 2. بناء خريطة product_id -> base_price (سعر المورد الحقيقي)
+    const productPrices = {};
+    myProducts.forEach(p => {
+      productPrices[p.product_id] = parseFloat(p.base_price) || 0;
+    });
     
     if (myProductIds.length === 0) {
       document.getElementById('available').textContent = '0.00';
@@ -547,7 +553,7 @@ async function loadDashboard() {
       return;
     }
 
-    // 2. نجيب كل الطلبات الخاصة بمنتجات المورد
+    // 3. نجيب كل الطلبات الخاصة بمنتجات المورد
     let allOrders = [];
     for (const pid of myProductIds) {
       const ordersForProduct = await supabaseApi(`orders?product_id=ilike.${encodeURIComponent(pid)}&select=*`);
@@ -556,9 +562,10 @@ async function loadDashboard() {
 
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
+    // 4. حساب الطلبات باستخدام base_price فقط (بدون الـ 20 جنيه)
     allOrders.forEach(o => {
-      // المورد ياخد سعر منتجه كامل بدون خصم
-      const supplierShare = parseFloat(o.price) || 0;
+      // سعر المورد الحقيقي من base_price
+      const supplierShare = productPrices[o.product_id] || 0;
       
       const status = (o.order_status || '').trim();
       
@@ -574,7 +581,7 @@ async function loadDashboard() {
       }
     });
 
-    // 3. نجيب طلبات السحب السابقة
+    // 5. نجيب طلبات السحب السابقة
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
@@ -584,6 +591,7 @@ async function loadDashboard() {
       else if (w.status === 'تم' || w.status === 'تم الدفع') withdrawn += amount;
     });
 
+    // الرصيد المتاح = إجمالي المكتمل - (المعلق + المسحوب)
     globalAvailableBalance = deliveredPriceTotal - (pending + withdrawn);
     if(globalAvailableBalance < 0) globalAvailableBalance = 0;
 
