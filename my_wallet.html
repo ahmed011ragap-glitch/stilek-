@@ -402,7 +402,7 @@ h2 {
     </div>
 
     <div class="alert">
-      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط.
+      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط. (يتم خصم 20 جنيه من كل أوردر)
     </div>
   </div>
 
@@ -530,7 +530,7 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
-// ===== تحميل البيانات - المورد يشوف سعر منتجه كامل مع خصم 20 جنيه =====
+// ===== تحميل البيانات - المورد يشوف سعر منتجه كامل مع خصم 20 جنيه من كل أوردر =====
 async function loadDashboard() {
   try {
     // 1. نجيب كل المنتجات بتاعة المورد مع base_price
@@ -562,35 +562,30 @@ async function loadDashboard() {
 
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
-    // ✅ خصم 20 جنيه على كل أوردر في أي حالة
+    // ✅ خصم 20 جنيه على كل أوردر في أي حالة (من كل منتج على حدة)
     const ORDER_FEE = 20;
 
-    // 4. حساب الطلبات باستخدام base_price كامل مع خصم 20 جنيه من كل أوردر
+    // 4. حساب الطلبات باستخدام base_price مع خصم 20 جنيه من كل أوردر على حدة
     allOrders.forEach(o => {
       // سعر المنتج كامل (base_price)
       const productPrice = productPrices[o.product_id] || 0;
       
+      // خصم 20 جنيه من كل منتج على حدة (إذا كان السعر أقل من 20 يكون صفر)
+      const priceAfterFee = Math.max(0, productPrice - ORDER_FEE);
+      
       const status = (o.order_status || '').trim();
       
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
-        deliveredPriceTotal += productPrice;     // نضيف السعر كامل (مثلاً 220)
-        deliveredPriceTotal -= ORDER_FEE;        // نخصم 20
+        deliveredPriceTotal += priceAfterFee;   // نضيف السعر بعد الخصم (مثلاً 220 - 20 = 200)
         deliveredCount++; 
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
-        shippingPriceTotal += productPrice;      // نضيف السعر كامل (مثلاً 220)
-        shippingPriceTotal -= ORDER_FEE;         // نخصم 20
+        shippingPriceTotal += priceAfterFee;    // نضيف السعر بعد الخصم
       } 
       else if (status === 'تغليف') { 
-        preparingPriceTotal += productPrice;     // نضيف السعر كامل (مثلاً 220)
-        preparingPriceTotal -= ORDER_FEE;        // نخصم 20
+        preparingPriceTotal += priceAfterFee;   // نضيف السعر بعد الخصم
       }
     });
-
-    // ✅ نتأكد إن الأرقام مش سالبة (لو في حالة غريبة)
-    if (deliveredPriceTotal < 0) deliveredPriceTotal = 0;
-    if (shippingPriceTotal < 0) shippingPriceTotal = 0;
-    if (preparingPriceTotal < 0) preparingPriceTotal = 0;
 
     // 5. نجيب طلبات السحب السابقة
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
