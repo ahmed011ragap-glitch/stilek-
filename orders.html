@@ -53,6 +53,7 @@
     .sum-row { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; }
     .sum-total { display:flex; justify-content:space-between; padding:8px 0 4px; font-size:18px; font-weight:900; border-top:2px solid var(--green); margin-top:6px; }
     .sum-total span:last-child { color:var(--green); }
+    .shipping-note { margin-top:10px; padding-top:8px; border-top:1px dashed var(--gold-light); text-align:center; font-size:12px; color:var(--gold); }
     .btn-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
     .btn { padding:12px; border-radius:var(--radius-sm); font-weight:700; font-size:15px; text-align:center; cursor:pointer; transition:.2s; border:none; font-family:"Tajawal",sans-serif; }
     .btn-primary { background:var(--green); color:#000; }
@@ -94,6 +95,7 @@
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const SITE_PROFIT = 20;
+const WA_NUM = '201108712091';
 
 // ============================================================
 // ===== نظام الشحن (بدون سيناء) =====
@@ -271,13 +273,11 @@ async function updateStockAfterOrder(productId, size, color, qty){
       const currentStock=parseInt(matchedVariant.stock)||0;
       const newStock=Math.max(0,currentStock-qty);
       
-      // تحديث المخزون في product_variants
       await req(`product_variants?id=eq.${matchedVariant.id}`,{
         method:'PATCH',
         body:JSON.stringify({stock:newStock})
       });
       
-      // تحديث المخزون الكلي في products
       const totalStock=variants.reduce((sum,v)=>{
         if(v.id===matchedVariant.id)return sum+newStock;
         return sum+(parseInt(v.stock)||0);
@@ -318,7 +318,6 @@ async function loadOrderData(){
   document.getElementById('userLabel').textContent=marketerName;
   
   if(fromCart){
-    // جلب السلة من localStorage
     const localCart=JSON.parse(localStorage.getItem('cart_'+marketerId)||'[]');
     if(localCart.length){
       orderProducts=localCart.map(item=>({
@@ -357,7 +356,7 @@ async function loadOrderData(){
 function renderOrderForm(){
   const container=document.getElementById('orderContainer');
   if(!orderProducts||!orderProducts.length){
-    container.innerHTML=`<div class="alert alert-danger">⚠️ لا توجد منتجات في الطلب</div><button class="btn btn-primary" onclick="goBack()" style="width:100%;">← رجوع للمنتجات</button>`;
+    container.innerHTML=`<div class="alert alert-danger">⚠️ لا توجد منتجات</div><button class="btn btn-primary" onclick="goBack()" style="width:100%;">← رجوع</button>`;
     return;
   }
   
@@ -405,6 +404,7 @@ function renderOrderForm(){
       <div class="sum-row"><span>العمولة</span><span style="color:var(--gold);" id="commissionDisplay">${defaultComm} ج</span></div>
       <div class="sum-row"><span>رسوم الشحن</span><span style="color:var(--muted);" id="shippingDisplay">115 ج</span></div>
       <div class="sum-total"><span>الإجمالي</span><span id="totalAmount">${totalProductsPrice+defaultComm+115} ج</span></div>
+      <div class="shipping-note">🚚 مدة الشحن القصوى: <strong>4 أيام عمل</strong></div>
     </div>
     <div id="alertContainer"></div>
     <div class="btn-row"><button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب</button><button class="btn btn-sec" onclick="goBack()">← رجوع</button></div>
@@ -491,12 +491,10 @@ async function submitOrder(){
     }
 
     if(allSuccess){
-      // ===== تحديث المخزون لكل منتج =====
       for(const order of createdOrders){
         await updateStockAfterOrder(order.product_id, order.size, order.color, order.qty);
       }
       
-      // حذف من السلة
       for(const item of orderProducts){
         if(item.cart_id&&!item.cart_id.startsWith('temp_')){
           const localCart=JSON.parse(localStorage.getItem('cart_'+marketerId)||'[]');
@@ -527,12 +525,7 @@ function showError(msg){
 }
 
 function goBack(){
-  // التوجيه لصفحة displayed_products.html
   window.location.href = `displayed_products.html?user=${encodeURIComponent(marketerId)}&type=marketer`;
-}
-
-function openWhatsApp(){
-  window.open(`https://wa.me/${WA_NUM}`, '_blank');
 }
 
 // ============================================================
