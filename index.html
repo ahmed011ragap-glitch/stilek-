@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stylek - تسجيل الدخول</title>
-<!-- ===== إضافة bcryptjs ===== -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+<!-- ===== CryptoJS للتشفير ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo', sans-serif;}
@@ -63,14 +63,12 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <span class="eye" onclick="togglePass('password',this)">👁️</span>
 </div>
 
-<!-- ===== القائمة المنسدلة ===== -->
 <select id="type">
     <option value="">نوع الحساب</option>
     <option value="تاجر">تاجر</option>
     <option value="مسوق" class="disabled-option" disabled>مسوق (🚫 غير متاح حالياً - قريباً)</option>
 </select>
 
-<!-- ===== رسالة تنبيه ===== -->
 <div id="noticeBox" class="notice-box" style="display:none;">
     ⚠️ عذراً، التسجيل للمسوقين غير متاح حالياً.<br>
     <span style="font-size:12px;color:#ffaa66;">سيكون متاحاً خلال الأيام القادمة 🔜</span>
@@ -114,14 +112,6 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 
 <script>
 // ============================================================
-// ===== التحقق من تحميل bcrypt =====
-// ============================================================
-if (typeof bcrypt === 'undefined') {
-    alert('❌ جاري تحميل مكتبة التشفير... يرجى إعادة تحميل الصفحة');
-    console.error('bcrypt not loaded');
-}
-
-// ============================================================
 // ===== CONFIG =====
 // ============================================================
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
@@ -133,7 +123,24 @@ let isCooldownActive = false;
 let generatedCurrentOtp = "";
 let cooldownInterval = null;
 
+// ============================================================
+// ===== دوال التشفير باستخدام CryptoJS =====
+// ============================================================
+function hashPassword(password) {
+    // استخدام SHA-256 مع إضافة salt ثابت
+    const salt = 'Stylek_Salt_2024_#Secure!';
+    const hashed = CryptoJS.SHA256(password + salt).toString();
+    return hashed;
+}
+
+function verifyPassword(plainPassword, hashedPassword) {
+    const hashed = hashPassword(plainPassword);
+    return hashed === hashedPassword;
+}
+
+// ============================================================
 // ===== دوال مساعدة =====
+// ============================================================
 function togglePass(id, eye) {
     let pass = document.getElementById(id);
     pass.type = pass.type === "password" ? "text" : "password";
@@ -150,30 +157,6 @@ function showPage(id) {
     isCooldownActive = false;
     document.getElementById("signupTimer").innerHTML = "";
     document.getElementById("noticeBox").style.display = "none";
-}
-
-// ============================================================
-// ===== تشفير الباسورد =====
-// ============================================================
-async function hashPassword(password) {
-    try {
-        const saltRounds = 10;
-        const hashed = await bcrypt.hash(password, saltRounds);
-        console.log('✅ تم تشفير الباسورد بنجاح');
-        return hashed;
-    } catch (error) {
-        console.error('❌ خطأ في التشفير:', error);
-        throw new Error('فشل في تشفير كلمة المرور');
-    }
-}
-
-async function verifyPassword(plainPassword, hashedPassword) {
-    try {
-        return await bcrypt.compare(plainPassword, hashedPassword);
-    } catch (error) {
-        console.error('❌ خطأ في التحقق:', error);
-        return false;
-    }
 }
 
 // ============================================================
@@ -266,7 +249,6 @@ document.getElementById("create").onclick = async function() {
     error.innerHTML = "";
     success.innerHTML = "";
 
-    // التحقق
     if (name.length < 3) { error.innerHTML = "⚠️ الاسم 3 أحرف على الأقل"; return; }
     if (username.length < 3) { error.innerHTML = "⚠️ اسم المستخدم 3 أحرف"; return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { error.innerHTML = "⚠️ البريد غير صحيح"; return; }
@@ -274,7 +256,6 @@ document.getElementById("create").onclick = async function() {
     if (whatsapp.length < 5) { error.innerHTML = "⚠️ رقم واتساب غير صحيح"; return; }
     if (type === "") { error.innerHTML = "⚠️ اختر نوع الحساب"; return; }
 
-    // منع التسجيل للمسوقين حالياً
     if (type === "مسوق") {
         error.innerHTML = "";
         notice.style.display = "block";
@@ -332,7 +313,8 @@ document.getElementById("verifyAndLogin").onclick = async function() {
         let whatsapp = document.getElementById("whatsapp").value.trim();
 
         // ===== تشفير الباسورد =====
-        const hashedPassword = await hashPassword(password);
+        const hashedPassword = hashPassword(password);
+        console.log('✅ تم تشفير الباسورد:', hashedPassword);
 
         const newUser = { 
             username, 
@@ -415,7 +397,7 @@ document.getElementById("login").onclick = async function() {
         const user = users[0];
 
         // ===== التحقق من الباسورد المشفر =====
-        const isValid = await verifyPassword(password, user.password);
+        const isValid = verifyPassword(password, user.password);
         
         if (!isValid) {
             error.innerHTML = "⚠️ كلمة المرور غير صحيحة";
@@ -524,7 +506,7 @@ document.getElementById("resetPass").onclick = async function() {
             return;
         }
 
-        const hashedPassword = await hashPassword(newpass);
+        const hashedPassword = hashPassword(newpass);
 
         await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
             method: 'PATCH',
@@ -551,9 +533,9 @@ document.getElementById("resetPass").onclick = async function() {
 };
 
 // ============================================================
-// ===== التحقق من تحميل bcrypt عند بدء التشغيل =====
+// ===== التحقق من تحميل CryptoJS =====
 // ============================================================
-console.log('✅ bcrypt loaded:', typeof bcrypt !== 'undefined');
+console.log('✅ CryptoJS loaded:', typeof CryptoJS !== 'undefined');
 </script>
 </body>
 </html>
