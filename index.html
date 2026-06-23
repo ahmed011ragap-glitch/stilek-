@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stylek - تسجيل الدخول</title>
+<!-- ===== إضافة bcryptjs ===== -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
@@ -62,14 +63,14 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <span class="eye" onclick="togglePass('password',this)">👁️</span>
 </div>
 
-<!-- ===== القائمة المنسدلة مع تنبيه للمسوقين ===== -->
+<!-- ===== القائمة المنسدلة ===== -->
 <select id="type">
     <option value="">نوع الحساب</option>
     <option value="تاجر">تاجر</option>
     <option value="مسوق" class="disabled-option" disabled>مسوق (🚫 غير متاح حالياً - قريباً)</option>
 </select>
 
-<!-- ===== رسالة تنبيه للمسوقين ===== -->
+<!-- ===== رسالة تنبيه ===== -->
 <div id="noticeBox" class="notice-box" style="display:none;">
     ⚠️ عذراً، التسجيل للمسوقين غير متاح حالياً.<br>
     <span style="font-size:12px;color:#ffaa66;">سيكون متاحاً خلال الأيام القادمة 🔜</span>
@@ -112,6 +113,17 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 </div>
 
 <script>
+// ============================================================
+// ===== التحقق من تحميل bcrypt =====
+// ============================================================
+if (typeof bcrypt === 'undefined') {
+    alert('❌ جاري تحميل مكتبة التشفير... يرجى إعادة تحميل الصفحة');
+    console.error('bcrypt not loaded');
+}
+
+// ============================================================
+// ===== CONFIG =====
+// ============================================================
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzPM33CzmK_7SiRoDvlUqH8EvzRYTxV1rk4Sx4pkOrnXR9XIZmlMTg0jRGUOTw4plnR/exec';
@@ -140,18 +152,33 @@ function showPage(id) {
     document.getElementById("noticeBox").style.display = "none";
 }
 
+// ============================================================
 // ===== تشفير الباسورد =====
+// ============================================================
 async function hashPassword(password) {
-    const saltRounds = 10;
-    return await bcrypt.hash(password, saltRounds);
+    try {
+        const saltRounds = 10;
+        const hashed = await bcrypt.hash(password, saltRounds);
+        console.log('✅ تم تشفير الباسورد بنجاح');
+        return hashed;
+    } catch (error) {
+        console.error('❌ خطأ في التشفير:', error);
+        throw new Error('فشل في تشفير كلمة المرور');
+    }
 }
 
-// ===== التحقق من الباسورد =====
 async function verifyPassword(plainPassword, hashedPassword) {
-    return await bcrypt.compare(plainPassword, hashedPassword);
+    try {
+        return await bcrypt.compare(plainPassword, hashedPassword);
+    } catch (error) {
+        console.error('❌ خطأ في التحقق:', error);
+        return false;
+    }
 }
 
+// ============================================================
 // ===== API =====
+// ============================================================
 async function supabaseApi(endpoint, options = {}) {
     const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
     const headers = {
@@ -224,7 +251,7 @@ function startOtpCooldown(timerId, buttonId) {
 }
 
 // ============================================================
-// 🔥 إنشاء حساب جديد
+// ===== إنشاء حساب جديد =====
 // ============================================================
 document.getElementById("create").onclick = async function() {
     let name = document.getElementById("name").value.trim();
@@ -247,7 +274,7 @@ document.getElementById("create").onclick = async function() {
     if (whatsapp.length < 5) { error.innerHTML = "⚠️ رقم واتساب غير صحيح"; return; }
     if (type === "") { error.innerHTML = "⚠️ اختر نوع الحساب"; return; }
 
-    // ===== منع التسجيل للمسوقين حالياً =====
+    // منع التسجيل للمسوقين حالياً
     if (type === "مسوق") {
         error.innerHTML = "";
         notice.style.display = "block";
@@ -278,7 +305,7 @@ document.getElementById("create").onclick = async function() {
 };
 
 // ============================================================
-// ✅ تأكيد OTP وتسجيل الدخول
+// ===== تأكيد OTP وتسجيل الدخول =====
 // ============================================================
 document.getElementById("verifyAndLogin").onclick = async function() {
     let enteredOtp = document.getElementById("signupOtpCode").value.trim();
@@ -325,7 +352,6 @@ document.getElementById("verifyAndLogin").onclick = async function() {
         localStorage.setItem('userType', type);
         localStorage.setItem('userName', name);
 
-        // التوجيه حسب نوع الحساب
         setTimeout(() => {
             if (type === 'تاجر') {
                 window.location.href = 'data_page.html?user=' + encodeURIComponent(username);
@@ -342,7 +368,7 @@ document.getElementById("verifyAndLogin").onclick = async function() {
 };
 
 // ============================================================
-// 🔄 إعادة إرسال OTP
+// ===== إعادة إرسال OTP =====
 // ============================================================
 document.getElementById("resendSignupOtp").onclick = function(e) {
     e.preventDefault();
@@ -362,7 +388,7 @@ document.getElementById("resendSignupOtp").onclick = function(e) {
 };
 
 // ============================================================
-// 🔓 تسجيل الدخول
+// ===== تسجيل الدخول =====
 // ============================================================
 document.getElementById("login").onclick = async function() {
     let email = document.getElementById("loginEmail").value.trim().toLowerCase();
@@ -397,8 +423,6 @@ document.getElementById("login").onclick = async function() {
             return;
         }
 
-        // ===== السماح للتجار والمسوقين بالدخول =====
-        // لكن المسوقين مش هيقدروا يسجلوا جديد
         if (user.role !== 'تاجر' && user.role !== 'مسوق') {
             error.innerHTML = "⚠️ نوع الحساب غير معروف";
             this.disabled = false;
@@ -433,7 +457,7 @@ document.getElementById("login").onclick = async function() {
 };
 
 // ============================================================
-// 🔐 استعادة كلمة السر
+// ===== استعادة كلمة السر =====
 // ============================================================
 document.getElementById("sendOtp").onclick = async function() {
     let email = document.getElementById("forgotEmail").value.trim().toLowerCase();
@@ -525,6 +549,11 @@ document.getElementById("resetPass").onclick = async function() {
     }
     this.disabled = false;
 };
+
+// ============================================================
+// ===== التحقق من تحميل bcrypt عند بدء التشغيل =====
+// ============================================================
+console.log('✅ bcrypt loaded:', typeof bcrypt !== 'undefined');
 </script>
 </body>
 </html>
