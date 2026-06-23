@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stylek - تسجيل الدخول</title>
-<!-- ===== CryptoJS للتشفير ===== -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
@@ -26,7 +25,7 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 .page{display:none;}
 .page.active{display:block;}
 .link{text-align:center;margin-top:15px;color:#00c6ff;cursor:pointer;text-decoration:underline;font-size:14px;}
-.otp-timer {font-size: 13px; color: #ffaa00; text-align: center; margin-top: 5px;}
+.otp-timer{font-size:13px;color:#ffaa00;text-align:center;margin-top:5px;}
 .disabled-option{color:#888;background:#1a1a1a;}
 .notice-box{background:#2a1a1a;border:1px solid #ff6633;border-radius:10px;padding:10px;margin:8px 0;text-align:center;color:#ff8844;font-size:13px;}
 </style>
@@ -124,18 +123,43 @@ let generatedCurrentOtp = "";
 let cooldownInterval = null;
 
 // ============================================================
-// ===== دوال التشفير باستخدام CryptoJS =====
+// ===== التحقق من تحميل CryptoJS =====
+// ============================================================
+console.log('🔍 Checking CryptoJS:', typeof CryptoJS);
+
+// ============================================================
+// ===== دوال التشفير =====
 // ============================================================
 function hashPassword(password) {
-    // استخدام SHA-256 مع إضافة salt ثابت
-    const salt = 'Stylek_Salt_2024_#Secure!';
-    const hashed = CryptoJS.SHA256(password + salt).toString();
-    return hashed;
+    try {
+        // التحقق من وجود CryptoJS
+        if (typeof CryptoJS === 'undefined') {
+            console.warn('⚠️ CryptoJS not loaded, using plain text');
+            return password;
+        }
+        const salt = 'Stylek_Salt_2024_#Secure!';
+        const hashed = CryptoJS.SHA256(password + salt).toString();
+        console.log('✅ تم تشفير الباسورد بنجاح');
+        return hashed;
+    } catch (error) {
+        console.error('❌ خطأ في التشفير:', error);
+        // في حالة الفشل، نرجع الباسورد نفسه (حل مؤقت)
+        return password;
+    }
 }
 
 function verifyPassword(plainPassword, hashedPassword) {
-    const hashed = hashPassword(plainPassword);
-    return hashed === hashedPassword;
+    try {
+        if (typeof CryptoJS === 'undefined') {
+            console.warn('⚠️ CryptoJS not loaded, comparing plain text');
+            return plainPassword === hashedPassword;
+        }
+        const hashed = hashPassword(plainPassword);
+        return hashed === hashedPassword;
+    } catch (error) {
+        console.error('❌ خطأ في التحقق:', error);
+        return plainPassword === hashedPassword;
+    }
 }
 
 // ============================================================
@@ -314,7 +338,7 @@ document.getElementById("verifyAndLogin").onclick = async function() {
 
         // ===== تشفير الباسورد =====
         const hashedPassword = hashPassword(password);
-        console.log('✅ تم تشفير الباسورد:', hashedPassword);
+        console.log('✅ الباسورد المشفر:', hashedPassword);
 
         const newUser = { 
             username, 
@@ -531,11 +555,6 @@ document.getElementById("resetPass").onclick = async function() {
     }
     this.disabled = false;
 };
-
-// ============================================================
-// ===== التحقق من تحميل CryptoJS =====
-// ============================================================
-console.log('✅ CryptoJS loaded:', typeof CryptoJS !== 'undefined');
 </script>
 </body>
 </html>
