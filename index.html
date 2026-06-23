@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stylek</title>
+<title>Stylek - تسجيل الدخول</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo', sans-serif;}
@@ -18,33 +19,55 @@ button{width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;fo
 button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 .green{background:linear-gradient(90deg,#00aa55,#00cc66);}
 .blue{background:linear-gradient(90deg,#0099ff,#00c6ff);}
+.red{background:linear-gradient(90deg,#cc3333,#ff5555);}
 .error{text-align:center;margin-top:12px;color:#ff5555;font-weight:600;font-size:14px;min-height:20px;}
 .success{text-align:center;margin-top:12px;color:#00ff88;font-weight:600;font-size:14px;min-height:20px;}
 .page{display:none;}
 .page.active{display:block;}
 .link{text-align:center;margin-top:15px;color:#00c6ff;cursor:pointer;text-decoration:underline;font-size:14px;}
 .otp-timer {font-size: 13px; color: #ffaa00; text-align: center; margin-top: 5px;}
+.hidden{display:none;}
 </style>
 </head>
 <body>
 <div class="container">
 
-<div id="signupPage" class="page active">
+<!-- ===== تسجيل الدخول ===== -->
+<div id="loginPage" class="page active">
 <div class="logo">Stylek</div>
-<div class="title">إنشاء حساب جديد</div>
+<div class="title">🔐 تسجيل الدخول (للتجار فقط)</div>
+<input id="loginEmail" placeholder="البريد الإلكتروني">
+<div class="passwordBox">
+<input id="loginPassword" type="password" placeholder="كلمة المرور">
+<span class="eye" onclick="togglePass('loginPassword',this)">👁️</span>
+</div>
+<button class="green" id="login">دخول</button>
+<div class="link" onclick="showPage('forgotPage')">نسيت كلمة السر؟</div>
+<div class="link" onclick="showPage('signupPage')">إنشاء حساب جديد (تاجر فقط)</div>
+<div class="error" id="loginError"></div>
+<div class="success" id="loginSuccess"></div>
+</div>
+
+<!-- ===== إنشاء حساب (تاجر فقط) ===== -->
+<div id="signupPage" class="page">
+<div class="logo">Stylek</div>
+<div class="title">📝 إنشاء حساب جديد (تاجر فقط)</div>
 <input id="name" placeholder="الاسم الكامل">
 <input id="username" placeholder="اسم المستخدم">
 <input id="email" placeholder="البريد الإلكتروني">
 <input id="whatsapp" placeholder="رقم الواتساب (مثال: 01123456789)" type="tel" dir="ltr">
 <div class="passwordBox">
-<input id="password" type="password" placeholder="كلمة المرور">
+<input id="password" type="password" placeholder="كلمة المرور (8 أحرف على الأقل)">
 <span class="eye" onclick="togglePass('password',this)">👁️</span>
 </div>
-<select id="type"><option value="">نوع الحساب</option><option value="مسوق">مسوق</option><option value="تاجر">تاجر</option></select>
+<select id="type">
+    <option value="">نوع الحساب</option>
+    <option value="تاجر" selected>تاجر</option>
+</select>
 <button class="green" id="create">إنشاء حساب</button>
 
 <div id="signupOtpBox" style="display:none; margin-top:20px; border-top:1px dashed #444; padding-top:15px;">
-<div class="title" style="margin-bottom:10px; color:#00ff88;">🔐 أدخل كود التحقق المرسل إلى بريدك الإلكتروني لتفعيل الحساب</div>
+<div class="title" style="margin-bottom:10px; color:#00ff88;">🔐 أدخل كود التحقق المرسل إلى بريدك الإلكتروني</div>
 <input id="signupOtpCode" placeholder="أدخل الكود المكون من 6 أرقام" maxlength="6">
 <button class="blue" id="verifyAndLogin">تأكيد ودخول مباشر 🚀</button>
 <button class="link" id="resendSignupOtp" style="font-size:12px; color:#aaa; background:none; border:none; width:auto; margin:10px auto; display:block;">إعادة إرسال الكود؟</button>
@@ -56,30 +79,16 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <div class="success" id="success"></div>
 </div>
 
-<div id="loginPage" class="page">
-<div class="logo">Stylek</div>
-<div class="title">تسجيل الدخول</div>
-<input id="loginEmail" placeholder="البريد الإلكتروني">
-<div class="passwordBox">
-<input id="loginPassword" type="password" placeholder="كلمة المرور">
-<span class="eye" onclick="togglePass('loginPassword',this)">👁️</span>
-</div>
-<button class="green" id="login">دخول</button>
-<div class="link" onclick="showPage('forgotPage')">نسيت كلمة السر؟</div>
-<div class="link" onclick="showPage('signupPage')">إنشاء حساب جديد</div>
-<div class="error" id="loginError"></div>
-. <div class="success" id="loginSuccess"></div>
-</div>
-
+<!-- ===== استعادة كلمة السر ===== -->
 <div id="forgotPage" class="page">
 <div class="logo">Stylek</div>
-<div class="title">استعادة كلمة السر</div>
+<div class="title">🔑 استعادة كلمة السر</div>
 <input id="forgotEmail" placeholder="البريد الإلكتروني">
 <button class="blue" id="sendOtp">إرسال الكود</button>
 <div id="otpBox" style="display:none;margin-top:15px;">
-<input id="otpCode" placeholder="الكود من الجيميل" maxlength="6">
+<input id="otpCode" placeholder="الكود من البريد" maxlength="6">
 <div class="passwordBox">
-<input id="newPass" type="password" placeholder="كلمة السر الجديدة">
+<input id="newPass" type="password" placeholder="كلمة السر الجديدة (8 أحرف)">
 <span class="eye" onclick="togglePass('newPass',this)">👁️</span>
 </div>
 <button class="green" id="resetPass">تغيير كلمة السر</button>
@@ -96,163 +105,224 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const GOOGLE_SHEETS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzPM33CzmK_7SiRoDvlUqH8EvzRYTxV1rk4Sx4pkOrnXR9XIZmlMTg0jRGUOTw4plnR/exec';
 
-let otpRequestCount = 0; 
+let otpRequestCount = 0;
 let isCooldownActive = false;
-let generatedCurrentOtp = ""; // لحفظ كود الـ OTP العادي للمطابقة الأمنية
-let cooldownInterval = null; 
+let generatedCurrentOtp = "";
+let cooldownInterval = null;
 
-function togglePass(id,eye){let pass=document.getElementById(id);pass.type=pass.type==="password"?"text":"password";eye.innerHTML=pass.type==="password"?"👁️":"🙈";}
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.error,.success').forEach(e=>e.innerHTML="");
-  document.getElementById("otpBox").style.display="none";
-  document.getElementById("signupOtpBox").style.display="none";
-  if(cooldownInterval) clearInterval(cooldownInterval);
-  isCooldownActive = false;
-  document.getElementById("signupTimer").innerHTML = "";
+// ===== دوال مساعدة =====
+function togglePass(id, eye) {
+    let pass = document.getElementById(id);
+    pass.type = pass.type === "password" ? "text" : "password";
+    eye.innerHTML = pass.type === "password" ? "👁️" : "🙈";
 }
 
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.error,.success').forEach(e => e.innerHTML = "");
+    document.getElementById("otpBox").style.display = "none";
+    document.getElementById("signupOtpBox").style.display = "none";
+    if (cooldownInterval) clearInterval(cooldownInterval);
+    isCooldownActive = false;
+    document.getElementById("signupTimer").innerHTML = "";
+}
+
+// ===== تشفير الباسورد =====
+async function hashPassword(password) {
+    const saltRounds = 10;
+    return await bcrypt.hash(password, saltRounds);
+}
+
+// ===== التحقق من الباسورد =====
+async function verifyPassword(plainPassword, hashedPassword) {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+}
+
+// ===== API =====
 async function supabaseApi(endpoint, options = {}) {
-  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-  const headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
-  if (options.method === 'POST' || options.method === 'PATCH') {
-    headers['Prefer'] = 'return=representation';
-  }
-  const response = await fetch(url, { ...options, headers });
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`خطأ ${response.status}: ${error}`);
-  }
-  const text = await response.text();
-  return text ? JSON.parse(text) : {};
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    if (options.method === 'POST' || options.method === 'PATCH') {
+        headers['Prefer'] = 'return=representation';
+    }
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`خطأ ${response.status}: ${error}`);
+    }
+    const text = await response.text();
+    return text ? JSON.parse(text) : {};
 }
 
 async function saveToSupabase(table, data) {
-  try {
-    return await supabaseApi(table, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-  } catch(e) {
-    throw new Error(`❌ فشل الحفظ في السيرفر: ${e.message}`);
-  }
+    try {
+        return await supabaseApi(table, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    } catch (e) {
+        throw new Error(`❌ فشل الحفظ: ${e.message}`);
+    }
 }
 
 async function sendToGoogleSheet(actionType, payload) {
-  try {
-    // توليد كود OTP عادي مكون من 6 أرقام
-    if (!payload.otp || payload.otp === payload.whatsapp) {
-      payload.otp = Math.floor(100000 + Math.random() * 900000).toString();
+    try {
+        if (!payload.otp || payload.otp === payload.whatsapp) {
+            payload.otp = Math.floor(100000 + Math.random() * 900000).toString();
+        }
+        generatedCurrentOtp = payload.otp;
+        await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: actionType, ...payload })
+        });
+        return { status: 'success', otp: payload.otp };
+    } catch (e) {
+        throw new Error(`❌ فشل الاتصال: ${e.message}`);
     }
-    generatedCurrentOtp = payload.otp;
-
-    await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: actionType, ...payload })
-    });
-    return { status: 'success', otp: payload.otp };
-  } catch(e) {
-    throw new Error(`❌ فشل الاتصال بجوجل شيت: ${e.message}`);
-  }
 }
 
 function startOtpCooldown(timerId, buttonId) {
-  if (cooldownInterval) clearInterval(cooldownInterval);
-  
-  otpRequestCount++;
-  let seconds = 60; 
-  if (otpRequestCount > 2) {
-    seconds = 180; 
-  }
-
-  isCooldownActive = true;
-  const timerElement = document.getElementById(timerId);
-  const btnElement = document.getElementById(buttonId);
-  
-  if(btnElement) btnElement.disabled = true;
-  
-  cooldownInterval = setInterval(() => {
-    let mins = Math.floor(seconds / 60);
-    let secs = seconds % 60;
-    timerElement.innerHTML = `⏳ برجاء الانتظار ${mins}:${secs < 10 ? '0' : ''}${secs} لإعادة الطلب`;
-    seconds--;
-
-    if (seconds < 0) {
-      clearInterval(cooldownInterval);
-      timerElement.innerHTML = "";
-      isCooldownActive = false;
-      if(btnElement) btnElement.disabled = false;
-    }
-  }, 1000);
+    if (cooldownInterval) clearInterval(cooldownInterval);
+    otpRequestCount++;
+    let seconds = otpRequestCount > 2 ? 180 : 60;
+    isCooldownActive = true;
+    const timerElement = document.getElementById(timerId);
+    const btnElement = document.getElementById(buttonId);
+    if (btnElement) btnElement.disabled = true;
+    cooldownInterval = setInterval(() => {
+        let mins = Math.floor(seconds / 60);
+        let secs = seconds % 60;
+        timerElement.innerHTML = `⏳ انتظر ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        seconds--;
+        if (seconds < 0) {
+            clearInterval(cooldownInterval);
+            timerElement.innerHTML = "";
+            isCooldownActive = false;
+            if (btnElement) btnElement.disabled = false;
+        }
+    }, 1000);
 }
 
-// =============================================
-// 🔥 إنشاء حساب جديد
-// =============================================
+// ============================================================
+// 🔥 إنشاء حساب جديد (تاجر فقط)
+// ============================================================
 document.getElementById("create").onclick = async function() {
-  let name = document.getElementById("name").value.trim();
-  let username = document.getElementById("username").value.trim().toLowerCase();
-  let email = document.getElementById("email").value.trim().toLowerCase();
-  let password = document.getElementById("password").value;
-  let type = document.getElementById("type").value;
-  let whatsapp = document.getElementById("whatsapp").value.trim();
-  let error = document.getElementById("error");
-  let success = document.getElementById("success");
-  error.innerHTML = ""; success.innerHTML = "";
+    let name = document.getElementById("name").value.trim();
+    let username = document.getElementById("username").value.trim().toLowerCase();
+    let email = document.getElementById("email").value.trim().toLowerCase();
+    let password = document.getElementById("password").value;
+    let type = document.getElementById("type").value;
+    let whatsapp = document.getElementById("whatsapp").value.trim();
+    let error = document.getElementById("error");
+    let success = document.getElementById("success");
+    error.innerHTML = "";
+    success.innerHTML = "";
 
-  if (name.length < 3) { error.innerHTML = "اكتب اسم صحيح"; return; }
-  if (username.length < 3) { error.innerHTML = "اسم المستخدم 3 أحرف أو أكثر"; return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { error.innerHTML = "البريد غير صحيح"; return; }
-  if (password.length < 8) { error.innerHTML = "كلمة المرور 8 أحرف أو أكثر"; return; }
-  if (whatsapp.length < 5) { error.innerHTML = "اكتب رقم واتساب صحيح"; return; }
-  if (type === "") { error.innerHTML = "اختر نوع الحساب"; return; }
+    // التحقق
+    if (name.length < 3) { error.innerHTML = "⚠️ الاسم 3 أحرف على الأقل"; return; }
+    if (username.length < 3) { error.innerHTML = "⚠️ اسم المستخدم 3 أحرف"; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { error.innerHTML = "⚠️ البريد غير صحيح"; return; }
+    if (password.length < 8) { error.innerHTML = "⚠️ كلمة المرور 8 أحرف على الأقل"; return; }
+    if (whatsapp.length < 5) { error.innerHTML = "⚠️ رقم واتساب غير صحيح"; return; }
+    if (type === "") { error.innerHTML = "⚠️ اختر نوع الحساب"; return; }
+    if (type !== "تاجر") { error.innerHTML = "⚠️ عذراً، التسجيل متاح للتجار فقط حالياً"; return; }
 
-  this.disabled = true;
-  try {
-    success.innerHTML = "⏳ جاري الفحص...";
-    const checkUser = await supabaseApi(`stylek_password?or=(username.ilike.${username},email.ilike.${email})&select=*`);
-    if (checkUser && checkUser.length > 0) {
-      error.innerHTML = "اسم المستخدم أو البريد مسجل بالفعل";
-      this.disabled = false;
-      return;
+    this.disabled = true;
+    try {
+        success.innerHTML = "⏳ جاري الفحص...";
+        const checkUser = await supabaseApi(`stylek_password?or=(username.ilike.${username},email.ilike.${email})&select=*`);
+        if (checkUser && checkUser.length > 0) {
+            error.innerHTML = "⚠️ اسم المستخدم أو البريد مسجل بالفعل";
+            this.disabled = false;
+            return;
+        }
+
+        success.innerHTML = "⏳ جاري إرسال كود التحقق إلى بريدك...";
+        await sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp });
+
+        success.innerHTML = "✅ تم إرسال كود التحقق بنجاح 📧";
+        document.getElementById("signupOtpBox").style.display = "block";
+        startOtpCooldown("signupTimer", "resendSignupOtp");
+
+    } catch (e) {
+        error.innerHTML = "❌ " + e.message;
     }
-
-    success.innerHTML = "⏳ جاري توليد وإرسال كود الـ OTP إلى بريدك الإلكتروني...";
-    await sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp });
-
-    success.innerHTML = "✅ تم إرسال كود التحقق بنجاح للجيميل الخاص بك!";
-    document.getElementById("signupOtpBox").style.display = "block";
-    startOtpCooldown("signupTimer", "resendSignupOtp");
-
-  } catch (e) {
-    error.innerHTML = "❌ " + e.message;
-  }
-  this.disabled = false;
+    this.disabled = false;
 };
 
+// ============================================================
+// ✅ تأكيد OTP وتسجيل الدخول
+// ============================================================
 document.getElementById("verifyAndLogin").onclick = async function() {
-  let enteredOtp = document.getElementById("signupOtpCode").value.trim();
-  let error = document.getElementById("error");
-  let success = document.getElementById("success");
-  error.innerHTML = "";
+    let enteredOtp = document.getElementById("signupOtpCode").value.trim();
+    let error = document.getElementById("error");
+    let success = document.getElementById("success");
+    error.innerHTML = "";
 
-  if(enteredOtp !== generatedCurrentOtp) {
-    error.innerHTML = "❌ كود الـ OTP غير صحيح، يرجى التحقق من بريدك الإلكتروني";
-    return;
-  }
+    if (enteredOtp !== generatedCurrentOtp) {
+        error.innerHTML = "❌ كود OTP غير صحيح";
+        return;
+    }
 
-  this.disabled = true;
-  this.innerText = "جاري تفعيل الحساب والدخول...";
+    this.disabled = true;
+    this.innerText = "⏳ جاري التفعيل...";
 
-  try {
+    try {
+        let name = document.getElementById("name").value.trim();
+        let username = document.getElementById("username").value.trim().toLowerCase();
+        let email = document.getElementById("email").value.trim().toLowerCase();
+        let password = document.getElementById("password").value;
+        let type = document.getElementById("type").value;
+        let whatsapp = document.getElementById("whatsapp").value.trim();
+
+        // ===== تشفير الباسورد قبل التخزين =====
+        const hashedPassword = await hashPassword(password);
+        console.log('✅ تم تشفير الباسورد:', hashedPassword);
+
+        const newUser = { 
+            username, 
+            password: hashedPassword, // <-- مخزن مشفر
+            email, 
+            role: type, 
+            name, 
+            whatsapp 
+        };
+        
+        await saveToSupabase('stylek_password', newUser);
+
+        success.innerHTML = "🎉 تم التفعيل بنجاح! جاري التوجيه...";
+        if (cooldownInterval) clearInterval(cooldownInterval);
+
+        localStorage.setItem('username', username);
+        localStorage.setItem('userType', type);
+        localStorage.setItem('userName', name);
+
+        setTimeout(() => {
+            window.location.href = 'data_page.html?user=' + encodeURIComponent(username);
+        }, 1500);
+
+    } catch (e) {
+        error.innerHTML = "❌ " + e.message;
+        this.disabled = false;
+        this.innerText = "تأكيد ودخول مباشر 🚀";
+    }
+};
+
+// ============================================================
+// 🔄 إعادة إرسال OTP
+// ============================================================
+document.getElementById("resendSignupOtp").onclick = function(e) {
+    e.preventDefault();
+    if (isCooldownActive) return;
+    
     let name = document.getElementById("name").value.trim();
     let username = document.getElementById("username").value.trim().toLowerCase();
     let email = document.getElementById("email").value.trim().toLowerCase();
@@ -260,183 +330,171 @@ document.getElementById("verifyAndLogin").onclick = async function() {
     let type = document.getElementById("type").value;
     let whatsapp = document.getElementById("whatsapp").value.trim();
 
-    const newUser = { username, password, email, role: type, name, whatsapp };
-    await saveToSupabase('stylek_password', newUser);
-
-    success.innerHTML = "🎉 تم التفعيل بنجاح! جاري توجيهك...";
-    if(cooldownInterval) clearInterval(cooldownInterval);
-
-    sessionStorage.setItem('username', username);
-    sessionStorage.setItem('userType', type);
-    sessionStorage.setItem('userName', name);
-    localStorage.setItem('username', username);
-    localStorage.setItem('userType', type);
-    localStorage.setItem('userName', name);
-
-    setTimeout(() => {
-      if (type === 'تاجر') {
-        window.location.href = 'data_page.html?user=' + encodeURIComponent(username);
-      } else {
-        window.location.href = 'displayed_products.html?user=' + encodeURIComponent(username);
-      }
-    }, 1500);
-
-  } catch(e) {
-    error.innerHTML = "❌ " + e.message;
-    this.disabled = false;
-    this.innerText = "تأكيد ودخول مباشر 🚀";
-  }
+    document.getElementById("success").innerHTML = "🔄 جاري إعادة إرسال الكود...";
+    sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp });
+    document.getElementById("success").innerHTML = "✅ تم إعادة الإرسال!";
+    startOtpCooldown("signupTimer", "resendSignupOtp");
 };
 
-document.getElementById("resendSignupOtp").onclick = function(e) {
-  e.preventDefault();
-  if (isCooldownActive) return;
-  
-  let name = document.getElementById("name").value.trim();
-  let username = document.getElementById("username").value.trim().toLowerCase();
-  let email = document.getElementById("email").value.trim().toLowerCase();
-  let password = document.getElementById("password").value;
-  let type = document.getElementById("type").value;
-  let whatsapp = document.getElementById("whatsapp").value.trim();
-
-  document.getElementById("success").innerHTML = "🔄 جاري إعادة إرسال كود جديد...";
-  sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp });
-  
-  document.getElementById("success").innerHTML = "✅ تم إعادة الإرسال!";
-  startOtpCooldown("signupTimer", "resendSignupOtp");
-};
-
-// =============================================
-// 🔓 تسجيل الدخول التقليدي
-// =============================================
+// ============================================================
+// 🔓 تسجيل الدخول (مع التحقق من التشفير)
+// ============================================================
 document.getElementById("login").onclick = async function() {
-  let email = document.getElementById("loginEmail").value.trim().toLowerCase();
-  let password = document.getElementById('loginPassword').value;
-  let error = document.getElementById("loginError");
-  let success = document.getElementById("loginSuccess");
-  error.innerHTML = ""; success.innerHTML = "";
+    let email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    let password = document.getElementById('loginPassword').value;
+    let error = document.getElementById("loginError");
+    let success = document.getElementById("loginSuccess");
+    error.innerHTML = "";
+    success.innerHTML = "";
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 3) {
-    error.innerHTML = "اكتب بيانات البريد وكلمة السر بشكل صحيح"; return;
-  }
-
-  this.disabled = true;
-  try {
-    const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
-    if (!users || users.length === 0) {
-      error.innerHTML = "البريد الإلكتروني غير مسجل لدينا";
-      this.disabled = false; return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 3) {
+        error.innerHTML = "⚠️ بيانات الدخول غير صحيحة";
+        return;
     }
 
-    const user = users[0];
-    if (user.password !== password) {
-      error.innerHTML = "كلمة المرور غير صحيحة";
-      this.disabled = false; return;
+    this.disabled = true;
+    try {
+        const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
+        if (!users || users.length === 0) {
+            error.innerHTML = "⚠️ البريد غير مسجل";
+            this.disabled = false;
+            return;
+        }
+
+        const user = users[0];
+
+        // ===== التحقق من الباسورد المشفر =====
+        const isValid = await verifyPassword(password, user.password);
+        
+        if (!isValid) {
+            error.innerHTML = "⚠️ كلمة المرور غير صحيحة";
+            this.disabled = false;
+            return;
+        }
+
+        // ===== التحقق من نوع الحساب (تاجر فقط) =====
+        if (user.role !== 'تاجر') {
+            error.innerHTML = "⚠️ عذراً، الدخول متاح للتجار فقط حالياً";
+            this.disabled = false;
+            return;
+        }
+
+        await sendToGoogleSheet("login_success", {
+            name: user.name,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            whatsapp: user.whatsapp || ""
+        });
+
+        localStorage.setItem('username', user.username);
+        localStorage.setItem('userType', user.role);
+        localStorage.setItem('userName', user.name || user.username);
+
+        success.innerHTML = "✅ تم التحقق بنجاح! جاري التوجيه...";
+        setTimeout(() => {
+            window.location.href = 'data_page.html?user=' + encodeURIComponent(user.username);
+        }, 1500);
+
+    } catch (e) {
+        error.innerHTML = "❌ خطأ: " + e.message;
     }
-
-    await sendToGoogleSheet("login_success", { 
-      name: user.name, username: user.username, email: user.email, role: user.role, password: user.password, whatsapp: user.whatsapp || ""
-    });
-
-    const userType = user.role || 'مسوق';
-    sessionStorage.setItem('username', user.username);
-    sessionStorage.setItem('userType', userType);
-    sessionStorage.setItem('userName', user.name || user.username);
-    localStorage.setItem('username', user.username);
-    localStorage.setItem('userType', userType);
-    localStorage.setItem('userName', user.name || user.username);
-
-    success.innerHTML = "✅ تم التحقق بنجاح! جاري التوجيه...";
-    setTimeout(() => {
-      if (userType === 'تاجر') {
-        window.location.href = 'data_page.html?user=' + encodeURIComponent(user.username);
-      } else {
-        window.location.href = 'displayed_products.html?user=' + encodeURIComponent(user.username);
-      }
-    }, 1500);
-
-  } catch (e) {
-    error.innerHTML = "خطأ في الاتصال: " + e.message;
-  }
-  this.disabled = false;
+    this.disabled = false;
 };
 
-// =============================================
-// 🔐 استعادة كلمة السر وتغييرها
-// =============================================
+// ============================================================
+// 🔐 استعادة كلمة السر
+// ============================================================
 document.getElementById("sendOtp").onclick = async function() {
-  let email = document.getElementById("forgotEmail").value.trim().toLowerCase();
-  let error = document.getElementById("forgotError");
-  let success = document.getElementById("forgotSuccess");
-  error.innerHTML = ""; success.innerHTML = "";
+    let email = document.getElementById("forgotEmail").value.trim().toLowerCase();
+    let error = document.getElementById("forgotError");
+    let success = document.getElementById("forgotSuccess");
+    error.innerHTML = "";
+    success.innerHTML = "";
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { error.innerHTML = "البريد غير صحيح"; return; }
-
-  this.disabled = true;
-  try {
-    const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
-    if (!users || users.length === 0) {
-      error.innerHTML = "البريد الإلكتروني غير مسجل";
-      this.disabled = false; return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        error.innerHTML = "⚠️ البريد غير صحيح";
+        return;
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ otp_temp: otp })
-    });
+    this.disabled = true;
+    try {
+        const users = await supabaseApi(`stylek_password?email=ilike.${email}&select=*`);
+        if (!users || users.length === 0) {
+            error.innerHTML = "⚠️ البريد غير مسجل";
+            this.disabled = false;
+            return;
+        }
 
-    await sendToGoogleSheet("forgot_password_otp", { 
-      name: users[0].name, username: users[0].username, email: email, otp: otp, whatsapp: users[0].whatsapp || ""
-    });
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ otp_temp: otp })
+        });
 
-    success.innerHTML = "✅ تم إرسال كود التحقق إلى بريدك الإلكتروني 📧";
-    document.getElementById("otpBox").style.display = "block";
+        await sendToGoogleSheet("forgot_password_otp", {
+            name: users[0].name,
+            username: users[0].username,
+            email: email,
+            otp: otp,
+            whatsapp: users[0].whatsapp || ""
+        });
 
-  } catch (e) {
-    error.innerHTML = "خطأ: " + e.message;
-  }
-  this.disabled = false;
+        success.innerHTML = "✅ تم إرسال الكود إلى بريدك 📧";
+        document.getElementById("otpBox").style.display = "block";
+
+    } catch (e) {
+        error.innerHTML = "❌ " + e.message;
+    }
+    this.disabled = false;
 };
 
 document.getElementById("resetPass").onclick = async function() {
-  let email = document.getElementById("forgotEmail").value.trim().toLowerCase();
-  let otp = document.getElementById("otpCode").value.trim();
-  let newpass = document.getElementById("newPass").value;
-  let error = document.getElementById("forgotError");
-  let success = document.getElementById("forgotSuccess");
-  error.innerHTML = ""; success.innerHTML = "";
+    let email = document.getElementById("forgotEmail").value.trim().toLowerCase();
+    let otp = document.getElementById("otpCode").value.trim();
+    let newpass = document.getElementById("newPass").value;
+    let error = document.getElementById("forgotError");
+    let success = document.getElementById("forgotSuccess");
+    error.innerHTML = "";
+    success.innerHTML = "";
 
-  if (otp.length < 6) { error.innerHTML = "اكتب الكود كامل"; return; }
-  if (newpass.length < 8) { error.innerHTML = "كلمة السر 8 أحرف أو أكثر"; return; }
+    if (otp.length < 6) { error.innerHTML = "⚠️ الكود غير مكتمل"; return; }
+    if (newpass.length < 8) { error.innerHTML = "⚠️ كلمة السر 8 أحرف على الأقل"; return; }
 
-  this.disabled = true;
-  try {
-    const users = await supabaseApi(`stylek_password?email=ilike.${email}&otp_temp=eq.${otp}&select=*`);
-    if (!users || users.length === 0) {
-      error.innerHTML = "الكود غير صحيح أو منتهي الصلاحية";
-      this.disabled = false; return;
+    this.disabled = true;
+    try {
+        const users = await supabaseApi(`stylek_password?email=ilike.${email}&otp_temp=eq.${otp}&select=*`);
+        if (!users || users.length === 0) {
+            error.innerHTML = "⚠️ الكود غير صحيح أو منتهي الصلاحية";
+            this.disabled = false;
+            return;
+        }
+
+        // ===== تشفير الباسورد الجديد =====
+        const hashedPassword = await hashPassword(newpass);
+
+        await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ password: hashedPassword, otp_temp: null })
+        });
+
+        await sendToGoogleSheet("password_changed_success", {
+            name: users[0].name,
+            username: users[0].username,
+            email: email,
+            whatsapp: users[0].whatsapp || ""
+        });
+
+        success.innerHTML = "✅ تم تغيير كلمة السر بنجاح!";
+        setTimeout(() => {
+            showPage('loginPage');
+            document.getElementById("loginEmail").value = email;
+        }, 2000);
+
+    } catch (e) {
+        error.innerHTML = "❌ " + e.message;
     }
-
-    await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ password: newpass, otp_temp: null })
-    });
-
-    await sendToGoogleSheet("password_changed_success", {
-      name: users[0].name, username: users[0].username, email: email, password: newpass, whatsapp: users[0].whatsapp || ""
-    });
-
-    success.innerHTML = "✅ تم تغيير كلمة السر بنجاح!";
-    setTimeout(() => {
-      showPage('loginPage');
-      document.getElementById("loginEmail").value = email;
-    }, 2000);
-
-  } catch (e) {
-    error.innerHTML = "خطأ: " + e.message;
-  }
-  this.disabled = false;
+    this.disabled = false;
 };
 </script>
 </body>
