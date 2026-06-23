@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   
   <style>
-    /* ===== نفس الستايلات السابقة ===== */
     :root {
       --bg: #121212;
       --white: #1e1e1e;
@@ -404,8 +403,6 @@ if(isLoggedIn){
   document.getElementById('userLabel').textContent='زائر';
 }
 
-console.log('🔐 isLoggedIn:', isLoggedIn, 'marketerId:', marketerId);
-
 // ============================================================
 // ===== دوال مساعدة =====
 // ============================================================
@@ -461,23 +458,6 @@ async function callApi(action,data={}){
         if(!isLoggedIn)return[];
         return await req(`favorites?marketer_id=ilike.${data.mid}&product_id=eq.${data.pid}`,{method:'DELETE'});
       }
-      case 'get_cart':{
-        if(!isLoggedIn)return[];
-        const c=await req(`cart?marketer_id=ilike.${data.mid}&select=*`);
-        if(!Array.isArray(c))return c;
-        const pr=await req('products?select=*');
-        return c.map(i=>{ const p=pr.find(x=>String(x.product_id)===String(i.product_id)); return p?{...i,...p}:i; });
-      }
-      case 'add_cart':{
-        if(!isLoggedIn){ alert('⚠️ تسجيل الدخول أولاً'); return; }
-        const pId=String(data.pid);
-        const vId=String(data.variant_id||'default');
-        const existing=cartItems.find(i=>String(i.product_id)===pId&&String(i.variant_id||'default')===vId);
-        if(existing)return await req(`cart?cart_id=eq.${existing.cart_id}`,{method:'PATCH',body:JSON.stringify({qty:existing.qty+1})});
-        return await req('cart',{method:'POST',body:JSON.stringify({marketer_id:data.mid.toLowerCase(),product_id:pId,variant_id:vId,color:data.color||'',size:data.size||'',qty:1,cart_id:'C'+Date.now()+'_'+Math.random().toString(36).substr(2,4)})});
-      }
-      case 'upd_cart': return await req(`cart?cart_id=eq.${data.cid}`,{method:'PATCH',body:JSON.stringify({qty:data.qty})});
-      case 'del_cart': return await req(`cart?cart_id=eq.${data.cid}`,{method:'DELETE'});
       default: return {status:'error'};
     }
   }catch(e){ return {status:'error',message:e.message}; }
@@ -571,7 +551,6 @@ async function quickFav(pid,btn){
 // ===== فتح المنتج =====
 // ============================================================
 async function openProduct(id){
-  console.log('📦 openProduct called with id:', id);
   openM('productModal'); 
   document.getElementById('productModalContent').innerHTML='<div class="ls" style="padding:60px"><div class="spin"></div></div>';
   const r=await callApi('get_product',{product_id:id});
@@ -580,14 +559,12 @@ async function openProduct(id){
     selectedColor=''; 
     selectedSize=''; 
     renderProd(r[0]); 
-    console.log('✅ Product loaded:', currentProduct);
   } else {
     document.getElementById('productModalContent').innerHTML='<div class="empty-state"><div class="big">⚠️</div><p>تعذر التحميل</p></div>';
   }
 }
 
 function renderProd(p){
-  console.log('🎨 renderProd called for:', p.name);
   const sp=sellP(p.base_price), cm=comm(p.base_price);
   const isFav=isLoggedIn?favoriteIds.includes(String(p.product_id)):false;
   const galleryLink=p.drive_link||p.gallery_link||'';
@@ -625,7 +602,6 @@ function renderProd(p){
   
   const hasVariants = variants.length > 0 && ucolors.length > 0 && usizes.length > 0;
   
-  // ===== زر اطلب الآن - مع تمرير product_id بشكل صحيح =====
   let orderBtnHtml = `<button class="btn btn-primary" onclick="goToOrder('${p.product_id}')" ${out?'disabled':''}>${out?'⛔ نفذت':'🛍️ اطلب الآن'}</button>`;
   
   document.getElementById('productModalContent').innerHTML=`
@@ -697,10 +673,6 @@ function updateVariantDetails(){
 // ===== الطلب - التوجيه لصفحة orders.html =====
 // ============================================================
 function goToOrder(productId){
-  console.log('🛍️ goToOrder called with productId:', productId);
-  console.log('📌 currentProduct:', currentProduct);
-  console.log('🎨 selectedColor:', selectedColor, 'selectedSize:', selectedSize);
-  
   if(!productId){
     alert('⚠️ خطأ: لم يتم تحديد المنتج');
     return;
@@ -708,7 +680,6 @@ function goToOrder(productId){
   
   const variants=currentProduct?.variants||[];
   
-  // إذا فيه خصائص، نتحقق من الاختيار
   if(variants.length>0){
     if(!selectedColor||!selectedSize){
       alert('⚠️ يرجى اختيار اللون والمقاس أولاً');
@@ -719,18 +690,11 @@ function goToOrder(productId){
       alert('❌ المخزون غير متوفر لهذا المزيج');
       return;
     }
-    // إغلاق مودال المنتج
     closeM('productModal');
-    // التوجيه مع البيانات
-    const url = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}&color=${encodeURIComponent(selectedColor)}&size=${encodeURIComponent(selectedSize)}`;
-    console.log('🔗 Redirecting to:', url);
-    window.location.href = url;
+    window.location.href = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}&color=${encodeURIComponent(selectedColor)}&size=${encodeURIComponent(selectedSize)}`;
   } else {
-    // مفيش خصائص → نروح مباشرة
     closeM('productModal');
-    const url = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}`;
-    console.log('🔗 Redirecting to:', url);
-    window.location.href = url;
+    window.location.href = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}`;
   }
 }
 
@@ -781,10 +745,9 @@ async function openFavorites(){
 }
 
 // ============================================================
-// ===== السلة =====
+// ===== السلة (localStorage) =====
 // ============================================================
 async function addToCart(){
-  console.log('🛒 addToCart called');
   if(!isLoggedIn){ 
     alert('⚠️ يرجى تسجيل الدخول أولاً لإضافة للسلة');
     return; 
@@ -829,49 +792,57 @@ async function addToCart(){
   const color=selectedVariant?selectedVariant.color:'';
   const size=selectedVariant?selectedVariant.size:'';
   
-  console.log('📦 Adding to cart:', {productId: latest.product_id, variantId, color, size});
+  // ===== التخزين في localStorage =====
+  let localCart = JSON.parse(localStorage.getItem('cart_' + marketerId) || '[]');
   
-  const existing=cartItems.find(i=>String(i.product_id)===String(latest.product_id)&&String(i.variant_id||'default')===variantId);
+  const existingIndex = localCart.findIndex(i => 
+    String(i.product_id) === String(latest.product_id) && 
+    String(i.variant_id||'default') === variantId
+  );
   
-  if(existing){
-    await callApi('upd_cart',{cid:existing.cart_id,qty:existing.qty+1});
-  }else{
-    await callApi('add_cart',{mid:marketerId,pid:latest.product_id,variant_id:variantId,color,size});
+  if(existingIndex > -1){
+    localCart[existingIndex].qty += 1;
+  } else {
+    localCart.push({
+      ...latest,
+      variant_id: variantId,
+      color: color,
+      size: size,
+      qty: 1,
+      cart_id: 'C'+Date.now()+'_'+Math.random().toString(36).substr(2,4)
+    });
   }
   
-  await updateCartBadge();
-  alert('✅ أضيف للسلة');
+  localStorage.setItem('cart_' + marketerId, JSON.stringify(localCart));
+  cartItems = localCart;
+  updateCartBadge();
+  
+  alert('✅ تمت الإضافة للسلة');
   closeM('productModal'); 
   applyFilters();
 }
 
-async function updateCartBadge(){
+function updateCartBadge(){
   if(!isLoggedIn){ 
     document.getElementById('cartCount').textContent='0'; 
     return; 
   }
-  const r=await callApi('get_cart',{mid:marketerId});
-  if(Array.isArray(r)){ 
-    cartItems=r; 
-    let t=0; 
-    r.forEach(i=>t+=i.qty||1); 
-    document.getElementById('cartCount').textContent=t; 
-    console.log('🛒 Cart updated:', cartItems);
-  }
+  const localCart = JSON.parse(localStorage.getItem('cart_' + marketerId) || '[]');
+  cartItems = localCart;
+  let t = 0;
+  localCart.forEach(i => t += i.qty || 1);
+  document.getElementById('cartCount').textContent = t;
 }
 
-async function openCart(){
+function openCart(){
   if(!isLoggedIn){ 
     alert('⚠️ تسجيل الدخول أولاً'); 
     return; 
   }
-  openM('cartModal'); 
-  document.getElementById('cartModalContent').innerHTML='<div class="ls"><div class="spin"></div></div>';
-  const r=await callApi('get_cart',{mid:marketerId});
-  if(Array.isArray(r)){ 
-    cartItems=r; 
-    renderCart(); 
-  }
+  openM('cartModal');
+  const localCart = JSON.parse(localStorage.getItem('cart_' + marketerId) || '[]');
+  cartItems = localCart;
+  renderCart();
 }
 
 function renderCart(){
@@ -916,21 +887,27 @@ function goToOrderFromCart(){
   window.location.href = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&from_cart=true`;
 }
 
-async function updQty(cid,diff){
-  const item=cartItems.find(i=>i.cart_id===cid); 
-  if(!item)return;
-  const nq=item.qty+diff; 
-  if(nq<1)return;
-  await callApi('upd_cart',{cid,qty:nq});
-  await openCart(); 
-  await updateCartBadge(); 
+function updQty(cid, diff){
+  let localCart = JSON.parse(localStorage.getItem('cart_' + marketerId) || '[]');
+  const item = localCart.find(i => i.cart_id === cid);
+  if(!item) return;
+  const nq = item.qty + diff;
+  if(nq < 1) return;
+  item.qty = nq;
+  localStorage.setItem('cart_' + marketerId, JSON.stringify(localCart));
+  cartItems = localCart;
+  updateCartBadge();
+  renderCart();
   applyFilters();
 }
 
-async function delCart(cid){
-  await callApi('del_cart',{cid}); 
-  await openCart(); 
-  await updateCartBadge(); 
+function delCart(cid){
+  let localCart = JSON.parse(localStorage.getItem('cart_' + marketerId) || '[]');
+  localCart = localCart.filter(i => i.cart_id !== cid);
+  localStorage.setItem('cart_' + marketerId, JSON.stringify(localCart));
+  cartItems = localCart;
+  updateCartBadge();
+  renderCart();
   applyFilters();
 }
 
