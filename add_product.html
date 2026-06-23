@@ -25,7 +25,6 @@ body {
   min-height: 100vh;
 }
 
-/* ===== السليدر الجانبي المطور للمورد ===== */
 .menu-btn {
   position: fixed;
   top: 15px;
@@ -202,7 +201,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .loading-overlay p { margin-top: 20px; color: #00ff88; font-size: 18px; font-weight: 600; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* تحسينات إضافية */
 .required-star { color: var(--red); margin-right: 4px; }
 .hint-text { font-size: 12px; color: var(--muted); margin-top: 4px; }
 </style>
@@ -246,7 +244,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 <div class="price-row">
   <div class="form-group">
     <label>👤 اسم المستخدم (المورد الحالي) <span class="required-star">*</span></label>
-    <input id="supplierUsername" type="text" placeholder="اسم المستخدم" readonly style="background: #1a1a1a; color: #00ff88; font-weight: bold;">
+    <input id="supplierUsername" type="text" readonly style="background: #1a1a1a; color: #00ff88; font-weight: bold;">
   </div>
   <div class="form-group">
     <label>📞 رقم واتساب المورد <span class="required-star">*</span></label>
@@ -255,21 +253,21 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- ✅ الحقول الجديدة: المحافظة، المدينة، العنوان بالتفصيل -->
+<!-- ✅ حقول المحافظة والمدينة والعنوان (من غير placeholder) -->
 <div class="price-row">
   <div class="form-group">
     <label>🏙️ المحافظة <span class="required-star">*</span></label>
-    <input id="governorate" placeholder="مثال: القاهرة">
+    <input id="governorate">
   </div>
   <div class="form-group">
     <label>🌆 المدينة <span class="required-star">*</span></label>
-    <input id="city" placeholder="مثال: مدينة نصر">
+    <input id="city">
   </div>
 </div>
 
 <div class="form-group">
   <label>📍 العنوان بالتفصيل <span class="required-star">*</span></label>
-  <textarea id="address" rows="3" placeholder="مثال: شارع محمد نجيب، عمارة 5، شقة 12"></textarea>
+  <textarea id="address" rows="3"></textarea>
 </div>
 
 <div class="form-group">
@@ -319,7 +317,6 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// جلب الـ username وتحويله إلى حروف صغيرة
 const urlParams = new URLSearchParams(window.location.search);
 let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
 let CURRENT_USER = rawUser.trim().toLowerCase(); 
@@ -328,10 +325,6 @@ localStorage.setItem('username', CURRENT_USER);
 
 document.getElementById('supplierUsername').value = CURRENT_USER;
 
-/**
- * دالة التنقل إلى صفحة معينة مع تمرير اسم المستخدم ونوع المستخدم
- * @param {string} page - اسم الملف كاملاً (مثل 'data_page.html')
- */
 function goToPage(page) {
   toggleSidebar();
   window.location.href = `${page}?user=${encodeURIComponent(CURRENT_USER)}&type=supplier`;
@@ -365,8 +358,8 @@ function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-// ✅ دالة لجلب آخر بيانات المحافظة والمدينة والعنوان للمستخدم
-async function fetchLastAddressData(username) {
+// ✅ جلب آخر بيانات (محافظة + مدينة + عنوان + واتساب)
+async function fetchLastProductData(username) {
   try {
     const url = `${SUPABASE_URL}/rest/v1/products?username=eq.${username}&order=id.desc&limit=1`;
     const response = await fetch(url, {
@@ -381,13 +374,14 @@ async function fetchLastAddressData(username) {
       return {
         governorate: data[0].governorate || '',
         city: data[0].city || '',
-        address: data[0].address || ''
+        address: data[0].address || '',
+        whatsapp: data[0].whatsapp || ''
       };
     }
-    return { governorate: '', city: '', address: '' };
+    return { governorate: '', city: '', address: '', whatsapp: '' };
   } catch(err) {
-    console.error('خطأ في جلب العنوان:', err);
-    return { governorate: '', city: '', address: '' };
+    console.error('خطأ في جلب البيانات:', err);
+    return { governorate: '', city: '', address: '', whatsapp: '' };
   }
 }
 
@@ -452,13 +446,13 @@ function resetForm() {
   productCode = generateCode();
 }
 
-// ✅ تحميل آخر بيانات العنوان عند فتح الصفحة
+// ✅ تحميل آخر البيانات عند فتح الصفحة
 window.onload = async function() {
-  // جلب آخر عنوان محفوظ للمستخدم
-  const lastAddress = await fetchLastAddressData(CURRENT_USER);
-  document.getElementById('governorate').value = lastAddress.governorate;
-  document.getElementById('city').value = lastAddress.city;
-  document.getElementById('address').value = lastAddress.address;
+  const lastData = await fetchLastProductData(CURRENT_USER);
+  document.getElementById('governorate').value = lastData.governorate;
+  document.getElementById('city').value = lastData.city;
+  document.getElementById('address').value = lastData.address;
+  document.getElementById('supplierPhone').value = lastData.whatsapp;
 };
 
 document.getElementById('addBtn').onclick = async function() {
@@ -473,7 +467,6 @@ document.getElementById('addBtn').onclick = async function() {
   let desc = document.getElementById('productDesc').value.trim();
   const fileInput = document.getElementById('coverImg');
   
-  // ✅ جلب بيانات المحافظة والمدينة والعنوان
   const governorate = document.getElementById('governorate').value.trim();
   const city = document.getElementById('city').value.trim();
   const address = document.getElementById('address').value.trim();
@@ -481,13 +474,11 @@ document.getElementById('addBtn').onclick = async function() {
   const errorDiv = document.getElementById('error'), successDiv = document.getElementById('success');
   errorDiv.innerHTML = ''; successDiv.innerHTML = '';
 
-  // ✅ التحقق من اسم المستخدم
   if(!usernameValue || usernameValue === 'supplier_default') { 
     errorDiv.innerHTML = '❌ خطأ: اسم المستخدم غير معرف، يرجى إعادة تسجيل الدخول'; 
     return; 
   }
 
-  // ✅ التحقق من رقم واتساب (إجباري و11 رقم)
   if(!supplierPhone) { 
     errorDiv.innerHTML = '❌ من فضلك أدخل رقم واتساب الخاص بك للتواصل'; 
     return; 
@@ -497,7 +488,6 @@ document.getElementById('addBtn').onclick = async function() {
     return;
   }
 
-  // ✅ التحقق من المحافظة والمدينة والعنوان
   if(!governorate) { errorDiv.innerHTML = '❌ من فضلك أدخل المحافظة'; return; }
   if(!city) { errorDiv.innerHTML = '❌ من فضلك أدخل المدينة'; return; }
   if(!address) { errorDiv.innerHTML = '❌ من فضلك أدخل العنوان بالتفصيل'; return; }
@@ -516,7 +506,6 @@ document.getElementById('addBtn').onclick = async function() {
     const extraDetails = `\n\n📞 هاتف واتساب المورد: ${supplierPhone}\n🔗 المعرض الإضافي: ${galleryLink || 'لا يوجد'}`;
     const finalDescription = desc ? (desc + extraDetails) : `منتج المورد: ${usernameValue} ${extraDetails}`;
 
-    // ✅ إضافة الحقول الجديدة لكائن المنتج
     const finalProductPayload = {
       product_id: productCode,
       name: name,
@@ -531,7 +520,6 @@ document.getElementById('addBtn').onclick = async function() {
       colors: '',
       slider: [],
       whatsapp: supplierPhone,
-      // ✅ الحقول الجديدة
       governorate: governorate,
       city: city,
       address: address
