@@ -777,21 +777,41 @@ function updateCombinationsPreview() {
   listContainer.innerHTML = html;
 }
 
-// تجميع بيانات الخصائص لإرسالها مع المنتج
+// ===== التعديل الرئيسي: تجميع بيانات الخصائص =====
 function getVariantsData() {
-  // تحويل المصفوفة إلى النص المطلوب
+  // استخراج المقاسات والألوان
   const sizesGroup = variantGroups.find(g => g.name === 'المقاس' || g.name === 'مقاس' || g.name === 'المقاسات');
   const colorsGroup = variantGroups.find(g => g.name === 'اللون' || g.name === 'لون' || g.name === 'الألوان');
   
-  // تجميع باقي الخصائص (غير المقاسات والألوان) كخصائص إضافية
+  // الخصائص الإضافية (غير المقاسات والألوان)
   const extraAttributes = variantGroups.filter(g => {
     const name = g.name.toLowerCase();
     return name !== 'المقاس' && name !== 'مقاس' && name !== 'المقاسات' 
       && name !== 'اللون' && name !== 'لون' && name !== 'الألوان';
   });
   
-  // التوليفات النهائية
+  // التوليفات الكاملة
   const combinations = generateCombinations();
+  
+  // بناء مصفوفة الـ variants بالشكل المطلوب
+  const variantsArray = combinations.map(combo => {
+    const obj = {};
+    combo.forEach(c => { 
+      // لو الخاصية مقاس أو لون، نحطها في حقول مخصصة
+      const lowerAttr = c.attribute.toLowerCase();
+      if (lowerAttr === 'المقاس' || lowerAttr === 'مقاس' || lowerAttr === 'المقاسات') {
+        obj.size = c.value;
+      } else if (lowerAttr === 'اللون' || lowerAttr === 'لون' || lowerAttr === 'الألوان') {
+        obj.color = c.value;
+      } else {
+        obj[c.attribute] = c.value;
+      }
+    });
+    // إضافة مخزون وسعر افتراضي (المستخدم يقدر يعدلهم بعدين)
+    obj.stock = parseInt(document.getElementById('stock').value) || 1;
+    obj.price = parseFloat(document.getElementById('price').value) || 0;
+    return obj;
+  });
   
   return {
     sizes: sizesGroup ? sizesGroup.values.join(',') : '',
@@ -800,11 +820,7 @@ function getVariantsData() {
       name: g.name,
       values: g.values
     })),
-    variants: combinations.map(combo => {
-      const obj = {};
-      combo.forEach(c => { obj[c.attribute] = c.value; });
-      return obj;
-    })
+    variants: variantsArray
   };
 }
 
@@ -894,10 +910,10 @@ function resetForm() {
   document.getElementById('error').innerHTML = '';
   document.getElementById('success').innerHTML = '';
   
-  // إعادة تعيين الخصائص
+  // إعادة تعيين الخصائص مع الاحتفاظ بالافتراضية
   variantGroups = [];
-  renderAllVariantGroups();
-  updateCombinationsPreview();
+  addVariantGroup('المقاس', null, []);
+  addVariantGroup('اللون', null, []);
   
   productCode = generateCode();
 }
@@ -967,7 +983,7 @@ document.getElementById('addBtn').onclick = async function() {
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
-    // تجميع بيانات الخصائص
+    // ===== التعديل الرئيسي: تجميع بيانات الخصائص =====
     const variantsData = getVariantsData();
     
     // بناء وصف المنتج مع الخصائص
@@ -990,6 +1006,7 @@ document.getElementById('addBtn').onclick = async function() {
     const extraDetails = `\n\n📞 هاتف واتساب المورد: ${supplierPhone}\n🔗 المعرض الإضافي: ${galleryLink || 'لا يوجد'}`;
     const finalDescription = (desc || `منتج المورد: ${usernameValue}`) + variantsDescription + extraDetails;
 
+    // ===== التعديل الرئيسي: إضافة حقول sizes, colors, variants =====
     const finalProductPayload = {
       product_id: productCode,
       name: name,
