@@ -13,20 +13,21 @@ body{min-height:100vh;display:flex;justify-content:center;align-items:center;pad
 .logo{font-size:38px;font-weight:700;background:linear-gradient(90deg,#00ff88,#00c6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:8px;}
 .title{text-align:center;color:#999;margin-bottom:25px;font-size:15px;}
 input,select{width:100%;padding:16px;margin:10px 0;border:none;outline:none;border-radius:14px;background:#262626;color:#fff;font-size:15px;border:1px solid #333;}
+input:focus,select:focus{border-color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.1);}
 .passwordBox{position:relative;}
 .eye{position:absolute;left:18px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:20px;color:#666;}
 button{width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;font-size:16px;cursor:pointer;color:white;font-weight:600;transition: all 0.3s ease;}
 button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 .green{background:linear-gradient(90deg,#00aa55,#00cc66);}
 .blue{background:linear-gradient(90deg,#0099ff,#00c6ff);}
-.red{background:linear-gradient(90deg,#cc3333,#ff5555);}
 .error{text-align:center;margin-top:12px;color:#ff5555;font-weight:600;font-size:14px;min-height:20px;}
 .success{text-align:center;margin-top:12px;color:#00ff88;font-weight:600;font-size:14px;min-height:20px;}
 .page{display:none;}
 .page.active{display:block;}
 .link{text-align:center;margin-top:15px;color:#00c6ff;cursor:pointer;text-decoration:underline;font-size:14px;}
 .otp-timer {font-size: 13px; color: #ffaa00; text-align: center; margin-top: 5px;}
-.hidden{display:none;}
+.disabled-option{color:#888;background:#1a1a1a;}
+.notice-box{background:#2a1a1a;border:1px solid #ff6633;border-radius:10px;padding:10px;margin:8px 0;text-align:center;color:#ff8844;font-size:13px;}
 </style>
 </head>
 <body>
@@ -35,7 +36,7 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <!-- ===== تسجيل الدخول ===== -->
 <div id="loginPage" class="page active">
 <div class="logo">Stylek</div>
-<div class="title">🔐 تسجيل الدخول (للتجار فقط)</div>
+<div class="title">🔐 تسجيل الدخول</div>
 <input id="loginEmail" placeholder="البريد الإلكتروني">
 <div class="passwordBox">
 <input id="loginPassword" type="password" placeholder="كلمة المرور">
@@ -43,15 +44,15 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 </div>
 <button class="green" id="login">دخول</button>
 <div class="link" onclick="showPage('forgotPage')">نسيت كلمة السر؟</div>
-<div class="link" onclick="showPage('signupPage')">إنشاء حساب جديد (تاجر فقط)</div>
+<div class="link" onclick="showPage('signupPage')">إنشاء حساب جديد</div>
 <div class="error" id="loginError"></div>
 <div class="success" id="loginSuccess"></div>
 </div>
 
-<!-- ===== إنشاء حساب (تاجر فقط) ===== -->
+<!-- ===== إنشاء حساب ===== -->
 <div id="signupPage" class="page">
 <div class="logo">Stylek</div>
-<div class="title">📝 إنشاء حساب جديد (تاجر فقط)</div>
+<div class="title">📝 إنشاء حساب جديد</div>
 <input id="name" placeholder="الاسم الكامل">
 <input id="username" placeholder="اسم المستخدم">
 <input id="email" placeholder="البريد الإلكتروني">
@@ -60,10 +61,20 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <input id="password" type="password" placeholder="كلمة المرور (8 أحرف على الأقل)">
 <span class="eye" onclick="togglePass('password',this)">👁️</span>
 </div>
+
+<!-- ===== القائمة المنسدلة مع تنبيه للمسوقين ===== -->
 <select id="type">
     <option value="">نوع الحساب</option>
-    <option value="تاجر" selected>تاجر</option>
+    <option value="تاجر">تاجر</option>
+    <option value="مسوق" class="disabled-option" disabled>مسوق (🚫 غير متاح حالياً - قريباً)</option>
 </select>
+
+<!-- ===== رسالة تنبيه للمسوقين ===== -->
+<div id="noticeBox" class="notice-box" style="display:none;">
+    ⚠️ عذراً، التسجيل للمسوقين غير متاح حالياً.<br>
+    <span style="font-size:12px;color:#ffaa66;">سيكون متاحاً خلال الأيام القادمة 🔜</span>
+</div>
+
 <button class="green" id="create">إنشاء حساب</button>
 
 <div id="signupOtpBox" style="display:none; margin-top:20px; border-top:1px dashed #444; padding-top:15px;">
@@ -126,6 +137,7 @@ function showPage(id) {
     if (cooldownInterval) clearInterval(cooldownInterval);
     isCooldownActive = false;
     document.getElementById("signupTimer").innerHTML = "";
+    document.getElementById("noticeBox").style.display = "none";
 }
 
 // ===== تشفير الباسورد =====
@@ -212,7 +224,7 @@ function startOtpCooldown(timerId, buttonId) {
 }
 
 // ============================================================
-// 🔥 إنشاء حساب جديد (تاجر فقط)
+// 🔥 إنشاء حساب جديد
 // ============================================================
 document.getElementById("create").onclick = async function() {
     let name = document.getElementById("name").value.trim();
@@ -223,6 +235,7 @@ document.getElementById("create").onclick = async function() {
     let whatsapp = document.getElementById("whatsapp").value.trim();
     let error = document.getElementById("error");
     let success = document.getElementById("success");
+    let notice = document.getElementById("noticeBox");
     error.innerHTML = "";
     success.innerHTML = "";
 
@@ -233,7 +246,13 @@ document.getElementById("create").onclick = async function() {
     if (password.length < 8) { error.innerHTML = "⚠️ كلمة المرور 8 أحرف على الأقل"; return; }
     if (whatsapp.length < 5) { error.innerHTML = "⚠️ رقم واتساب غير صحيح"; return; }
     if (type === "") { error.innerHTML = "⚠️ اختر نوع الحساب"; return; }
-    if (type !== "تاجر") { error.innerHTML = "⚠️ عذراً، التسجيل متاح للتجار فقط حالياً"; return; }
+
+    // ===== منع التسجيل للمسوقين حالياً =====
+    if (type === "مسوق") {
+        error.innerHTML = "";
+        notice.style.display = "block";
+        return;
+    }
 
     this.disabled = true;
     try {
@@ -265,7 +284,9 @@ document.getElementById("verifyAndLogin").onclick = async function() {
     let enteredOtp = document.getElementById("signupOtpCode").value.trim();
     let error = document.getElementById("error");
     let success = document.getElementById("success");
+    let notice = document.getElementById("noticeBox");
     error.innerHTML = "";
+    notice.style.display = "none";
 
     if (enteredOtp !== generatedCurrentOtp) {
         error.innerHTML = "❌ كود OTP غير صحيح";
@@ -283,13 +304,12 @@ document.getElementById("verifyAndLogin").onclick = async function() {
         let type = document.getElementById("type").value;
         let whatsapp = document.getElementById("whatsapp").value.trim();
 
-        // ===== تشفير الباسورد قبل التخزين =====
+        // ===== تشفير الباسورد =====
         const hashedPassword = await hashPassword(password);
-        console.log('✅ تم تشفير الباسورد:', hashedPassword);
 
         const newUser = { 
             username, 
-            password: hashedPassword, // <-- مخزن مشفر
+            password: hashedPassword,
             email, 
             role: type, 
             name, 
@@ -305,8 +325,13 @@ document.getElementById("verifyAndLogin").onclick = async function() {
         localStorage.setItem('userType', type);
         localStorage.setItem('userName', name);
 
+        // التوجيه حسب نوع الحساب
         setTimeout(() => {
-            window.location.href = 'data_page.html?user=' + encodeURIComponent(username);
+            if (type === 'تاجر') {
+                window.location.href = 'data_page.html?user=' + encodeURIComponent(username);
+            } else {
+                window.location.href = 'displayed_products.html?user=' + encodeURIComponent(username);
+            }
         }, 1500);
 
     } catch (e) {
@@ -337,7 +362,7 @@ document.getElementById("resendSignupOtp").onclick = function(e) {
 };
 
 // ============================================================
-// 🔓 تسجيل الدخول (مع التحقق من التشفير)
+// 🔓 تسجيل الدخول
 // ============================================================
 document.getElementById("login").onclick = async function() {
     let email = document.getElementById("loginEmail").value.trim().toLowerCase();
@@ -372,9 +397,10 @@ document.getElementById("login").onclick = async function() {
             return;
         }
 
-        // ===== التحقق من نوع الحساب (تاجر فقط) =====
-        if (user.role !== 'تاجر') {
-            error.innerHTML = "⚠️ عذراً، الدخول متاح للتجار فقط حالياً";
+        // ===== السماح للتجار والمسوقين بالدخول =====
+        // لكن المسوقين مش هيقدروا يسجلوا جديد
+        if (user.role !== 'تاجر' && user.role !== 'مسوق') {
+            error.innerHTML = "⚠️ نوع الحساب غير معروف";
             this.disabled = false;
             return;
         }
@@ -393,7 +419,11 @@ document.getElementById("login").onclick = async function() {
 
         success.innerHTML = "✅ تم التحقق بنجاح! جاري التوجيه...";
         setTimeout(() => {
-            window.location.href = 'data_page.html?user=' + encodeURIComponent(user.username);
+            if (user.role === 'تاجر') {
+                window.location.href = 'data_page.html?user=' + encodeURIComponent(user.username);
+            } else {
+                window.location.href = 'displayed_products.html?user=' + encodeURIComponent(user.username);
+            }
         }, 1500);
 
     } catch (e) {
@@ -470,7 +500,6 @@ document.getElementById("resetPass").onclick = async function() {
             return;
         }
 
-        // ===== تشفير الباسورد الجديد =====
         const hashedPassword = await hashPassword(newpass);
 
         await supabaseApi(`stylek_password?id=eq.${users[0].id}`, {
