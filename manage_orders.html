@@ -160,6 +160,25 @@ body {
   border: 1px solid var(--green);
 }
 
+/* ===== إشعار التحديث التلقائي ===== */
+.auto-update-badge {
+  background: #1a1a2e;
+  border: 1px solid #304ffe;
+  color: #82b1ff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: pulse-badge 2s infinite;
+}
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 /* ===== خانة إدخال اسم المستخدم ===== */
 .user-input-section {
   background: var(--card-bg);
@@ -276,6 +295,25 @@ body {
 .order-id { color: var(--green); font-size: 13px; font-weight: 600; margin-top: 2px; }
 .order-date { font-size: 12px; color: var(--muted); }
 
+/* تنبيه الوقت المتبقي */
+.time-remaining {
+  background: #1a1a0a;
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-size: 12px;
+  color: #ffd700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.time-remaining .countdown {
+  font-weight: bold;
+  color: #ffab00;
+  font-size: 14px;
+}
+
 .customer-details { background: #0e0e0e; border-radius: 12px; padding: 14px; margin: 12px 0; font-size: 14px; color: #c0c0c0; line-height: 1.8; }
 
 /* معلومات المسوق */
@@ -355,6 +393,26 @@ body {
 }
 
 .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
+
+/* رسالة تحديث تلقائي */
+.auto-update-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: #1b5e20;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  z-index: 2000;
+  display: none;
+  box-shadow: 0 4px 20px rgba(0,255,136,0.3);
+  animation: slideUp 0.4s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 </style>
 </head>
 <body>
@@ -383,6 +441,7 @@ body {
 <div id="userBar" class="user-bar">
   <span>🏭 المورد: <strong id="userName">-</strong></span>
   <span>كود المستخدم: <strong id="userCode">-</strong></span>
+  <span class="auto-update-badge" id="autoUpdateBadge">🔄 تحديث تلقائي نشط</span>
   <span class="user-type">🏭 مورد</span>
 </div>
 
@@ -414,6 +473,9 @@ body {
 <div id="loading" class="loading">⏳ جاري تحميل الطلبات...</div>
 <div id="ordersList" class="orders-list"></div>
 
+<!-- توست الإشعارات -->
+<div id="autoUpdateToast" class="auto-update-toast"></div>
+
 <script>
 // ===== دوال السليدر والتنقل =====
 function toggleSidebar() {
@@ -444,6 +506,15 @@ let allOrders = [];
 let allProducts = [];
 let currentFilter = 'all';
 let currentSearch = '';
+let autoUpdateInterval = null;
+let updatedOrderIds = new Set(); // تتبع الطلبات التي تم تحديثها تلقائياً
+
+// ===== إعدادات المدد الزمنية للتحديث التلقائي (بالأيام) =====
+const AUTO_UPDATE_RULES = [
+  { fromStatuses: ['pending', 'جديد'], toStatus: 'packing', days: 2 },
+  { fromStatuses: ['packing', 'تغليف'], toStatus: 'shipping', days: 3 },
+  { fromStatuses: ['shipping', 'توصيل'], toStatus: 'received', days: 10 }
+];
 
 // تعريف شامل للحالات مع المرادفات العربية والإنجليزية
 const STATUS_STAGES = {
@@ -467,8 +538,143 @@ window.onload = function() {
   document.getElementById('userCode').innerText = currentUserVar || 'غير محدد';
   document.getElementById('userName').innerText = currentUserVar || 'غير محدد';
   loadOrders();
-  // تحديث الطلبات كل 30 ثانية
-  setInterval(loadOrders, 30000);
+  
+  // بدء التحديث التلقائي كل 30 ثانية
+  startAutoUpdate();
+}
+
+// ===== نظام التحديث التلقائي =====
+function startAutoUpdate() {
+  // إيقاف أي مؤقت سابق
+  if (autoUpdateInterval) clearInterval(autoUpdateInterval);
+  
+  // تشغيل التحديث كل 30 ثانية
+  autoUpdateInterval = setInterval(() => {
+    processAutoUpdates();
+  }, 30000);
+  
+  // تحديث شارة الحالة
+  document.getElementById('autoUpdateBadge').style.display = 'inline-flex';
+}
+
+function stopAutoUpdate() {
+  if (autoUpdateInterval) {
+    clearInterval(autoUpdateInterval);
+    autoUpdateInterval = null;
+  }
+  document.getElementById('autoUpdateBadge').style.display = 'none';
+}
+
+// ===== حساب عمر الطلب بالأيام =====
+function getOrderAgeInDays(createdAt) {
+  if (!createdAt) return 0;
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now - created;
+  return diffMs / (1000 * 60 * 60 * 24); // يرجع كسر عشري للأيام
+}
+
+// ===== حساب الوقت المتبقي للتحديث التلقائي القادم =====
+function getTimeUntilNextUpdate(orderStatus, createdAt) {
+  const ageInDays = getOrderAgeInDays(createdAt);
+  
+  for (const rule of AUTO_UPDATE_RULES) {
+    if (rule.fromStatuses.includes(orderStatus)) {
+      const remainingDays = rule.days - ageInDays;
+      return {
+        nextStatus: rule.toStatus,
+        remainingDays: remainingDays,
+        targetDays: rule.days,
+        willUpdate: remainingDays <= 0
+      };
+    }
+  }
+  
+  return null;
+}
+
+// ===== معالجة التحديثات التلقائية =====
+async function processAutoUpdates() {
+  if (allOrders.length === 0) return;
+  
+  let updatesCount = 0;
+  const updatesToApply = [];
+  
+  for (const order of allOrders) {
+    // تخطي الطلبات المكتملة أو المرتجعة
+    if (COMPLETED_STATUSES.includes(order.order_status) || 
+        RETURNED_STATUSES.includes(order.order_status)) {
+      continue;
+    }
+    
+    const ageInDays = getOrderAgeInDays(order.created_at);
+    
+    // التحقق من كل قاعدة تحديث
+    for (const rule of AUTO_UPDATE_RULES) {
+      if (rule.fromStatuses.includes(order.order_status) && ageInDays >= rule.days) {
+        // تجنب تحديث نفس الطلب مرتين
+        const updateKey = `${order.order_id}_${rule.toStatus}`;
+        if (!updatedOrderIds.has(updateKey)) {
+          updatesToApply.push({
+            orderId: order.order_id,
+            newStatus: rule.toStatus,
+            oldStatus: order.order_status,
+            ageInDays: ageInDays,
+            ruleDays: rule.days,
+            updateKey: updateKey
+          });
+        }
+        break; // تطبيق أول قاعدة مطابقة فقط
+      }
+    }
+  }
+  
+  // تطبيق التحديثات
+  for (const update of updatesToApply) {
+    try {
+      await updateOrderStatusInDB(update.orderId, update.newStatus);
+      
+      // تحديث الحالة محلياً
+      const order = allOrders.find(o => o.order_id === update.orderId);
+      if (order) {
+        order.order_status = update.newStatus;
+      }
+      
+      // تسجيل التحديث
+      updatedOrderIds.add(update.updateKey);
+      updatesCount++;
+      
+      console.log(`🔄 تحديث تلقائي: الطلب ${update.orderId} من "${update.oldStatus}" إلى "${update.newStatus}" (عمر الطلب: ${update.ageInDays.toFixed(1)} يوم، المدة المطلوبة: ${update.ruleDays} يوم)`);
+    } catch (err) {
+      console.error(`❌ فشل التحديث التلقائي للطلب ${update.orderId}:`, err);
+    }
+  }
+  
+  // عرض إشعار إذا تم تحديث طلبات
+  if (updatesCount > 0) {
+    showToast(`✅ تم تحديث ${updatesCount} طلب تلقائياً حسب الجدول الزمني`);
+    updateStats();
+    filterAndDisplay();
+  }
+}
+
+// ===== تحديث حالة الطلب في قاعدة البيانات =====
+async function updateOrderStatusInDB(orderId, newStatus) {
+  await supabaseApi(`orders?order_id=eq.${orderId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ order_status: newStatus })
+  });
+}
+
+// ===== عرض إشعار (توست) =====
+function showToast(message) {
+  const toast = document.getElementById('autoUpdateToast');
+  toast.textContent = message;
+  toast.style.display = 'block';
+  
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 4000);
 }
 
 // ===== دوال API =====
@@ -527,7 +733,6 @@ async function loadOrders() {
     const productIds = allProducts.map(p => p.product_id);
     
     // الخطوة 2: جلب الطلبات التي تحتوي على هذه المنتجات فقط
-    // استخدام filter على product_id
     const productFilter = productIds.map(id => `product_id.eq.${id}`).join(',');
     const orders = await supabaseApi(`orders?or=(${productFilter})&order=created_at.desc`);
     
@@ -545,8 +750,7 @@ async function loadOrders() {
       return;
     }
     
-    // الخطوة 3: ربط الطلبات بمعلومات المنتج من جدول products
-    // إنشاء خريطة (Map) للمنتجات للوصول السريع
+    // الخطوة 3: ربط الطلبات بمعلومات المنتج
     const productsMap = {};
     allProducts.forEach(p => {
       productsMap[p.product_id] = p;
@@ -557,17 +761,17 @@ async function loadOrders() {
       
       return {
         ...order,
-        // بيانات المنتج من جدول products (مصدر موثوق)
         product_name: product.name || 'منتج غير معروف',
         image_url: product.image_url || '',
         product_price: product.base_price || order.price || 0,
-        // الاحتفاظ بالبيانات الأصلية للطلب
         order_qty: order.qty || 1,
         order_price: order.price || 0,
-        // التأكد من وجود order_status
         order_status: order.order_status || 'pending'
       };
     });
+    
+    // معالجة التحديثات التلقائية فوراً بعد التحميل
+    await processAutoUpdates();
     
     updateStats();
     filterAndDisplay();
@@ -591,18 +795,15 @@ async function loadOrders() {
 function updateStats() {
   const total = allOrders.length;
   
-  // الطلبات قيد التنفيذ (غير مكتملة وغير مرتجعة)
   const pending = allOrders.filter(o => 
     !COMPLETED_STATUSES.includes(o.order_status) && 
     !RETURNED_STATUSES.includes(o.order_status)
   ).length;
   
-  // الطلبات المكتملة
   const completed = allOrders.filter(o => 
     COMPLETED_STATUSES.includes(o.order_status)
   ).length;
   
-  // إجمالي المبيعات (الطلبات المكتملة فقط)
   const totalSales = allOrders
     .filter(o => COMPLETED_STATUSES.includes(o.order_status))
     .reduce((sum, o) => sum + (parseFloat(o.product_price) || 0) * (parseInt(o.order_qty) || 1), 0);
@@ -612,7 +813,6 @@ function updateStats() {
   document.getElementById('statCompleted').innerText = completed;
   document.getElementById('statCommission').innerText = totalSales.toFixed(2);
   
-  // تحديث عدد الطلبات في الهيدر
   document.getElementById('orderCount').innerText = total;
 }
 
@@ -634,7 +834,6 @@ function filterOrders() {
 function filterAndDisplay() {
   let filtered = [...allOrders];
   
-  // تصفية حسب الحالة
   if(currentFilter === 'pending') {
     filtered = filtered.filter(o => !COMPLETED_STATUSES.includes(o.order_status) && !RETURNED_STATUSES.includes(o.order_status));
   } else if(currentFilter === 'completed') {
@@ -643,7 +842,6 @@ function filterAndDisplay() {
     filtered = filtered.filter(o => RETURNED_STATUSES.includes(o.order_status));
   }
   
-  // تصفية حسب البحث
   if(currentSearch) {
     filtered = filtered.filter(o => 
       (o.customer_name || '').toLowerCase().includes(currentSearch) ||
@@ -691,21 +889,39 @@ function isOrderFinished(status) {
   return COMPLETED_STATUSES.includes(status) || RETURNED_STATUSES.includes(status);
 }
 
-// ===== تحديث حالة الطلب =====
+// ===== صياغة الوقت المتبقي بالعربية =====
+function formatRemainingTime(remainingDays) {
+  if (remainingDays <= 0) return 'سيتم التحديث الآن...';
+  
+  const days = Math.floor(remainingDays);
+  const hours = Math.floor((remainingDays - days) * 24);
+  const minutes = Math.floor(((remainingDays - days) * 24 - hours) * 60);
+  
+  let parts = [];
+  if (days > 0) parts.push(`${days} يوم`);
+  if (hours > 0) parts.push(`${hours} ساعة`);
+  if (minutes > 0 && days === 0) parts.push(`${minutes} دقيقة`);
+  
+  return `متبقي ${parts.join(' و ')}`;
+}
+
+// ===== تحديث حالة الطلب يدوياً =====
 async function updateStatus(orderId, newStatus) {
   if(RETURNED_STATUSES.includes(newStatus) && !confirm('⚠️ هل أنت متأكد من إرجاع هذا الطلب؟')) return;
   
   try {
-    await supabaseApi(`orders?order_id=eq.${orderId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ order_status: newStatus })
-    });
+    await updateOrderStatusInDB(orderId, newStatus);
     
     const order = allOrders.find(o => o.order_id === orderId);
     if(order) order.order_status = newStatus;
+    
+    // تسجيل التحديث اليدوي في مجموعة التحديثات
+    const updateKey = `${orderId}_${newStatus}`;
+    updatedOrderIds.add(updateKey);
+    
     filterAndDisplay();
     updateStats();
-    alert('✅ تم تحديث الحالة بنجاح');
+    showToast(`✅ تم تحديث حالة الطلب ${orderId} إلى "${getStatusArabicLabel(newStatus)}"`);
   } catch(err) {
     alert('❌ فشل تحديث الحالة: ' + err.message);
   }
@@ -740,6 +956,28 @@ function displayOrders(orders) {
     const qty = parseInt(order.order_qty) || 1;
     const totalPrice = productPrice * qty;
     
+    // حساب الوقت المتبقي للتحديث التلقائي
+    const timeInfo = getTimeUntilNextUpdate(order.order_status, order.created_at);
+    
+    // شريط الوقت المتبقي
+    let timeRemainingHTML = '';
+    if (timeInfo && !isFinished) {
+      if (timeInfo.willUpdate) {
+        timeRemainingHTML = `
+          <div class="time-remaining" style="background:#1a2a0a;border-color:#00ff88;color:#00ff88;">
+            ⏰ جاري التحديث التلقائي إلى "${getStatusArabicLabel(timeInfo.nextStatus)}"...
+          </div>
+        `;
+      } else {
+        timeRemainingHTML = `
+          <div class="time-remaining">
+            ⏳ <span>التحديث التلقائي إلى "${getStatusArabicLabel(timeInfo.nextStatus)}"</span>
+            <span class="countdown">${formatRemainingTime(timeInfo.remainingDays)}</span>
+          </div>
+        `;
+      }
+    }
+    
     html += `
       <div class="order-card">
         <div class="order-header">
@@ -754,8 +992,11 @@ function displayOrders(orders) {
           <div style="text-align:left">
             <span class="status-badge ${statusClass}">${getStatusArabicLabel(order.order_status)}</span>
             <div class="order-date">📅 ${order.created_at ? new Date(order.created_at).toLocaleDateString('ar-EG') : '-'}</div>
+            <div class="order-date" style="font-size:11px;color:var(--orange);">📊 عمر الطلب: ${getOrderAgeInDays(order.created_at).toFixed(1)} يوم</div>
           </div>
         </div>
+        
+        ${timeRemainingHTML}
         
         <div class="customer-details">
           <div>📞 رقم الهاتف: ${order.phone || '-'}</div>
