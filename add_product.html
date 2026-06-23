@@ -15,6 +15,7 @@
   --green: #00ff88;
   --blue: #00aaff;
   --red: #ff3366;
+  --orange: #ff9500;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -134,6 +135,13 @@ body {
   padding: 30px;
 }
 h2 { text-align: center; font-size: 22px; color: var(--text); margin-bottom: 25px; }
+h3 { 
+  color: var(--green); 
+  font-size: 16px; 
+  margin: 20px 0 10px 0; 
+  padding-bottom: 8px; 
+  border-bottom: 1px solid #222; 
+}
 .form-group { margin-bottom: 18px; }
 label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 14px; font-weight: 500; }
 input, textarea, select {
@@ -154,6 +162,173 @@ input:focus, textarea:focus {
 }
 textarea { resize: vertical; min-height: 100px; }
 .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ========= أنماط قسم الخصائص ========= */
+.variants-section {
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.variant-group {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.variant-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.variant-group-header label {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 15px;
+  margin: 0;
+}
+
+.remove-variant-btn {
+  background: #2a080c;
+  color: var(--red);
+  border: 1px solid #440000;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "Tajawal";
+  transition: 0.2s;
+}
+.remove-variant-btn:hover { background: #440000; }
+
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 8px 14px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #e0e0e0;
+  transition: 0.2s;
+}
+
+.chip .remove-chip {
+  cursor: pointer;
+  color: var(--red);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  transition: 0.2s;
+}
+.chip .remove-chip:hover { color: #ff0000; }
+
+.add-value-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.add-value-row input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.add-value-btn {
+  background: var(--green);
+  color: #000;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: "Tajawal";
+  white-space: nowrap;
+  transition: 0.2s;
+}
+.add-value-btn:hover { background: #00cc66; }
+
+.add-variant-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.add-variant-row input {
+  flex: 1;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.add-variant-btn {
+  background: var(--blue);
+  color: #000;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: "Tajawal";
+  white-space: nowrap;
+  transition: 0.2s;
+}
+.add-variant-btn:hover { background: #0088dd; }
+
+.combinations-preview {
+  background: #0a0a0a;
+  border: 1px dashed var(--orange);
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.combinations-preview h4 {
+  color: var(--orange);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.combinations-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.combination-chip {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.no-combinations {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: italic;
+}
+/* ================================== */
+
 .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px; }
 button.submit {
   padding: 16px;
@@ -253,7 +428,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- ✅ حقول المحافظة والمدينة والعنوان (من غير placeholder) -->
 <div class="price-row">
   <div class="form-group">
     <label>🏙️ المحافظة <span class="required-star">*</span></label>
@@ -299,8 +473,36 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 <div class="form-group">
   <label>📝 تفاصيل ووصف المنتج</label>
-  <textarea id="productDesc" rows="3" placeholder="اكتب المقاسات والألوان المتوفرة وأي تفاصيل أخرى..."></textarea>
+  <textarea id="productDesc" rows="3" placeholder="اكتب وصف المنتج الأساسي هنا..."></textarea>
 </div>
+
+<!-- ========= قسم الخصائص المتغيرة ========= -->
+<div class="variants-section" id="variantsSection">
+  <h3>🎨 خصائص المنتج (مقاسات - ألوان - غيرها)</h3>
+  <p style="color: var(--muted); font-size: 13px; margin-bottom: 15px;">
+    أضف الخصائص ثم قيمها. مثلاً: خاصية "المقاس" بقيم: S, M, L, XL - خاصية "اللون" بقيم: أحمر, أزرق, أسود
+  </p>
+  
+  <!-- حاوية مجموعات الخصائص -->
+  <div id="variantGroupsContainer">
+    <!-- سيتم إضافة المجموعات هنا ديناميكياً -->
+  </div>
+
+  <!-- إضافة خاصية جديدة -->
+  <div class="add-variant-row">
+    <input type="text" id="newVariantName" placeholder="اسم الخاصية الجديدة (مثلاً: الخامة، النمط...)">
+    <button class="add-variant-btn" onclick="addVariantGroup()">➕ إضافة خاصية</button>
+  </div>
+
+  <!-- معاينة التوليفات -->
+  <div class="combinations-preview" id="combinationsPreview">
+    <h4>📋 التوليفات الناتجة:</h4>
+    <div class="combinations-list" id="combinationsList">
+      <span class="no-combinations">لم تتم إضافة خصائص بعد</span>
+    </div>
+  </div>
+</div>
+<!-- ====================================== -->
 
 <div class="btn-row">
   <button class="submit" id="addBtn">✅ إضافة وتثبيت المنتج</button>
@@ -312,6 +514,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 </div>
 
 <script>
+// ========= إدارة القائمة الجانبية =========
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
@@ -338,6 +541,7 @@ function logout() {
   }
 }
 
+// ========= بيانات Supabase =========
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
@@ -358,7 +562,253 @@ function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-// ✅ جلب آخر بيانات (محافظة + مدينة + عنوان + واتساب)
+// ========= نظام الخصائص المتغيرة =========
+
+// مصفوفة لتخزين جميع مجموعات الخصائص
+// كل مجموعة: { id, name, values: [] }
+let variantGroups = [];
+
+// إنشاء ID فريد لكل مجموعة
+function generateVariantId() {
+  return 'var_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+}
+
+// إضافة مجموعة خاصية جديدة
+function addVariantGroup(groupName = null, groupId = null, values = []) {
+  const nameInput = document.getElementById('newVariantName');
+  const name = groupName || nameInput.value.trim();
+  
+  if (!name) {
+    alert('من فضلك أدخل اسم الخاصية أولاً');
+    return;
+  }
+  
+  // التحقق من عدم تكرار الاسم
+  if (variantGroups.some(g => g.name === name)) {
+    alert('هذه الخاصية مضافة بالفعل');
+    return;
+  }
+  
+  const id = groupId || generateVariantId();
+  
+  variantGroups.push({ id, name, values: [...values] });
+  
+  if (!groupName) {
+    nameInput.value = ''; // تفريغ الحقل بعد الإضافة
+  }
+  
+  renderAllVariantGroups();
+  updateCombinationsPreview();
+}
+
+// حذف مجموعة خاصية
+function removeVariantGroup(groupId) {
+  if (confirm('هل أنت متأكد من حذف هذه الخاصية وجميع قيمها؟')) {
+    variantGroups = variantGroups.filter(g => g.id !== groupId);
+    renderAllVariantGroups();
+    updateCombinationsPreview();
+  }
+}
+
+// إضافة قيمة لمجموعة خاصية
+function addValueToGroup(groupId) {
+  const input = document.getElementById(`value-input-${groupId}`);
+  const value = input.value.trim();
+  
+  if (!value) {
+    alert('من فضلك أدخل قيمة');
+    return;
+  }
+  
+  const group = variantGroups.find(g => g.id === groupId);
+  if (!group) return;
+  
+  // التحقق من عدم تكرار القيمة
+  if (group.values.includes(value)) {
+    alert('هذه القيمة مضافة بالفعل');
+    return;
+  }
+  
+  group.values.push(value);
+  input.value = '';
+  
+  renderAllVariantGroups();
+  updateCombinationsPreview();
+}
+
+// حذف قيمة من مجموعة
+function removeValueFromGroup(groupId, valueIndex) {
+  const group = variantGroups.find(g => g.id === groupId);
+  if (!group) return;
+  
+  group.values.splice(valueIndex, 1);
+  renderAllVariantGroups();
+  updateCombinationsPreview();
+}
+
+// إضافة قيمة بالضغط على Enter
+function handleValueKeypress(event, groupId) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    addValueToGroup(groupId);
+  }
+}
+
+// إضافة خاصية جديدة بالضغط على Enter
+function handleNewVariantKeypress(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    addVariantGroup();
+  }
+}
+
+// رسم جميع مجموعات الخصائص
+function renderAllVariantGroups() {
+  const container = document.getElementById('variantGroupsContainer');
+  
+  if (variantGroups.length === 0) {
+    container.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 20px;">لم تتم إضافة خصائص بعد. أضف خاصية مثل "المقاس" أو "اللون".</p>';
+    return;
+  }
+  
+  let html = '';
+  
+  variantGroups.forEach(group => {
+    html += `
+      <div class="variant-group" id="group-${group.id}">
+        <div class="variant-group-header">
+          <label>📌 ${escapeHtml(group.name)}</label>
+          <button class="remove-variant-btn" onclick="removeVariantGroup('${group.id}')">🗑️ حذف الخاصية</button>
+        </div>
+        
+        <div class="chips-container" id="chips-${group.id}">
+    `;
+    
+    // عرض القيم كشرائح (Chips)
+    if (group.values.length === 0) {
+      html += '<span style="color: var(--muted); font-size: 13px;">لا توجد قيم بعد...</span>';
+    } else {
+      group.values.forEach((value, index) => {
+        html += `
+          <span class="chip">
+            ${escapeHtml(value)}
+            <span class="remove-chip" onclick="removeValueFromGroup('${group.id}', ${index})" title="حذف">×</span>
+          </span>
+        `;
+      });
+    }
+    
+    html += `
+        </div>
+        
+        <div class="add-value-row">
+          <input 
+            type="text" 
+            id="value-input-${group.id}" 
+            placeholder="أدخل قيمة جديدة..." 
+            onkeypress="handleValueKeypress(event, '${group.id}')"
+          >
+          <button class="add-value-btn" onclick="addValueToGroup('${group.id}')">➕ إضافة</button>
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+
+// تفريغ HTML لمنع XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// توليد التوليفات (Cartesian Product)
+function generateCombinations() {
+  if (variantGroups.length === 0) return [];
+  
+  // فلترة المجموعات التي لها قيم فقط
+  const groupsWithValues = variantGroups.filter(g => g.values.length > 0);
+  
+  if (groupsWithValues.length === 0) return [];
+  
+  // دالة مساعدة للضرب الديكارتي
+  function cartesian(arrays) {
+    return arrays.reduce((acc, curr) => {
+      const result = [];
+      acc.forEach(a => {
+        curr.forEach(b => {
+          result.push([...a, b]);
+        });
+      });
+      return result;
+    }, [[]]);
+  }
+  
+  const arrays = groupsWithValues.map(g => g.values);
+  const combinations = cartesian(arrays);
+  
+  // تنسيق النتيجة مع أسماء الخصائص
+  return combinations.map(combo => {
+    return combo.map((value, index) => ({
+      attribute: groupsWithValues[index].name,
+      value: value
+    }));
+  });
+}
+
+// تحديث معاينة التوليفات
+function updateCombinationsPreview() {
+  const listContainer = document.getElementById('combinationsList');
+  const combinations = generateCombinations();
+  
+  if (combinations.length === 0) {
+    listContainer.innerHTML = '<span class="no-combinations">أضف خصائص وقيم لرؤية التوليفات</span>';
+    return;
+  }
+  
+  let html = '';
+  combinations.forEach((combo, index) => {
+    const label = combo.map(c => `${c.attribute}: ${c.value}`).join(' | ');
+    html += `<span class="combination-chip">${escapeHtml(label)}</span>`;
+  });
+  
+  listContainer.innerHTML = html;
+}
+
+// تجميع بيانات الخصائص لإرسالها مع المنتج
+function getVariantsData() {
+  // تحويل المصفوفة إلى النص المطلوب
+  const sizesGroup = variantGroups.find(g => g.name === 'المقاس' || g.name === 'مقاس' || g.name === 'المقاسات');
+  const colorsGroup = variantGroups.find(g => g.name === 'اللون' || g.name === 'لون' || g.name === 'الألوان');
+  
+  // تجميع باقي الخصائص (غير المقاسات والألوان) كخصائص إضافية
+  const extraAttributes = variantGroups.filter(g => {
+    const name = g.name.toLowerCase();
+    return name !== 'المقاس' && name !== 'مقاس' && name !== 'المقاسات' 
+      && name !== 'اللون' && name !== 'لون' && name !== 'الألوان';
+  });
+  
+  // التوليفات النهائية
+  const combinations = generateCombinations();
+  
+  return {
+    sizes: sizesGroup ? sizesGroup.values.join(',') : '',
+    colors: colorsGroup ? colorsGroup.values.join(',') : '',
+    extra_attributes: extraAttributes.map(g => ({
+      name: g.name,
+      values: g.values
+    })),
+    variants: combinations.map(combo => {
+      const obj = {};
+      combo.forEach(c => { obj[c.attribute] = c.value; });
+      return obj;
+    })
+  };
+}
+
+// ========= دوال Supabase =========
 async function fetchLastProductData(username) {
   try {
     const url = `${SUPABASE_URL}/rest/v1/products?username=eq.${username}&order=id.desc&limit=1`;
@@ -443,18 +893,32 @@ function resetForm() {
   document.getElementById('preview').style.display = 'none';
   document.getElementById('error').innerHTML = '';
   document.getElementById('success').innerHTML = '';
+  
+  // إعادة تعيين الخصائص
+  variantGroups = [];
+  renderAllVariantGroups();
+  updateCombinationsPreview();
+  
   productCode = generateCode();
 }
 
-// ✅ تحميل آخر البيانات عند فتح الصفحة
+// تحميل آخر البيانات عند فتح الصفحة
 window.onload = async function() {
   const lastData = await fetchLastProductData(CURRENT_USER);
   document.getElementById('governorate').value = lastData.governorate;
   document.getElementById('city').value = lastData.city;
   document.getElementById('address').value = lastData.address;
   document.getElementById('supplierPhone').value = lastData.whatsapp;
+  
+  // إضافة خصائص افتراضية (المقاس واللون)
+  addVariantGroup('المقاس', null, []);
+  addVariantGroup('اللون', null, []);
 };
 
+// ربط حدث Enter لحقل إضافة خاصية جديدة
+document.getElementById('newVariantName').addEventListener('keypress', handleNewVariantKeypress);
+
+// ========= زر الإضافة الرئيسي =========
 document.getElementById('addBtn').onclick = async function() {
   productCode = generateCode();
 
@@ -503,8 +967,28 @@ document.getElementById('addBtn').onclick = async function() {
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
+    // تجميع بيانات الخصائص
+    const variantsData = getVariantsData();
+    
+    // بناء وصف المنتج مع الخصائص
+    let variantsDescription = '';
+    if (variantsData.sizes) {
+      variantsDescription += `\n📏 المقاسات المتوفرة: ${variantsData.sizes}`;
+    }
+    if (variantsData.colors) {
+      variantsDescription += `\n🎨 الألوان المتوفرة: ${variantsData.colors}`;
+    }
+    if (variantsData.extra_attributes.length > 0) {
+      variantsData.extra_attributes.forEach(attr => {
+        variantsDescription += `\n📌 ${attr.name}: ${attr.values.join('، ')}`;
+      });
+    }
+    if (variantsData.variants.length > 0) {
+      variantsDescription += `\n📋 عدد التوليفات: ${variantsData.variants.length}`;
+    }
+    
     const extraDetails = `\n\n📞 هاتف واتساب المورد: ${supplierPhone}\n🔗 المعرض الإضافي: ${galleryLink || 'لا يوجد'}`;
-    const finalDescription = desc ? (desc + extraDetails) : `منتج المورد: ${usernameValue} ${extraDetails}`;
+    const finalDescription = (desc || `منتج المورد: ${usernameValue}`) + variantsDescription + extraDetails;
 
     const finalProductPayload = {
       product_id: productCode,
@@ -516,8 +1000,9 @@ document.getElementById('addBtn').onclick = async function() {
       description: finalDescription,
       username: usernameValue,
       gallery_link: galleryLink || null,
-      sizes: '',
-      colors: '',
+      sizes: variantsData.sizes,
+      colors: variantsData.colors,
+      variants: variantsData.variants,
       slider: [],
       whatsapp: supplierPhone,
       governorate: governorate,
@@ -528,7 +1013,7 @@ document.getElementById('addBtn').onclick = async function() {
     await postProductToSupabase(finalProductPayload);
 
     hideLoading();
-    successDiv.innerHTML = `✅ تم الحفظ التام! تم إدراج المنتج بنجاح تحت اسم المستخدم الخاص بك (${usernameValue}) داخل جدول products الرئيسي مع رقم واتساب ${supplierPhone}.`;
+    successDiv.innerHTML = `✅ تم الحفظ التام! تم إدراج المنتج بنجاح مع ${variantsData.variants.length} توليفة تحت اسم المستخدم (${usernameValue}).`;
     resetForm();
     
   } catch(err) {
@@ -540,6 +1025,7 @@ document.getElementById('addBtn').onclick = async function() {
   btn.disabled = false;
 };
 
+// ========= معاينة الصورة =========
 document.getElementById('coverImg').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (file) {
@@ -552,6 +1038,7 @@ document.getElementById('coverImg').addEventListener('change', function(e) {
   }
 });
 
+// ========= فلترة رقم الهاتف =========
 document.getElementById('supplierPhone').addEventListener('input', function(e) {
   this.value = this.value.replace(/\D/g, '').slice(0, 11);
 });
