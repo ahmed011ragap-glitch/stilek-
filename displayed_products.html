@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   
   <style>
+    /* ===== نفس الستايلات السابقة ===== */
     :root {
       --bg: #121212;
       --white: #1e1e1e;
@@ -392,10 +393,18 @@ const SITE_PROFIT=20;
 const urlP=new URLSearchParams(window.location.search);
 let rawUser=urlP.get('user')||localStorage.getItem('username')||'';
 let marketerId=rawUser.trim().toLowerCase();
-let isLoggedIn=marketerId.length>0&&marketerId!==''&&marketerId!=='undefined';
+let isLoggedIn=marketerId.length>0&&marketerId!==''&&marketerId!=='undefined'&&marketerId!=='guest_';
 
-if(!isLoggedIn){ document.body.classList.add('guest-mode'); marketerId='guest_'+Date.now(); document.getElementById('userLabel').textContent='زائر'; }
-else { localStorage.setItem('username',marketerId); document.getElementById('userLabel').textContent='مسوق'; }
+if(isLoggedIn){
+  localStorage.setItem('username',marketerId);
+  document.getElementById('userLabel').textContent='مسوق';
+}else{
+  document.body.classList.add('guest-mode');
+  marketerId='guest_'+Date.now();
+  document.getElementById('userLabel').textContent='زائر';
+}
+
+console.log('🔐 isLoggedIn:', isLoggedIn, 'marketerId:', marketerId);
 
 // ============================================================
 // ===== دوال مساعدة =====
@@ -440,9 +449,18 @@ async function callApi(action,data={}){
         if(Array.isArray(p)&&p.length){ const v=await req(`product_variants?product_id=eq.${data.product_id}&select=*`); return [{...p[0],variants:Array.isArray(v)?v:[]}]; }
         return p;
       }
-      case 'get_favs':{ if(!isLoggedIn)return[]; return await req(`favorites?marketer_id=ilike.${data.mid}&select=*`); }
-      case 'add_fav':{ if(!isLoggedIn){ alert('⚠️ تسجيل الدخول أولاً'); return[]; } return await req('favorites',{method:'POST',body:JSON.stringify({marketer_id:data.mid.toLowerCase(),product_id:data.pid,fav_id:'F'+Date.now()})}); }
-      case 'del_fav':{ if(!isLoggedIn)return[]; return await req(`favorites?marketer_id=ilike.${data.mid}&product_id=eq.${data.pid}`,{method:'DELETE'}); }
+      case 'get_favs':{
+        if(!isLoggedIn)return[];
+        return await req(`favorites?marketer_id=ilike.${data.mid}&select=*`);
+      }
+      case 'add_fav':{
+        if(!isLoggedIn){ alert('⚠️ تسجيل الدخول أولاً'); return[]; }
+        return await req('favorites',{method:'POST',body:JSON.stringify({marketer_id:data.mid.toLowerCase(),product_id:data.pid,fav_id:'F'+Date.now()})});
+      }
+      case 'del_fav':{
+        if(!isLoggedIn)return[];
+        return await req(`favorites?marketer_id=ilike.${data.mid}&product_id=eq.${data.pid}`,{method:'DELETE'});
+      }
       case 'get_cart':{
         if(!isLoggedIn)return[];
         const c=await req(`cart?marketer_id=ilike.${data.mid}&select=*`);
@@ -553,13 +571,23 @@ async function quickFav(pid,btn){
 // ===== فتح المنتج =====
 // ============================================================
 async function openProduct(id){
-  openM('productModal'); document.getElementById('productModalContent').innerHTML='<div class="ls" style="padding:60px"><div class="spin"></div></div>';
+  console.log('📦 openProduct called with id:', id);
+  openM('productModal'); 
+  document.getElementById('productModalContent').innerHTML='<div class="ls" style="padding:60px"><div class="spin"></div></div>';
   const r=await callApi('get_product',{product_id:id});
-  if(Array.isArray(r)&&r.length){ currentProduct=r[0]; selectedColor=''; selectedSize=''; renderProd(r[0]); }
-  else document.getElementById('productModalContent').innerHTML='<div class="empty-state"><div class="big">⚠️</div><p>تعذر التحميل</p></div>';
+  if(Array.isArray(r)&&r.length){ 
+    currentProduct=r[0]; 
+    selectedColor=''; 
+    selectedSize=''; 
+    renderProd(r[0]); 
+    console.log('✅ Product loaded:', currentProduct);
+  } else {
+    document.getElementById('productModalContent').innerHTML='<div class="empty-state"><div class="big">⚠️</div><p>تعذر التحميل</p></div>';
+  }
 }
 
 function renderProd(p){
+  console.log('🎨 renderProd called for:', p.name);
   const sp=sellP(p.base_price), cm=comm(p.base_price);
   const isFav=isLoggedIn?favoriteIds.includes(String(p.product_id)):false;
   const galleryLink=p.drive_link||p.gallery_link||'';
@@ -582,7 +610,12 @@ function renderProd(p){
   let colorsHtml=ucolors.map(c=>`<button class="color-btn" style="background:${getColorHex(c)};" data-color="${esc(c)}" onclick="selectColor('${esc(c)}')"></button>`).join('')||'<span style="color:var(--muted);font-size:12px;">لا توجد ألوان</span>';
   let sizesHtml=usizes.map(s=>`<button class="size-btn" data-size="${esc(s)}" onclick="selectSize('${esc(s)}')">${esc(s)}</button>`).join('')||'<span style="color:var(--muted);font-size:12px;">لا توجد مقاسات</span>';
   
-  const imgs=[]; if(p.image_url)imgs.push(p.image_url); if(p.image_url2)imgs.push(p.image_url2); if(p.image_url3)imgs.push(p.image_url3); if(p.image_url4)imgs.push(p.image_url4); if(!imgs.length)imgs.push('');
+  const imgs=[]; 
+  if(p.image_url)imgs.push(p.image_url); 
+  if(p.image_url2)imgs.push(p.image_url2); 
+  if(p.image_url3)imgs.push(p.image_url3); 
+  if(p.image_url4)imgs.push(p.image_url4); 
+  if(!imgs.length)imgs.push('');
   const slides=imgs.map(src=>`<div class="slider-slide"><img src="${iurl(src)}" onerror="this.src='https://placehold.co/540x400/2a2a2a/808080?text=🛍️'" alt="${esc(cn)}"></div>`).join('');
   const dots=imgs.length>1?imgs.map((_,i)=>`<div class="slider-dot ${i===0?'on':''}" onclick="goSlide(${i})"></div>`).join(''):'';
   const navBtns=imgs.length>1?`<button class="slider-btn slider-prev" onclick="moveSlide(-1)">‹</button><button class="slider-btn slider-next" onclick="moveSlide(1)">›</button>`:'';
@@ -592,8 +625,8 @@ function renderProd(p){
   
   const hasVariants = variants.length > 0 && ucolors.length > 0 && usizes.length > 0;
   
-  // ===== زر اطلب الآن =====
-  let orderBtnHtml = `<button class="btn btn-primary" onclick="goToOrder(${p.product_id})" ${out?'disabled':''}>${out?'⛔ نفذت':'🛍️ اطلب الآن'}</button>`;
+  // ===== زر اطلب الآن - مع تمرير product_id بشكل صحيح =====
+  let orderBtnHtml = `<button class="btn btn-primary" onclick="goToOrder('${p.product_id}')" ${out?'disabled':''}>${out?'⛔ نفذت':'🛍️ اطلب الآن'}</button>`;
   
   document.getElementById('productModalContent').innerHTML=`
     <div class="slider-wrap"><div class="slider-track" id="sliderTrack">${slides}</div>${navBtns}${dots?`<div class="slider-dots">${dots}</div>`:''}</div>
@@ -629,8 +662,17 @@ function renderProd(p){
 // ============================================================
 // ===== اختيار اللون والمقاس =====
 // ============================================================
-function selectColor(c){ selectedColor=c; document.querySelectorAll('.color-btn').forEach(b=>b.classList.toggle('active',b.dataset.color===c)); updateVariantDetails(); }
-function selectSize(s){ selectedSize=s; document.querySelectorAll('.size-btn').forEach(b=>b.classList.toggle('active',b.dataset.size===s)); updateVariantDetails(); }
+function selectColor(c){ 
+  selectedColor=c; 
+  document.querySelectorAll('.color-btn').forEach(b=>b.classList.toggle('active',b.dataset.color===c)); 
+  updateVariantDetails(); 
+}
+
+function selectSize(s){ 
+  selectedSize=s; 
+  document.querySelectorAll('.size-btn').forEach(b=>b.classList.toggle('active',b.dataset.size===s)); 
+  updateVariantDetails(); 
+}
 
 function updateVariantDetails(){
   const dd=document.getElementById('variantDetails'), ph=document.getElementById('variantPlaceholder');
@@ -656,6 +698,13 @@ function updateVariantDetails(){
 // ============================================================
 function goToOrder(productId){
   console.log('🛍️ goToOrder called with productId:', productId);
+  console.log('📌 currentProduct:', currentProduct);
+  console.log('🎨 selectedColor:', selectedColor, 'selectedSize:', selectedSize);
+  
+  if(!productId){
+    alert('⚠️ خطأ: لم يتم تحديد المنتج');
+    return;
+  }
   
   const variants=currentProduct?.variants||[];
   
@@ -673,11 +722,15 @@ function goToOrder(productId){
     // إغلاق مودال المنتج
     closeM('productModal');
     // التوجيه مع البيانات
-    window.location.href = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}&color=${encodeURIComponent(selectedColor)}&size=${encodeURIComponent(selectedSize)}`;
+    const url = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}&color=${encodeURIComponent(selectedColor)}&size=${encodeURIComponent(selectedSize)}`;
+    console.log('🔗 Redirecting to:', url);
+    window.location.href = url;
   } else {
     // مفيش خصائص → نروح مباشرة
     closeM('productModal');
-    window.location.href = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}`;
+    const url = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&product_id=${productId}`;
+    console.log('🔗 Redirecting to:', url);
+    window.location.href = url;
   }
 }
 
@@ -695,79 +748,138 @@ async function toggleFav(){
   if(!currentProduct)return;
   const isFav=favoriteIds.includes(String(currentProduct.product_id));
   await callApi(isFav?'del_fav':'add_fav',{mid:marketerId,pid:currentProduct.product_id});
-  await loadFavs(); renderProd(currentProduct); applyFilters();
+  await loadFavs(); 
+  renderProd(currentProduct); 
+  applyFilters();
 }
 
 async function openFavorites(){
   if(!isLoggedIn){ alert('⚠️ تسجيل الدخول أولاً'); return; }
-  openM('favModal'); document.getElementById('favModalContent').innerHTML='<div class="ls"><div class="spin"></div></div>';
+  openM('favModal'); 
+  document.getElementById('favModalContent').innerHTML='<div class="ls"><div class="spin"></div></div>';
   const r=await callApi('get_favs',{mid:marketerId});
-  if(!Array.isArray(r)||!r.length){ document.getElementById('favModalContent').innerHTML='<div class="empty-state"><div class="big">❤️</div><p>لا توجد مفضلات</p></div>'; return; }
+  if(!Array.isArray(r)||!r.length){ 
+    document.getElementById('favModalContent').innerHTML='<div class="empty-state"><div class="big">❤️</div><p>لا توجد مفضلات</p></div>'; 
+    return; 
+  }
   const prods=await callApi('get_products');
   const favs=r.map(f=>Array.isArray(prods)?prods.find(p=>String(p.product_id)===String(f.product_id)):null).filter(Boolean);
-  const g=document.createElement('div'); g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:9px;';
+  const g=document.createElement('div'); 
+  g.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:9px;';
   favs.forEach(p=>{
     const sp=sellP(p.base_price), cm=comm(p.base_price), cn=cleanText(p.name);
-    const d=document.createElement('div'); d.style.cssText='background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:10px;cursor:pointer;';
-    d.onmouseenter=()=>d.style.borderColor='var(--green)'; d.onmouseleave=()=>d.style.borderColor='var(--border)';
+    const d=document.createElement('div'); 
+    d.style.cssText='background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:10px;cursor:pointer;';
+    d.onmouseenter=()=>d.style.borderColor='var(--green)'; 
+    d.onmouseleave=()=>d.style.borderColor='var(--border)';
     d.onclick=()=>{ closeM('favModal'); openProduct(p.product_id); };
     d.innerHTML=`<img src="${iurl(p.image_url)}" style="width:100%;height:88px;object-fit:contain;border-radius:9px;background:var(--white)" onerror="this.src='https://placehold.co/200x200/2a2a2a/808080?text=🛍️'"><div style="font-size:11px;font-weight:800;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(cn)}</div><div style="color:var(--green);font-size:13px;font-weight:900;">${sp} ج</div>${isLoggedIn?`<div style="color:var(--gold);font-size:10px;">⭐ ${cm} ج عمولة</div>`:''}`;
     g.appendChild(d);
   });
-  document.getElementById('favModalContent').innerHTML=''; document.getElementById('favModalContent').appendChild(g);
+  document.getElementById('favModalContent').innerHTML=''; 
+  document.getElementById('favModalContent').appendChild(g);
 }
 
 // ============================================================
 // ===== السلة =====
 // ============================================================
 async function addToCart(){
-  if(!isLoggedIn){ alert('⚠️ تسجيل الدخول أولاً'); return; }
-  if(!currentProduct)return;
+  console.log('🛒 addToCart called');
+  if(!isLoggedIn){ 
+    alert('⚠️ يرجى تسجيل الدخول أولاً لإضافة للسلة');
+    return; 
+  }
+  if(!currentProduct){
+    alert('⚠️ لا يوجد منتج محدد');
+    return;
+  }
+  
   const variants=currentProduct.variants||[];
   let selectedVariant=null;
+  
   if(variants.length>0){
-    if(!selectedColor||!selectedSize){ alert('⚠️ اختر اللون والمقاس'); return; }
+    if(!selectedColor||!selectedSize){
+      alert('⚠️ اختر اللون والمقاس أولاً');
+      return;
+    }
     selectedVariant=variants.find(v=>v.color===selectedColor&&v.size===selectedSize);
-    if(!selectedVariant||parseInt(selectedVariant.stock)<=0){ alert('❌ المخزون غير متوفر'); return; }
+    if(!selectedVariant||parseInt(selectedVariant.stock)<=0){
+      alert('❌ المخزون غير متوفر');
+      return;
+    }
   }
+  
   const latest=allProducts.find(p=>String(p.product_id)===String(currentProduct.product_id));
-  if(!latest)return;
+  if(!latest){
+    alert('⚠️ المنتج غير موجود');
+    return;
+  }
+  
+  // منع خلط الموردين
   if(cartItems.length>0){
     const es=(cartItems[0].username||cartItems[0].supplier||'').trim();
     const ns=(latest.username||latest.supplier||'').trim();
-    if(es&&ns&&es!==ns){ alert(`⚠️ لا يمكن خلط موردين: "${es}"`); return; }
+    if(es&&ns&&es!==ns){ 
+      alert(`⚠️ لا يمكن خلط موردين: "${es}"`); 
+      return; 
+    }
   }
+  
   const variantId=selectedVariant?String(selectedVariant.id):'default';
   const color=selectedVariant?selectedVariant.color:'';
   const size=selectedVariant?selectedVariant.size:'';
   
+  console.log('📦 Adding to cart:', {productId: latest.product_id, variantId, color, size});
+  
   const existing=cartItems.find(i=>String(i.product_id)===String(latest.product_id)&&String(i.variant_id||'default')===variantId);
+  
   if(existing){
     await callApi('upd_cart',{cid:existing.cart_id,qty:existing.qty+1});
   }else{
     await callApi('add_cart',{mid:marketerId,pid:latest.product_id,variant_id:variantId,color,size});
   }
+  
   await updateCartBadge();
   alert('✅ أضيف للسلة');
-  closeM('productModal'); applyFilters();
+  closeM('productModal'); 
+  applyFilters();
 }
 
 async function updateCartBadge(){
-  if(!isLoggedIn){ document.getElementById('cartCount').textContent='0'; return; }
+  if(!isLoggedIn){ 
+    document.getElementById('cartCount').textContent='0'; 
+    return; 
+  }
   const r=await callApi('get_cart',{mid:marketerId});
-  if(Array.isArray(r)){ cartItems=r; let t=0; r.forEach(i=>t+=i.qty||1); document.getElementById('cartCount').textContent=t; }
+  if(Array.isArray(r)){ 
+    cartItems=r; 
+    let t=0; 
+    r.forEach(i=>t+=i.qty||1); 
+    document.getElementById('cartCount').textContent=t; 
+    console.log('🛒 Cart updated:', cartItems);
+  }
 }
 
 async function openCart(){
-  if(!isLoggedIn){ alert('⚠️ تسجيل الدخول أولاً'); return; }
-  openM('cartModal'); document.getElementById('cartModalContent').innerHTML='<div class="ls"><div class="spin"></div></div>';
+  if(!isLoggedIn){ 
+    alert('⚠️ تسجيل الدخول أولاً'); 
+    return; 
+  }
+  openM('cartModal'); 
+  document.getElementById('cartModalContent').innerHTML='<div class="ls"><div class="spin"></div></div>';
   const r=await callApi('get_cart',{mid:marketerId});
-  if(Array.isArray(r)){ cartItems=r; renderCart(); }
+  if(Array.isArray(r)){ 
+    cartItems=r; 
+    renderCart(); 
+  }
 }
 
 function renderCart(){
   const body=document.getElementById('cartModalContent');
-  if(!cartItems?.length){ body.innerHTML='<div class="empty-state"><div class="big">🛒</div><p>السلة فارغة</p></div>'; return; }
+  if(!cartItems?.length){ 
+    body.innerHTML='<div class="empty-state"><div class="big">🛒</div><p>السلة فارغة</p></div>'; 
+    return; 
+  }
   let tp=0,tc=0,html='';
   cartItems.forEach(item=>{
     const sp=sellP(item.base_price), cm=comm(item.base_price), it=sp*item.qty, ic=cm*item.qty;
@@ -792,35 +904,58 @@ function renderCart(){
 }
 
 function goToOrderFromCart(){
-  if(!isLoggedIn){ alert('⚠️ تسجيل الدخول أولاً'); return; }
-  if(!cartItems?.length){ alert('⚠️ السلة فارغة'); return; }
+  if(!isLoggedIn){ 
+    alert('⚠️ تسجيل الدخول أولاً'); 
+    return; 
+  }
+  if(!cartItems?.length){ 
+    alert('⚠️ السلة فارغة'); 
+    return; 
+  }
   closeM('cartModal');
   window.location.href = `orders.html?user=${encodeURIComponent(marketerId)}&type=marketer&from_cart=true`;
 }
 
 async function updQty(cid,diff){
-  const item=cartItems.find(i=>i.cart_id===cid); if(!item)return;
-  const nq=item.qty+diff; if(nq<1)return;
+  const item=cartItems.find(i=>i.cart_id===cid); 
+  if(!item)return;
+  const nq=item.qty+diff; 
+  if(nq<1)return;
   await callApi('upd_cart',{cid,qty:nq});
-  await openCart(); await updateCartBadge(); applyFilters();
+  await openCart(); 
+  await updateCartBadge(); 
+  applyFilters();
 }
 
 async function delCart(cid){
-  await callApi('del_cart',{cid}); await openCart(); await updateCartBadge(); applyFilters();
+  await callApi('del_cart',{cid}); 
+  await openCart(); 
+  await updateCartBadge(); 
+  applyFilters();
 }
 
 // ============================================================
 // ===== تتبع الطلب =====
 // ============================================================
-function openTrackOrder(){ openM('trackOrderModal'); document.getElementById('trackResult').innerHTML=''; document.getElementById('trackPhone').value=''; }
+function openTrackOrder(){ 
+  openM('trackOrderModal'); 
+  document.getElementById('trackResult').innerHTML=''; 
+  document.getElementById('trackPhone').value=''; 
+}
 
 async function trackOrder(){
   const phone=document.getElementById('trackPhone').value.trim();
-  if(!phone||phone.length!==11){ document.getElementById('trackResult').innerHTML='<div style="color:var(--red);padding:10px;">⚠️ رقم صحيح 11 رقم</div>'; return; }
+  if(!phone||phone.length!==11){ 
+    document.getElementById('trackResult').innerHTML='<div style="color:var(--red);padding:10px;">⚠️ رقم صحيح 11 رقم</div>'; 
+    return; 
+  }
   document.getElementById('trackResult').innerHTML='<div class="ls"><div class="spin"></div> جاري البحث...</div>';
   try{
     const orders=await req(`orders?phone=eq.${phone}&order=created_at.desc`);
-    if(!Array.isArray(orders)||orders.length===0){ document.getElementById('trackResult').innerHTML='<div style="color:var(--muted);padding:10px;">📭 لا توجد طلبات</div>'; return; }
+    if(!Array.isArray(orders)||orders.length===0){ 
+      document.getElementById('trackResult').innerHTML='<div style="color:var(--muted);padding:10px;">📭 لا توجد طلبات</div>'; 
+      return; 
+    }
     let html=`<div style="color:var(--green);font-weight:700;margin-bottom:8px;">✅ ${orders.length} طلب</div>`;
     orders.forEach(o=>{
       const sm={'pending':'⏳ قيد المعالجة','accepted':'✅ تم القبول','rejected':'❌ مرفوض','shipped':'🚚 قيد الشحن','delivered':'📦 تم التسليم'};
@@ -836,13 +971,16 @@ async function trackOrder(){
       </div>`;
     });
     document.getElementById('trackResult').innerHTML=html;
-  }catch(e){ document.getElementById('trackResult').innerHTML=`<div style="color:var(--red);padding:10px;">❌ ${e.message}</div>`; }
+  }catch(e){ 
+    document.getElementById('trackResult').innerHTML=`<div style="color:var(--red);padding:10px;">❌ ${e.message}</div>`; 
+  }
 }
 
 // ============================================================
 // ===== بدء التشغيل =====
 // ============================================================
-loadProducts(); updateCartBadge();
+loadProducts(); 
+updateCartBadge();
 
 document.addEventListener('DOMContentLoaded',function(){
   if(!isLoggedIn){
@@ -852,7 +990,8 @@ document.addEventListener('DOMContentLoaded',function(){
     ti.innerHTML='<span class="ni">🔍</span> تتبع طلباتي';
     ti.onclick=function(e){ e.preventDefault(); closeSB(); openTrackOrder(); };
     const wa=nav.querySelector('.nav-item.wa');
-    if(wa)nav.insertBefore(ti,wa); else nav.appendChild(ti);
+    if(wa)nav.insertBefore(ti,wa); 
+    else nav.appendChild(ti);
   }
 });
 </script>
