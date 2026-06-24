@@ -138,6 +138,7 @@
     .card-stock { font-size:10px; font-weight:600; margin-top:2px; }
     .stock-ok { color:var(--green); }
     .stock-out { color:var(--red); }
+    .supplier-name { font-size:10px; color:var(--muted); margin-top:2px; }
     .card-add-btn { margin-top:auto; padding:6px; border-radius:8px; background:var(--surface); color:var(--text-2); font-size:12px; font-weight:600; text-align:center; }
     .product-card:hover .card-add-btn { background:var(--green); color:#000; }
 
@@ -176,6 +177,7 @@
     .prod-section { margin:12px 0 0; }
     .prod-sec-lbl { font-size:13px; font-weight:700; color:var(--text-2); margin-bottom:4px; }
     .prod-desc { font-size:13px; color:var(--text-2); line-height:1.6; padding:4px 0; }
+    .supplier-name-detail { font-size:12px; color:var(--muted); margin-top:4px; text-align:center; }
     .spec-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; color:var(--text); }
     .spec-lbl { color:var(--muted); font-weight:500; }
 
@@ -525,7 +527,9 @@ function renderProducts(products){
     const sp=sellP(p.base_price), cm=comm(p.base_price);
     const isFav=isLoggedIn?favoriteIds.includes(String(p.product_id)):false;
     const cn=cleanText(p.name);
-    const cc=cleanText(p.category) || '📦 أخرى'; // <-- التصنيف مع قيمة افتراضية
+    const cc=cleanText(p.category) || '📦 أخرى';
+    const supplier = p.username || 'مورد'; // <-- عرض اسم المورد فقط
+    
     const card=document.createElement('div'); card.className='product-card';
     let commHtml=isLoggedIn?`<div class="card-comm-badge"><span>⭐ ${cm} ج</span><small>عمولتك</small></div>`:'';
     let favHtml=isLoggedIn?`<div class="fav-btn-card ${isFav?'on':''}" onclick="event.stopPropagation();quickFav(${p.product_id},this)">${isFav?'❤️':'🤍'}</div>`:'';
@@ -537,6 +541,7 @@ function renderProducts(products){
         <div class="card-price-row"><div class="card-price">${sp}</div><div class="card-price-cur">جنيه</div></div>
         ${commHtml}
         <div class="card-stock ${out?'stock-out':'stock-ok'}">${out?'❌ نفذت':`✅ متوفر — ${totalStock}`}</div>
+        <div class="supplier-name">🏷️ ${esc(supplier)}</div>
         <div class="card-add-btn">${out?'⛔ غير متوفر':'👆 التفاصيل'}</div>
       </div>
     `;
@@ -577,21 +582,26 @@ function renderProd(p){
   const sp=sellP(p.base_price), cm=comm(p.base_price);
   const isFav=isLoggedIn?favoriteIds.includes(String(p.product_id)):false;
   const galleryLink=p.drive_link||p.gallery_link||'';
-  const cn=cleanText(p.name), cd=cleanText(p.description);
+  const cn=cleanText(p.name);
+  const supplier = p.username || 'مورد';
+  
+  // ===== تنظيف الوصف من معلومات المورد =====
+  let desc = cleanText(p.description);
+  desc = desc.replace(/منتج المورد:[^\n]*/g, '');
+  desc = desc.replace(/هاتف المورد:[^\n]*/g, '');
+  desc = desc.replace(/واتساب المورد:[^\n]*/g, '');
+  desc = desc.replace(/رابط المعرض الإضافي:[^\n]*/g, '');
+  desc = desc.replace(/📞[^\n]*/g, '');
+  desc = desc.replace(/\n\s*\n/g, '\n');
+  desc = desc.trim();
+  if(!desc) desc = 'منتج ممتاز بجودة عالية';
+  
   const variants=p.variants||[];
   const ucolors=[...new Set(variants.map(v=>v.color).filter(c=>c&&c.trim()))];
   const usizes=[...new Set(variants.map(v=>v.size).filter(s=>s&&s.trim()))];
   let totalStock=variants.reduce((s,v)=>s+(parseInt(v.stock)||0),0);
   if(totalStock===0&&p.stock)totalStock=parseInt(p.stock)||0;
   const out=totalStock===0;
-  
-  let desc=cd;
-  desc=desc.replace(/\d+\.\s*اللون:\s*[^\n]+,?/g,'');
-  desc=desc.replace(/الخصائص:\s*\d+\.\s*اللون:\s*[^\n]+,?/g,'');
-  desc=desc.replace(/اللون:\s*[^\n]+,?\s*/g,'');
-  desc=desc.replace(/\d+\.\s*/g,'');
-  desc=desc.replace(/\s+/g,' ').trim();
-  if(!desc)desc='منتج ممتاز بجودة عالية';
   
   let colorsHtml=ucolors.map(c=>`<button class="color-btn" style="background:${getColorHex(c)};" data-color="${esc(c)}" onclick="selectColor('${esc(c)}')"></button>`).join('')||'<span style="color:var(--muted);font-size:12px;">لا توجد ألوان</span>';
   let sizesHtml=usizes.map(s=>`<button class="size-btn" data-size="${esc(s)}" onclick="selectSize('${esc(s)}')">${esc(s)}</button>`).join('')||'<span style="color:var(--muted);font-size:12px;">لا توجد مقاسات</span>';
@@ -619,6 +629,7 @@ function renderProd(p){
       <div class="prod-name">${esc(cn)}</div>
       <div class="prod-price-zone"><div class="price-tile sell"><div class="pt-lbl g">💰 السعر</div><div class="pt-val g">${sp}</div><div class="pt-cur g">جنيه</div></div>${commHtml}</div>
       ${desc?`<div class="prod-section"><div class="prod-sec-lbl">📋 الوصف</div><div class="prod-desc">${esc(desc)}</div></div>`:''}
+      <div class="supplier-name-detail">🏷️ المورد: ${esc(supplier)}</div>
       ${hasVariants?`
       <div class="prod-section" style="background:var(--surface);border-radius:12px;padding:14px;margin-top:8px;border:1px solid var(--border);">
         <div style="font-weight:700;font-size:14px;margin-bottom:10px;color:var(--text);">🎯 اختر اللون والمقاس</div>
