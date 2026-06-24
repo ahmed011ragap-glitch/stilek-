@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>إنشاء طلب جديد - متجر المسوقين</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght=300;400;500;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   
   <style>
@@ -101,7 +101,6 @@ const WA_NUM = '201108712091';
 // ===== نظام الشحن (بدون سيناء) =====
 // ============================================================
 const SHIPPING_COSTS = {
-  // ===== القاهرة والجيزة (102 ج) =====
   'القاهرة':102,'الجيزة':102,'6 أكتوبر':102,'الشيخ زايد':102,
   'مدينة نصر':102,'المعادي':102,'مصر الجديدة':102,'حلوان':102,
   'التجمع الخامس':102,'شبرا':102,'المرج':102,'الزيتون':102,
@@ -112,8 +111,6 @@ const SHIPPING_COSTS = {
   'أوسيم':102,'حدائق الأهرام':102,'المنيب':102,'الهرم':102,
   'فيصل':102,'بولاق الدكرور':102,'كفر طهرمس':102,
   'منشأة القناطر':102,'الواحات':102,'نزلة السمان':102,
-  
-  // ===== الإسكندرية والساحل (107 ج) =====
   'الإسكندرية':107,'العجمي':107,'سموحة':107,'سيدي بشر':107,
   'المنتزه':107,'محرم بك':107,'الرمل':107,'برج العرب':107,
   'الدخيلة':107,'العامرية':107,'مينا البصل':107,'أنفوشي':107,
@@ -123,8 +120,6 @@ const SHIPPING_COSTS = {
   'الظاهرية':107,'جناكليس':107,'مرسى مطروح':107,
   'الضبعة':107,'العلمين':107,'سيوة':107,'النجيلة':107,
   'سيدي براني':107,'الحمام':107,'راس الحكمة':107,'فوكة':107,
-  
-  // ===== الدلتا والقناة (115 ج) =====
   'المنصورة':115,'طلخا':115,'ميت غمر':115,'دكرنس':115,
   'السنبلاوين':115,'شربين':115,'أجا':115,'بلقاس':115,
   'المطرية':115,'منية النصر':115,'الجمالية':115,'تمي الأمديد':115,
@@ -140,14 +135,12 @@ const SHIPPING_COSTS = {
   'بركة السبع':115,'تلا':115,'الشهداء':115,'سرس الليان':115,
   'الزقازيق':115,'العاشر من رمضان':115,'بلبيس':115,'منيا القمح':115,
   'فاقوس':115,'أبو حماد':115,'كفر صقر':115,'أبو كبير':115,
-  'ههيا':115,'ديرب نجم':115,'الإبراهيمية':115,'الحسينية':115,
+  'ههيا':115,'ديرب نجم':115,'إبراهيمية':115,'الحسينية':115,
   'دمياط':115,'دمياط الجديدة':115,'رأس البر':115,'فارسكور':115,
   'الزرقا':115,'ميت أبو غالب':115,'بورسعيد':115,'بورفؤاد':115,
   'الضاحية':115,'المناخ':115,'العرب':115,'الإسماعيلية':115,
   'فايد':115,'القنطرة شرق':115,'التل الكبير':115,'أبو صوير':115,
   'السويس':115,'الأربعين':115,'الجناين':115,'عتاقة':115,
-  
-  // ===== شمال الصعيد (129 ج) =====
   'الفيوم':129,'إطسا':129,'سنورس':129,'طامية':129,
   'أبشواي':129,'يوسف الصديق':129,'الفيوم الجديدة':129,
   'بني سويف':129,'الواسطى':129,'ناصر':129,'ببا':129,
@@ -158,8 +151,6 @@ const SHIPPING_COSTS = {
   'أبنوب':129,'أبو تيج':129,'الغنايم':129,'صدفا':129,
   'سوهاج':129,'أخميم':129,'طهطا':129,'جرجا':129,
   'طما':129,'البلينا':129,'المراغة':129,'ساقلته':129,
-  
-  // ===== جنوب الصعيد والبحر الأحمر (145 ج) =====
   'قنا':145,'نجع حمادي':145,'دشنا':145,'أبو تشت':145,
   'فرشوط':145,'قوص':145,'الوقف':145,'نقادة':145,
   'الأقصر':145,'إسنا':145,'أرمنت':145,'القرنة':145,
@@ -167,16 +158,11 @@ const SHIPPING_COSTS = {
   'كوم أمبو':145,'إدفو':145,'نصر النوبة':145,'دراو':145,
   'كشكول':145,'أبو سمبل':145,'الغردقة':145,'سفاجا':145,
   'رأس غارب':145,'مرسى علم':145,'القصير':145,'الشلاتين':145,
-  
-  // ===== الوادي الجديد (149 ج) =====
   'الخارجة':149,'الداخلة':149,'الفرافرة':149,'بلاط':149,
   'موط':149,'القصر':149,'باريس':149
 };
 function getShippingCost(g){ return SHIPPING_COSTS[g]||115; }
 
-// ============================================================
-// ===== المدن (بدون سيناء) =====
-// ============================================================
 const CITIES = {
   'القاهرة':['القاهرة','حلوان','مصر الجديدة','المعادي','مدينة نصر','التجمع الخامس','شبرا','المرج','الزيتون','السلام','العباسية','وسط البلد','المقطم'],
   'الجيزة':['الجيزة','6 أكتوبر','الشيخ زايد','الهرم','فيصل','المهندسين','الدقي','العجوزة'],
@@ -205,18 +191,12 @@ const CITIES = {
   'البحر الأحمر':['الغردقة','سفاجا','رأس غارب','مرسى علم','القصير','الشلاتين','حلايب']
 };
 
-// ============================================================
-// ===== دوال مساعدة =====
-// ============================================================
 function esc(s){ return(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function cleanText(t){ return t?t.replace(/[«»""''()\[\]{}]/g,'').replace(/\s+/g,' ').trim():''; }
 function sellP(b){ const v=parseFloat(b)||0; return v+SITE_PROFIT; }
 function comm(b){ const v=parseFloat(b)||0; if(v<100)return 50; if(v<200)return 80; if(v<400)return 150; if(v<500)return 200; return 250; }
 function iurl(u){ return u?.toString().trim()||'https://placehold.co/400x400/2a2a2a/808080?text=🛍️'; }
 
-// ============================================================
-// ===== API =====
-// ============================================================
 async function req(ep, opts={}){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${ep}`,{...opts,headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',...opts.headers}});
   const t=await r.text(); return t?JSON.parse(t):{};
@@ -251,7 +231,8 @@ async function callApi(action,data={}){
           notes:data.notes||'',
           marketer_username:data.marketer_username,
           marketer_id:data.marketer_id,
-          order_status:data.order_status||'pending'
+          order_status:data.order_status||'pending',
+          cart_id:data.cart_id // ===== إضافة العمود الجديد هنا ليرسل لـ Supabase =====
         };
         return await req('orders',{method:'POST',body:JSON.stringify(orderBody)});
       }
@@ -260,9 +241,6 @@ async function callApi(action,data={}){
   }catch(e){ return {status:'error',message:e.message}; }
 }
 
-// ============================================================
-// ===== تحديث المخزون بعد الطلب =====
-// ============================================================
 async function updateStockAfterOrder(productId, size, color, qty){
   try{
     const variants=await req(`product_variants?product_id=eq.${productId}&select=*`);
@@ -294,9 +272,6 @@ async function updateStockAfterOrder(productId, size, color, qty){
   }catch(e){ console.error('خطأ في تحديث المخزون:',e); return false; }
 }
 
-// ============================================================
-// ===== المتغيرات =====
-// ============================================================
 const urlP=new URLSearchParams(window.location.search);
 let rawUser=urlP.get('user')||localStorage.getItem('username')||'';
 let marketerId=rawUser.trim().toLowerCase()||'m_'+Math.random().toString(36).substr(2,6);
@@ -305,10 +280,8 @@ let orderProducts=[];
 let currentProduct=null;
 let totalProductsPrice=0;
 let totalQty=0;
+let GlobalCartId = ''; // كود السلة الموحد للمجموعة الحالية
 
-// ============================================================
-// ===== تحميل بيانات الطلب =====
-// ============================================================
 async function loadOrderData(){
   const productId=urlP.get('product_id');
   const fromCart=urlP.get('from_cart')==='true';
@@ -320,11 +293,15 @@ async function loadOrderData(){
   if(fromCart){
     const localCart=JSON.parse(localStorage.getItem('cart_'+marketerId)||'[]');
     if(localCart.length){
+      // توليد كود سلة موحد فريد لجميع عناصر السلة الحالية
+      GlobalCartId = 'CRT-' + Date.now() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
+      
       orderProducts=localCart.map(item=>({
         ...item,
         qty:item.qty||1,
         size:size||item.size||'',
-        color:color||item.color||''
+        color:color||item.color||'',
+        cart_id: GlobalCartId // إسناد المعرف الموحد
       }));
       renderOrderForm();
     }else{
@@ -334,12 +311,15 @@ async function loadOrderData(){
     const result=await callApi('get_product',{product_id:productId});
     if(Array.isArray(result)&&result.length){
       currentProduct=result[0];
+      // في حالة منتج منفرد، نصنع له cart_id فريد خاص به
+      GlobalCartId = 'CRT-' + Date.now() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
+      
       orderProducts=[{
         ...currentProduct,
         qty:1,
         size:size||'',
         color:color||'',
-        cart_id:'temp_'+Date.now()
+        cart_id: GlobalCartId
       }];
       renderOrderForm();
     }else{
@@ -350,9 +330,6 @@ async function loadOrderData(){
   }
 }
 
-// ============================================================
-// ===== عرض الفورم =====
-// ============================================================
 function renderOrderForm(){
   const container=document.getElementById('orderContainer');
   if(!orderProducts||!orderProducts.length){
@@ -361,7 +338,7 @@ function renderOrderForm(){
   }
   
   const p=orderProducts[0];
-  const defaultComm = comm(p.base_price); // العمولة الافتراضية للقطعة الواحدة
+  const defaultComm = comm(p.base_price);
   
   totalProductsPrice = 0; 
   totalQty = 0;
@@ -370,7 +347,7 @@ function renderOrderForm(){
   orderProducts.forEach(item => {
     const isp = sellP(item.base_price); 
     const qty = parseInt(item.qty) || 1;
-    const it = isp * qty; // الضرب الفعلي في الكمية
+    const it = isp * qty; 
     totalProductsPrice += it;
     totalQty += qty;
     let vi = '';
@@ -434,20 +411,16 @@ function updateOrderTotal(){
   const cv = parseFloat(ci.value) || 0; 
   if(commPerItemTxt) commPerItemTxt.textContent = cv;
   
-  // ضرب العمولة المدخلة في إجمالي عدد قطع المنتجات
   const totalComm = cv * totalQty;
   cd.textContent = totalComm + ' ج';
   
   const gov = document.getElementById('oGovernorate')?.value || '', ship = getShippingCost(gov);
   if(sd) sd.textContent = ship + ' ج';
   
-  // الحسبة الكلية المحدثة
+  // يتم إضافة سعر الشحن [مرة واحدة فقط] للإجمالي الكلي للمجموعة
   td.textContent = (totalProductsPrice + totalComm + ship) + ' ج';
 }
 
-// ============================================================
-// ===== إرسال الطلب النهائي لقاعدة البيانات =====
-// ============================================================
 async function submitOrder(){
   const name=document.getElementById('oName').value.trim();
   const phone=document.getElementById('oPhone').value.trim();
@@ -479,8 +452,10 @@ async function submitOrder(){
       const bp = parseFloat(item.base_price) || 0;
       const qty = parseInt(item.qty) || 1;
       
-      // المعادلة المحدثة: (سعر المنتج الأساسي + ربح السيستم الثابت) × الكمية + (العمولة المحددة لكل قطعة × الكمية) + الشحن
-      const totalProductCost = ((bp + SITE_PROFIT) * qty) + (commissionPerItem * qty) + shippingCost;
+      // ===== تعديل المعادلة الحسابية لكل منتج مفرد داخل المجموعة ليتوافق مع اللوحة الفنية الأساسية =====
+      // نضع في خانة التوتال برايس لكل سطر: (سعر المنتج مع ربح الموقع + العمولة) * الكمية. 
+      // ولا نضرب الشحن في المنتجات المنفصلة تلافياً للمشكلة القديمة.
+      const totalProductCost = ((bp + SITE_PROFIT) * qty) + (commissionPerItem * qty);
       const oid='ORD-'+Date.now()+'-'+String(item.product_id)+'-'+Math.random().toString(36).substr(2,4);
 
       const result=await callApi('place_order',{
@@ -496,14 +471,15 @@ async function submitOrder(){
         size:item.size||'',
         color:item.color||'',
         price: bp, 
-        shipping:shippingCost,
-        total_price:totalProductCost, // الحسبة الإجمالية مرفوعة مضروبة في الكمية
-        commission: (commissionPerItem * qty), // عمولة المسوق الكلية بناءً على الكمية
-        site_profit: (SITE_PROFIT * qty), // ربح الموقع مضروب في الكمية
+        shipping:shippingCost, // الشحن يرسل كقيمة مرجعية للسطر
+        total_price:totalProductCost, 
+        commission: (commissionPerItem * qty), 
+        site_profit: (SITE_PROFIT * qty), 
         notes:notes,
         marketer_username:marketerName,
         marketer_id:marketerId,
-        order_status:'pending'
+        order_status:'pending',
+        cart_id: GlobalCartId // ===== تخزين كود السلة الجديد بنجاح =====
       });
 
       if(result.status==='error'){ allSuccess=false; errorMsg=result.message||''; break; }
@@ -516,7 +492,7 @@ async function submitOrder(){
       }
       
       for(const item of orderProducts){
-        if(item.cart_id&&!item.cart_id.startsWith('temp_')){
+        if(item.cart_id && !item.cart_id.startsWith('temp_')){
           const localCart=JSON.parse(localStorage.getItem('cart_'+marketerId)||'[]');
           const newCart=localCart.filter(i=>i.cart_id!==item.cart_id);
           localStorage.setItem('cart_'+marketerId, JSON.stringify(newCart));
@@ -534,9 +510,6 @@ async function submitOrder(){
   if(btn){ btn.disabled=false; btn.textContent='✅ تأكيد الطلب'; }
 }
 
-// ============================================================
-// ===== دوال مساعدة =====
-// ============================================================
 function showError(msg){
   document.getElementById('orderContainer').innerHTML=`
     <div class="alert alert-danger">⚠️ ${msg}</div>
@@ -548,9 +521,6 @@ function goBack(){
   window.location.href = `displayed_products.html?user=${encodeURIComponent(marketerId)}&type=marketer`;
 }
 
-// ============================================================
-// ===== بدء التشغيل =====
-// ============================================================
 loadOrderData();
 </script>
 </body>
