@@ -3,8 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stylek - تسجيل الدخول</title>
+
+<title>Stylek - تسجيل الدخول | المنصة الأولى للموردين والتجار في مصر</title>
+<meta name="description" content="سجل دخولك إلى منصة ستايلك (Stylek). المنصة الرائدة لربط الموردين بالتجار والمسوقين بالعمولة في مصر لإدارة وتوسيع تجارتك الإلكترونية.">
+<meta name="keywords" content="تسجيل دخول ستايلك, منصة ستايلك, Stylek login, موردين مصر, تجارة الكترونية, تسويق بالعمولة مصر">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://stylek.com/index.html">
+
+<meta property="og:title" content="Stylek - تسجيل الدخول">
+<meta property="og:description" content="سجل دخولك الآن إلى حسابك في ستايلك وابدأ إدارة تجارتك الإلكترونية ومبيعاتك بكل سهولة.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://stylek.com/index.html">
+<meta property="og:image" content="https://stylek.com/images/og-image.jpg">
+<meta property="og:locale" content="ar_EG">
+<meta property="og:site_name" content="ستايلك | Stylek">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Stylek - تسجيل الدخول",
+  "description": "صفحة تسجيل الدخول وإنشاء الحسابات للتجار والموردين في منصة ستايلك بمصر.",
+  "url": "https://stylek.com/index.html"
+}
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo', sans-serif;}
@@ -27,13 +53,43 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 .link{text-align:center;margin-top:15px;color:#00c6ff;cursor:pointer;text-decoration:underline;font-size:14px;}
 .otp-timer{font-size:13px;color:#ffaa00;text-align:center;margin-top:5px;}
 .disabled-option{color:#888;background:#1a1a1a;}
-.notice-box{background:#2a1a1a;border:1px solid #ff6633;border-radius:10px;padding:10px;margin:8px 0;text-align:center;color:#ff8844;font-size:13px;}
+
+/* ===== التنسيق المخصص لتنبيه منع المسوقين وأيقونة من نحن ===== */
+.notice-box {
+    background: #2a1a1a;
+    border: 1px solid #ff6633;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 8px 0;
+    text-align: center;
+    color: #ff8844;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.about-trigger-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    color: #00c6ff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    background: rgba(0, 198, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    transition: 0.2s;
+}
+.about-trigger-link:hover {
+    background: rgba(0, 198, 255, 0.2);
+    transform: scale(1.02);
+}
 </style>
 </head>
 <body>
 <div class="container">
 
-<!-- ===== تسجيل الدخول ===== -->
 <div id="loginPage" class="page active">
 <div class="logo">Stylek</div>
 <div class="title">🔐 تسجيل الدخول</div>
@@ -49,7 +105,6 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <div class="success" id="loginSuccess"></div>
 </div>
 
-<!-- ===== إنشاء حساب ===== -->
 <div id="signupPage" class="page">
 <div class="logo">Stylek</div>
 <div class="title">📝 إنشاء حساب جديد</div>
@@ -62,7 +117,7 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <span class="eye" onclick="togglePass('password',this)">👁️</span>
 </div>
 
-<select id="type">
+<select id="type" onchange="checkAccountType(this.value)">
     <option value="">نوع الحساب</option>
     <option value="تاجر">تاجر</option>
     <option value="مسوق" class="disabled-option" disabled>مسوق (🚫 غير متاح حالياً - قريباً)</option>
@@ -70,7 +125,10 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 
 <div id="noticeBox" class="notice-box" style="display:none;">
     ⚠️ عذراً، التسجيل للمسوقين غير متاح حالياً.<br>
-    <span style="font-size:12px;color:#ffaa66;">سيكون متاحاً خلال الأيام القادمة 🔜</span>
+    <span style="font-size:12px;color:#ffaa66;">سيكون متاحاً خلال الأيام القادمة 🔜</span><br>
+    <a href="About_us.html" target="_blank" class="about-trigger-link">
+        <i class="fas fa-info-circle"></i> لماذا تم منع التسجيل؟ (من نحن)
+    </a>
 </div>
 
 <button class="green" id="create">إنشاء حساب</button>
@@ -88,7 +146,6 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 <div class="success" id="success"></div>
 </div>
 
-<!-- ===== استعادة كلمة السر ===== -->
 <div id="forgotPage" class="page">
 <div class="logo">Stylek</div>
 <div class="title">🔑 استعادة كلمة السر</div>
@@ -122,9 +179,16 @@ let isCooldownActive = false;
 let generatedCurrentOtp = "";
 let cooldownInterval = null;
 
-// ============================================================
-// ===== التحقق من تحميل CryptoJS =====
-// ============================================================
+// فحص نوع الحساب وإظهار تنبيه المنع مع زر الانتقال لـ About_us.html
+function checkAccountType(val) {
+    let notice = document.getElementById("noticeBox");
+    if(val === "مسوق") {
+        notice.style.display = "block";
+    } else {
+        notice.style.display = "none";
+    }
+}
+
 console.log('🔍 Checking CryptoJS:', typeof CryptoJS);
 
 // ============================================================
@@ -132,7 +196,6 @@ console.log('🔍 Checking CryptoJS:', typeof CryptoJS);
 // ============================================================
 function hashPassword(password) {
     try {
-        // التحقق من وجود CryptoJS
         if (typeof CryptoJS === 'undefined') {
             console.warn('⚠️ CryptoJS not loaded, using plain text');
             return password;
@@ -143,7 +206,6 @@ function hashPassword(password) {
         return hashed;
     } catch (error) {
         console.error('❌ خطأ في التشفير:', error);
-        // في حالة الفشل، نرجع الباسورد نفسه (حل مؤقت)
         return password;
     }
 }
@@ -181,6 +243,7 @@ function showPage(id) {
     isCooldownActive = false;
     document.getElementById("signupTimer").innerHTML = "";
     document.getElementById("noticeBox").style.display = "none";
+    document.getElementById("type").value = "";
 }
 
 // ============================================================
@@ -336,7 +399,6 @@ document.getElementById("verifyAndLogin").onclick = async function() {
         let type = document.getElementById("type").value;
         let whatsapp = document.getElementById("whatsapp").value.trim();
 
-        // ===== تشفير الباسورد =====
         const hashedPassword = hashPassword(password);
         console.log('✅ الباسورد المشفر:', hashedPassword);
 
@@ -420,7 +482,6 @@ document.getElementById("login").onclick = async function() {
 
         const user = users[0];
 
-        // ===== التحقق من الباسورد المشفر =====
         const isValid = verifyPassword(password, user.password);
         
         if (!isValid) {
