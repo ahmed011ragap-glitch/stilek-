@@ -361,29 +361,31 @@ function renderOrderForm(){
   }
   
   const p=orderProducts[0];
-  const defaultComm=comm(p.base_price);
+  const defaultComm = comm(p.base_price); // العمولة الافتراضية للقطعة الواحدة
   
-  totalProductsPrice=0; totalQty=0;
-  let summaryHtml='';
-  orderProducts.forEach(item=>{
-    const isp=sellP(item.base_price);
-    const qty=item.qty||1;
-    const it=isp*qty;
-    totalProductsPrice+=it;
-    totalQty+=qty;
-    let vi='';
-    if(item.color||item.size) vi=` (${item.color||''}${item.color&&item.size?' - ':''}${item.size||''})`;
-    summaryHtml+=`<div style="font-size:12px;color:var(--text-2);padding:3px 0;border-bottom:1px solid var(--border);">
+  totalProductsPrice = 0; 
+  totalQty = 0;
+  let summaryHtml = '';
+  
+  orderProducts.forEach(item => {
+    const isp = sellP(item.base_price); 
+    const qty = parseInt(item.qty) || 1;
+    const it = isp * qty; // الضرب الفعلي في الكمية
+    totalProductsPrice += it;
+    totalQty += qty;
+    let vi = '';
+    if(item.color || item.size) vi = ` (${item.color || ''}${item.color && item.size ? ' - ' : ''}${item.size || ''})`;
+    summaryHtml += `<div style="font-size:12px;color:var(--text-2);padding:3px 0;border-bottom:1px solid var(--border);">
       ${esc(cleanText(item.name))}${vi} × ${qty} = ${it} ج
     </div>`;
   });
   
-  const govOpts=Object.keys(CITIES).map(g=>`<option value="${g}">${g}</option>`).join('');
+  const govOpts = Object.keys(CITIES).map(g => `<option value="${g}">${g}</option>`).join('');
   
-  container.innerHTML=`
+  container.innerHTML = `
     <div class="order-badge">
       <img src="${iurl(p.image_url)}" onerror="this.src='https://placehold.co/60x60/2a2a2a/808080?text=🛍️'" alt="product">
-      <div><div class="ob-name">${totalQty} منتج</div><div class="ob-sub">${orderProducts.length} منتج مختلف</div></div>
+      <div><div class="ob-name">إجمالي عدد القطع: ${totalQty}</div><div class="ob-sub">${orderProducts.length} منتج مختلف</div></div>
     </div>
     <div class="fsec">👤 بيانات العميل</div>
     <div class="fg"><label class="fl">👤 اسم العميل <span style="color:var(--red);">*</span></label><input class="fi" id="oName" placeholder="أدخل اسم العميل"></div>
@@ -395,15 +397,21 @@ function renderOrderForm(){
     </div>
     <div class="fg"><label class="fl">📍 العنوان <span style="color:var(--red);">*</span></label><input class="fi" id="oAddress" placeholder="الشارع، المنطقة..."></div>
     <div class="fg"><label class="fl">📝 ملاحظات</label><input class="fi" id="oNotes" placeholder="أي ملاحظات..."></div>
-    <div class="fsec">💰 تعديل العمولة</div>
-    <div class="fg"><label class="fl">⭐ العمولة (ج) <span style="color:var(--gold);">قابلة للتعديل</span></label><input class="fi fi-gold" id="oCommission" type="number" value="${defaultComm}" oninput="updateOrderTotal()" step="1" min="0"><div class="fi-hint">القيمة الافتراضية: ${defaultComm} ج</div></div>
+    
+    <div class="fsec">💰 تعديل العمولة (لكل منتج/قطعة)</div>
+    <div class="fg">
+      <label class="fl">⭐ عمولة القطعة الواحدة (ج) <span style="color:var(--gold);">تطبق على كل كمية</span></label>
+      <input class="fi fi-gold" id="oCommission" type="number" value="${defaultComm}" oninput="updateOrderTotal()" step="1" min="0">
+      <div class="fi-hint">القيمة الافتراضية للقطعة: ${defaultComm} ج (تضرب تلقائياً في إجمالي عدد القطع)</div>
+    </div>
+    
     <div class="fsec">📋 ملخص الطلب</div>
     <div class="sum-box">
       ${summaryHtml}
-      <div class="sum-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><span>إجمالي المنتجات</span><span style="color:var(--green);">${totalProductsPrice} ج</span></div>
-      <div class="sum-row"><span>العمولة</span><span style="color:var(--gold);" id="commissionDisplay">${defaultComm} ج</span></div>
+      <div class="sum-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><span>إجمالي المنتجات (مضروب في الكمية)</span><span style="color:var(--green);">${totalProductsPrice} ج</span></div>
+      <div class="sum-row"><span>إجمالي العمولة (<span id="commPerItemTxt">${defaultComm}</span> ج × ${totalQty} قطع)</span><span style="color:var(--gold);" id="commissionDisplay">${defaultComm * totalQty} ج</span></div>
       <div class="sum-row"><span>رسوم الشحن</span><span style="color:var(--muted);" id="shippingDisplay">115 ج</span></div>
-      <div class="sum-total"><span>الإجمالي</span><span id="totalAmount">${totalProductsPrice+defaultComm+115} ج</span></div>
+      <div class="sum-total"><span>الإجمالي النهائي</span><span id="totalAmount">${totalProductsPrice + (defaultComm * totalQty) + 115} ج</span></div>
       <div class="shipping-note">🚚 مدة الشحن القصوى: <strong>4 أيام عمل</strong></div>
     </div>
     <div id="alertContainer"></div>
@@ -420,15 +428,25 @@ function updateCities(){
 
 function updateOrderTotal(){
   const ci=document.getElementById('oCommission'), cd=document.getElementById('commissionDisplay'), td=document.getElementById('totalAmount'), sd=document.getElementById('shippingDisplay');
+  const commPerItemTxt = document.getElementById('commPerItemTxt');
   if(!ci||!cd||!td)return;
-  const cv=parseFloat(ci.value)||0; cd.textContent=cv+' ج';
-  const gov=document.getElementById('oGovernorate')?.value||'', ship=getShippingCost(gov);
-  if(sd)sd.textContent=ship+' ج';
-  td.textContent=(totalProductsPrice+cv+ship)+' ج';
+  
+  const cv = parseFloat(ci.value) || 0; 
+  if(commPerItemTxt) commPerItemTxt.textContent = cv;
+  
+  // ضرب العمولة المدخلة في إجمالي عدد قطع المنتجات
+  const totalComm = cv * totalQty;
+  cd.textContent = totalComm + ' ج';
+  
+  const gov = document.getElementById('oGovernorate')?.value || '', ship = getShippingCost(gov);
+  if(sd) sd.textContent = ship + ' ج';
+  
+  // الحسبة الكلية المحدثة
+  td.textContent = (totalProductsPrice + totalComm + ship) + ' ج';
 }
 
 // ============================================================
-// ===== إرسال الطلب =====
+// ===== إرسال الطلب النهائي لقاعدة البيانات =====
 // ============================================================
 async function submitOrder(){
   const name=document.getElementById('oName').value.trim();
@@ -438,7 +456,7 @@ async function submitOrder(){
   const city=document.getElementById('oCity').value;
   const address=document.getElementById('oAddress').value.trim();
   const notes=document.getElementById('oNotes').value.trim();
-  const commission=parseFloat(document.getElementById('oCommission').value)||0;
+  const commissionPerItem = parseFloat(document.getElementById('oCommission').value)||0;
 
   if(!name){ alert('⚠️ أدخل اسم العميل'); return; }
   if(!phone||phone.length!==11){ alert('⚠️ رقم الهاتف 11 رقم'); return; }
@@ -458,9 +476,11 @@ async function submitOrder(){
     const createdOrders=[];
 
     for(const item of orderProducts){
-      const bp=parseFloat(item.base_price)||0;
-      const qty=item.qty||1;
-      const total=(bp*qty)+commission+shippingCost;
+      const bp = parseFloat(item.base_price) || 0;
+      const qty = parseInt(item.qty) || 1;
+      
+      // المعادلة المحدثة: (سعر المنتج الأساسي + ربح السيستم الثابت) × الكمية + (العمولة المحددة لكل قطعة × الكمية) + الشحن
+      const totalProductCost = ((bp + SITE_PROFIT) * qty) + (commissionPerItem * qty) + shippingCost;
       const oid='ORD-'+Date.now()+'-'+String(item.product_id)+'-'+Math.random().toString(36).substr(2,4);
 
       const result=await callApi('place_order',{
@@ -475,11 +495,11 @@ async function submitOrder(){
         qty:qty,
         size:item.size||'',
         color:item.color||'',
-        price:bp,
+        price: bp, 
         shipping:shippingCost,
-        total_price:total,
-        commission:commission,
-        site_profit:20,
+        total_price:totalProductCost, // الحسبة الإجمالية مرفوعة مضروبة في الكمية
+        commission: (commissionPerItem * qty), // عمولة المسوق الكلية بناءً على الكمية
+        site_profit: (SITE_PROFIT * qty), // ربح الموقع مضروب في الكمية
         notes:notes,
         marketer_username:marketerName,
         marketer_id:marketerId,
