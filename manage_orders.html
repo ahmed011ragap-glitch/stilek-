@@ -203,20 +203,20 @@ body {
   border: 1px solid var(--card-border);
   border-radius: 10px;
   background: #1e1e1e;
-  color: #fff;
+  color: #888; /* تغيير اللون ليوحي بأنه مغلق */
   font-size: 14px;
   outline: none;
   font-family: "Tajawal";
+  cursor: not-allowed; /* تغيير شكل الماوس عند الوقوف عليه */
 }
 .user-input-section input:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(0,255,136,0.1);
+  border-color: var(--card-border);
 }
 .user-input-section .btn-load {
   padding: 12px 25px;
-  background: var(--green);
-  color: #000;
-  border: none;
+  background: #222;
+  color: var(--green);
+  border: 1px solid var(--card-border);
   border-radius: 10px;
   font-weight: 700;
   font-size: 14px;
@@ -225,8 +225,7 @@ body {
   transition: 0.3s;
 }
 .user-input-section .btn-load:hover {
-  background: #00cc66;
-  transform: scale(1.02);
+  background: #1a1a1a;
 }
 
 /* ===== إحصائيات ===== */
@@ -447,8 +446,8 @@ body {
 
 <div class="user-input-section">
   <label>👤 اسم المستخدم (المورد):</label>
-  <input type="text" id="usernameInput" placeholder="أدخل اسم المستخدم..." value="ragap">
-  <button class="btn-load" onclick="loadOrders()">🔍 تحميل الطلبات</button>
+  <input type="text" id="usernameInput" placeholder="أدخل اسم المستخدم..." value="ragap" readonly>
+  <button class="btn-load" onclick="loadOrders()">🔄 تحديث البيانات</button>
 </div>
 
 <div class="stats-container">
@@ -473,7 +472,6 @@ body {
 <div id="loading" class="loading">⏳ جاري تحميل الطلبات...</div>
 <div id="ordersList" class="orders-list"></div>
 
-<!-- توست الإشعارات -->
 <div id="autoUpdateToast" class="auto-update-toast"></div>
 
 <script>
@@ -501,7 +499,8 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 const urlParams = new URLSearchParams(window.location.search);
-let currentUserVar = (urlParams.get('user') || localStorage.getItem('username') || '').toLowerCase().trim();
+// جلب اسم المستخدم من الرابط أو الكاش أولاً، وإذا لم يوجد نضع القيمة الافتراضية ragap
+let currentUserVar = (urlParams.get('user') || localStorage.getItem('username') || 'ragap').toLowerCase().trim();
 let allOrders = [];
 let allProducts = [];
 let currentFilter = 'all';
