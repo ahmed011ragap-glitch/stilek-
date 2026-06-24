@@ -317,7 +317,6 @@ h2 {
 </div>
 
 <div class="container">
-  <!-- رسالة تأكيد الاسم الثابت -->
   <div class="username-display">
     👤 اسم المستخدم الحالي: <span id="userNameDisplay">-</span>
     <span style="color: var(--muted); font-weight: 400; margin-right: 10px;">🔒 (ثابت لا يمكن تغييره)</span>
@@ -389,8 +388,6 @@ h2 {
       <button class="btn btn-purple" onclick="openHistory()">🕐 السجل</button>
       <button class="btn btn-green" onclick="openWithdrawModal()">💵 طلب سحب</button>
     </div>
-
-    <!-- تم حذف رسالة الخصم (alert) نهائياً بناءً على الطلب -->
   </div>
 
   <div class="admin-panel" id="adminPanel">
@@ -517,20 +514,14 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
-// ===== تحميل البيانات - المورد يشوف سعر منتجه كامل مع خصم 20 جنيه من كل أوردر =====
+// ===== تحميل البيانات المحدث - الاعتماد على جدول orders وعمود (price * qty) مباشرة =====
 async function loadDashboard() {
   try {
-    // 1. نجيب كل المنتجات بتاعة المورد مع base_price
+    // 1. نجيب كل المنتجات بتاعة المورد لاستخراج المعرفات فقط
     const myProducts = await supabaseApi(
-      `products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id,base_price`
+      `products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id`
     );
     const myProductIds = myProducts.map(p => p.product_id);
-    
-    // 2. بناء خريطة product_id -> base_price (السعر الأساسي)
-    const productPrices = {};
-    myProducts.forEach(p => {
-      productPrices[p.product_id] = parseFloat(p.base_price) || 0;
-    });
     
     if (myProductIds.length === 0) {
       document.getElementById('available').textContent = '0.00';
@@ -542,7 +533,7 @@ async function loadDashboard() {
       return;
     }
 
-    // 3. نجيب كل الطلبات الخاصة بمنتجات المورد
+    // 2. نجيب كل الطلبات الخاصة بمنتجات المورد
     let allOrders = [];
     for (const pid of myProductIds) {
       const ordersForProduct = await supabaseApi(`orders?product_id=ilike.${encodeURIComponent(pid)}&select=*`);
@@ -551,27 +542,27 @@ async function loadDashboard() {
 
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
-    // استخدام base_price مباشرة بدون أي خصومات
-    // 4. حساب الطلبات باستخدام base_price مباشرة (بدون خصم)
+    // 3. الحساب البرمجي بالاعتماد على سعر الأوردر مضروباً في الكمية (o.price * o.qty)
     allOrders.forEach(o => {
-      // سعر المنتج الأساسي (base_price)
-      const productBasePrice = productPrices[o.product_id] || 0;
+      const orderPrice = parseFloat(o.price) || 0;
+      const orderQty = parseInt(o.qty) || 1;
+      const totalOrderValue = orderPrice * orderQty; // المعادلة: السعر * الكمية
       
       const status = (o.order_status || '').trim();
       
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
-        deliveredPriceTotal += productBasePrice;
+        deliveredPriceTotal += totalOrderValue;
         deliveredCount++; 
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
-        shippingPriceTotal += productBasePrice;
+        shippingPriceTotal += totalOrderValue;
       } 
       else if (status === 'تغليف') { 
-        preparingPriceTotal += productBasePrice;
+        preparingPriceTotal += totalOrderValue;
       }
     });
 
-    // 5. نجيب طلبات السحب السابقة
+    // 4. جلب طلبات السحب السابقة
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
@@ -652,7 +643,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
   if(val !== ADMIN_CODE && isAdmin) {
     isAdmin = false;
     document.getElementById('userMode').style.display = 'block';
-    document.getElementById('adminPanel').style.display = 'none';
+    document.getElementById('adminPanel').style.none = 'none';
   }
 });
 
