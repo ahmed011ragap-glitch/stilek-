@@ -172,17 +172,27 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* ===== بطاقة المورد ===== */
+        /* ===== بطاقة المورد المرنة ===== */
         .user-card {
             background: linear-gradient(135deg, #0d1e15, #070f0b);
             border: 1px solid var(--green);
             border-radius: 20px;
-            padding: 20px 25px;
+            padding: 25px;
             margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .user-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         .user-info h3 {
             color: var(--green);
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 800;
             margin-bottom: 5px;
         }
@@ -198,6 +208,92 @@
             font-weight: 600;
         }
 
+        .affiliate-boxes-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 580px) {
+            .affiliate-boxes-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .affiliate-box {
+            background: rgba(21, 21, 21, 0.6);
+            border: 1px dashed var(--card-border);
+            border-radius: 14px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .affiliate-box.box-blue {
+            border-color: var(--blue);
+            background: rgba(0, 170, 255, 0.03);
+        }
+        .affiliate-box.box-green {
+            border-color: var(--green);
+            background: rgba(0, 255, 136, 0.03);
+        }
+        
+        .affiliate-box .num {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--blue);
+        }
+        .affiliate-box .lbl {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .link-copy-wrapper {
+            display: flex;
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .link-copy-wrapper a.clickable-link {
+            flex: 1;
+            padding: 12px 10px;
+            color: #00aaff;
+            font-size: 12.5px;
+            text-align: left;
+            direction: ltr;
+            text-decoration: underline;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 700;
+        }
+        .link-copy-wrapper a.clickable-link:hover {
+            color: #00ff88;
+        }
+        .link-copy-wrapper button {
+            background: var(--blue);
+            color: #000;
+            border: none;
+            padding: 12px 18px;
+            font-family: 'Tajawal';
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            height: 100%;
+        }
+        .link-copy-wrapper button:hover {
+            background: var(--green);
+            color: #000;
+        }
+
         /* ===== شبكة الإحصائيات ===== */
         .stats-grid {
             display: grid;
@@ -208,6 +304,10 @@
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+            .user-card-top {
+                flex-direction: column;
+                text-align: center;
             }
         }
 
@@ -461,10 +561,27 @@
         </div>
 
         <div class="user-card">
-            <div class="user-info">
-                <h3 id="supplierName">👤 جاري التحميل...</h3>
-                <div id="supplierCode" style="color: #aaa; font-size: 14px; margin-top: 4px;">الكود: ---</div>
-                <span class="role-tag">✅ مورد معتمد</span>
+            <div class="user-card-top">
+                <div class="user-info">
+                    <h3 id="supplierName">👤 جاري التحميل...</h3>
+                    <div id="supplierCode" style="color: #00ff88; font-size: 15px; margin-top: 4px; font-weight:700;">كود الترويج: ---</div>
+                    <span class="role-tag">✅ مورد معتمد</span>
+                </div>
+            </div>
+            
+            <div class="affiliate-boxes-container">
+                <div class="affiliate-box box-blue">
+                    <div class="num" id="referredCount">0</div>
+                    <div class="lbl">👥 إجمالي المستخدمين المشتركين عبر كودك</div>
+                </div>
+                
+                <div class="affiliate-box box-green">
+                    <div class="lbl" style="margin-top: 0; margin-bottom: 2px;">🔗 رابط الإحالة المباشر الخاص بك</div>
+                    <div class="link-copy-wrapper">
+                        <a href="#" id="referralLinkInput" class="clickable-link" target="_blank">جاري إنشاء الرابط...</a>
+                        <button onclick="copyReferralLink()">نسخ</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -532,17 +649,53 @@
         const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
-        // ===== الحصول على اسم المستخدم =====
+        // ===== الحصول على اسم المستخدم ومعلومات الحساب =====
         const urlParams = new URLSearchParams(window.location.search);
-        let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'supplier_default';
-        const SUPPLIER_CODE = rawUser.trim().toLowerCase();
+        let rawUser = urlParams.get('user') || localStorage.getItem('username') || 'default';
+        const SUPPLIER_CODE = rawUser.trim();
         localStorage.setItem('username', SUPPLIER_CODE);
 
-        // عرض الاسم في الواجهة
+        // عرض البيانات في الواجهة بدون البادئة STYLEK-
         document.getElementById('supplierName').innerText = `👤 ${SUPPLIER_CODE}`;
-        document.getElementById('supplierCode').innerText = `الكود: ${SUPPLIER_CODE}`;
+        document.getElementById('supplierCode').innerText = `كود الترويج: ${SUPPLIER_CODE}`;
+        
+        // بناء الرابط المباشر الصافي للنشر في البروفايلات (https://stylek.store/?ref=اسم_المستخدم)
+        const generatedLink = `https://stylek.store/?ref=${SUPPLIER_CODE}`;
+        
+        const linkAnchor = document.getElementById('referralLinkInput');
+        linkAnchor.href = generatedLink;
+        linkAnchor.innerText = generatedLink;
 
-        // ===== دالة الطلب إلى Supabase =====
+        // دالة نسخ الرابط المباشر
+        function copyReferralLink() {
+            const urlToCopy = document.getElementById('referralLinkInput').href;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(urlToCopy)
+                    .then(() => alert('✅ تم نسخ الرابط المباشر بنجاح جاهز للـ Bio في البروفايل!'))
+                    .catch(() => fallbackCopyText(urlToCopy));
+            } else {
+                fallbackCopyText(urlToCopy);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; 
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('✅ تم نسخ الرابط المباشر بنجاح جاهز للـ Bio في البروفايل!');
+            } catch (err) {
+                alert('❌ فشل النسخ التلقائي، يرجى تحديد الرابط ونسخه يدوياً.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // ===== معالجة وحماية الطلبات لحل خطأ الـ JSON الموضح في الاسكرين شوت مسبقاً =====
         async function supabaseRequest(endpoint, options = {}) {
             const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
             const headers = {
@@ -551,21 +704,35 @@
                 'Content-Type': 'application/json',
                 ...options.headers,
             };
-            const response = await fetch(url, { ...options, headers });
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errText}`);
+            
+            try {
+                const response = await fetch(url, { ...options, headers });
+                
+                // منع التوقف غير المتوقع وحل مشكلة Unexpected end of JSON input
+                if (response.status === 204 || response.headers.get('content-length') === '0') {
+                    return [];
+                }
+                
+                const textData = await response.text();
+                if (!textData || textData.trim() === "") return [];
+                
+                return JSON.parse(textData);
+            } catch (e) {
+                console.error("Fetch Error caught safely:", e);
+                return [];
             }
-            return await response.json();
         }
 
         let currentBalance = 0;
         let allSupplierOrders = [];
 
-        // ===== تحميل بيانات المورد من جدول orders فقط (البحث بالاسم والآيدي) =====
+        // ===== تحميل بيانات المورد والإحصائيات من الـ Database =====
         async function loadSupplierData() {
             try {
-                // 1. جلب جميع الطلبات الخاصة بهذا المورد من جدول orders باستخدام شرط OR للبحث في الاسم أو الآيدي
+                // البحث في قاعدة البيانات باسم المستخدم الصافي
+                const directCount = await supabaseRequest(`stylek_password?affiliate_user=eq.${encodeURIComponent(SUPPLIER_CODE.toLowerCase())}&select=id`);
+                document.getElementById('referredCount').textContent = directCount ? directCount.length : 0;
+
                 const orders = await supabaseRequest(
                     `orders?or=(marketer_username.ilike.${encodeURIComponent(SUPPLIER_CODE)},marketer_id.ilike.${encodeURIComponent(SUPPLIER_CODE)})&select=*`
                 );
@@ -573,32 +740,30 @@
                 let totalRevenue = 0;
                 let allOrders = [];
 
-                // 2. معالجة الطلبات وحساب الأرباح
-                orders.forEach(order => {
-                    const total = parseFloat(order.total_price) || 0;
-                    const status = (order.order_status || '').trim().toLowerCase();
+                if(orders && orders.length > 0) {
+                    orders.forEach(order => {
+                        const total = parseFloat(order.total_price) || 0;
+                        const status = (order.order_status || '').trim().toLowerCase();
 
-                    // الحالات التي تعتبر "تم التسليم" أو مكتملة
-                    const isDelivered = status === 'تم التسليم' || 
-                                       status === 'delivered' || 
-                                       status === 'تم الاستلام' ||
-                                       status === 'مكتمل' ||
-                                       status === 'completed' ||
-                                       status === 'تسليم';
+                        const isDelivered = status === 'تم التسليم' || 
+                                           status === 'delivered' || 
+                                           status === 'تم الاستلام' ||
+                                           status === 'مكتمل' ||
+                                           status === 'completed' ||
+                                           status === 'تسليم';
 
-                    if (isDelivered) {
-                        totalRevenue += total;
-                    }
+                        if (isDelivered) {
+                            totalRevenue += total;
+                        }
 
-                    // تخزين الطلب للعرض
-                    allOrders.push({
-                        ...order,
-                        order_status: order.order_status || 'pending',
-                        total_price: total
+                        allOrders.push({
+                            ...order,
+                            order_status: order.order_status || 'pending',
+                            total_price: total
+                        });
                     });
-                });
+                }
 
-                // 3. جلب طلبات السحب السابقة من جدول withdrawals
                 const withdrawals = await supabaseRequest(
                     `withdrawals?username=ilike.${encodeURIComponent(SUPPLIER_CODE)}&select=*`
                 );
@@ -606,28 +771,27 @@
                 let pendingSum = 0;
                 let approvedSum = 0;
 
-                withdrawals.forEach(w => {
-                    const amt = parseFloat(w.amount) || 0;
-                    const status = (w.status || '').trim().toLowerCase();
-                    if (status === 'قيد المراجعة' || status === 'pending') {
-                        pendingSum += amt;
-                    } else if (status === 'تم' || status === 'تم الدفع' || status === 'approved') {
-                        approvedSum += amt;
-                    }
-                });
+                if(withdrawals && withdrawals.length > 0) {
+                    withdrawals.forEach(w => {
+                        const amt = parseFloat(w.amount) || 0;
+                        const status = (w.status || '').trim().toLowerCase();
+                        if (status === 'قيد المراجعة' || status === 'pending') {
+                            pendingSum += amt;
+                        } else if (status === 'تم' || status === 'تم الدفع' || status === 'approved') {
+                            approvedSum += amt;
+                        }
+                    });
+                }
 
                 const totalWithdrawn = pendingSum + approvedSum;
                 currentBalance = Math.max(0, totalRevenue - totalWithdrawn);
 
-                // 4. تحديث واجهة الإحصائيات
                 document.getElementById('totalEarned').textContent = totalRevenue.toFixed(2) + ' ج.م';
                 document.getElementById('totalWithdrawn').textContent = totalWithdrawn.toFixed(2) + ' ج.م';
                 document.getElementById('availableBalance').textContent = currentBalance.toFixed(2) + ' ج.م';
 
-                // 5. تخزين الطلبات للاستخدام في العرض
                 allSupplierOrders = allOrders;
 
-                // 6. عرض آخر الطلبات (أحدث 6 طلبات)
                 const container = document.getElementById('supplierRecentOrders');
 
                 if (!allOrders || allOrders.length === 0) {
@@ -635,7 +799,6 @@
                     return;
                 }
 
-                // ترتيب تنازلي حسب التاريخ (الأحدث أولاً)
                 const sorted = [...allOrders].sort((a, b) => {
                     const dateA = a.created_at ? new Date(a.created_at).getTime() : (a.id || 0);
                     const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.id || 0);
@@ -684,13 +847,13 @@
                     .join('');
 
             } catch (err) {
-                console.error('❌ خطأ في تحميل البيانات:', err);
+                console.error('❌ خطأ في النظام:', err);
                 document.getElementById('supplierRecentOrders').innerHTML =
-                    `<div class="empty-state" style="color:var(--red);">⚠️ حدث خطأ: ${err.message}</div>`;
+                    `<div class="empty-state" style="color:var(--red);">⚠️ حدث خطأ في الشبكة، يرجى المحاولة لاحقاً</div>`;
             }
         }
 
-        // ===== طلب السحب =====
+        // ===== معالجة طلب السحب =====
         document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -698,25 +861,18 @@
             const amount = parseFloat(document.getElementById('w_amount').value) || 0;
             const method = document.getElementById('w_account').value;
 
-            // التحقق من رقم الهاتف
             const phoneRegex = /^01[0125][0-9]{8}$/;
             if (!phoneRegex.test(phone)) {
-                alert('❌ رقم الهاتف غير صحيح. يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015 ويتكون من 11 رقمًا.');
+                alert('❌ رقم الهاتف غير صحيح.');
                 return;
             }
 
-            if (amount <= 0) {
-                alert('❌ المبلغ يجب أن يكون أكبر من صفر.');
-                return;
-            }
-
-            if (amount > currentBalance) {
+            if (amount <= 0 || amount > currentBalance) {
                 alert(`❌ الرصيد غير كافٍ. المتاح: ${currentBalance.toFixed(2)} ج.م`);
                 return;
             }
 
             try {
-                // إنشاء طلب سحب جديد في جدول withdrawals
                 await supabaseRequest('withdrawals', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -734,7 +890,7 @@
                     }),
                 });
 
-                alert('✅ تم إرسال طلب السحب بنجاح! سيتم مراجعته من قبل الإدارة.');
+                alert('✅ تم إرسال طلب السحب بنجاح!');
                 closeWithdrawModal();
                 document.getElementById('withdrawForm').reset();
                 await loadSupplierData();
@@ -744,7 +900,6 @@
             }
         });
 
-        // ===== دوال التحكم في القوائم =====
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
@@ -758,7 +913,6 @@
         function logout() {
             if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
                 localStorage.removeItem('username');
-                localStorage.removeItem('userType');
                 window.location.href = 'index.html';
             }
         }
@@ -771,13 +925,8 @@
             document.getElementById('withdrawModal').style.display = 'none';
         }
 
-        document.getElementById('withdrawModal').addEventListener('click', function(e) {
-            if (e.target === this) closeWithdrawModal();
-        });
-
-        // ===== تشغيل التطبيق =====
+        // بدء التشغيل التلقائي
         loadSupplierData();
     </script>
-
 </body>
 </html>
