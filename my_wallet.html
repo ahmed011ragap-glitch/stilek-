@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>المحفظة والسحوبات - Stylek Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght=400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0a;
@@ -166,6 +166,45 @@ body {
   margin-right: 6px;
 }
 
+/* ===== شريط تحدي الـ 300 جنيه المضاف للموردين ===== */
+.challenge-container {
+  background: linear-gradient(135deg, #151515, #222);
+  border: 1px solid var(--orange);
+  border-radius: 14px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+.challenge-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
+}
+.challenge-title span gold { color: var(--orange); }
+.progress-track {
+  background: #000;
+  border-radius: 20px;
+  height: 12px;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+.progress-fill {
+  background: linear-gradient(90deg, var(--orange), #ffbb00);
+  width: 0%;
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.5s ease-in-out;
+}
+.challenge-hint {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 6px;
+  text-align: center;
+}
+
 /* ===== الهيدر ومحتوى الصفحة ===== */
 .header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
 .header h1 {
@@ -224,6 +263,10 @@ h2 {
   border: 1px solid var(--green);
   background: #111a15;
 }
+.card.challenge-card {
+  border: 1px solid var(--orange);
+  background: #221505;
+}
 
 .card-header-row {
   display: flex;
@@ -250,6 +293,7 @@ h2 {
   color: #fff;
 }
 .card-value.highlight { color: var(--green); }
+.card-value.orange-highlight { color: var(--orange); }
 
 .btns {
   display: grid;
@@ -327,6 +371,17 @@ h2 {
     <span>نوع الحساب: <strong class="user-type">🏭 مورد</strong></span>
   </div>
 
+  <div class="challenge-container" id="challengeBox">
+    <div class="challenge-title">
+      <span>🏆 تحدي الموردين الحالي (توصيل 6 قطع)</span>
+      <span>التقدم: <strong id="progressText" style="color:var(--orange);">0 / 6</strong> قطعة</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="challenge-hint" id="challengeHint">شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!</div>
+  </div>
+
   <h2>💼 المحفظة والملخص المالي</h2>
 
   <div class="search-bar">
@@ -381,6 +436,14 @@ h2 {
           <div class="card-label">طلبات مكتملة</div>
         </div>
         <div class="card-value" id="delivered">0</div>
+      </div>
+
+      <div class="card challenge-card">
+        <div class="card-header-row">
+          <span class="card-icon orange">🎁</span>
+          <div class="card-label">بونص التحدي الحالي</div>
+        </div>
+        <div class="card-value orange-highlight" id="challengeBonusDisplay">0.00</div>
       </div>
     </div>
 
@@ -530,6 +593,9 @@ async function loadDashboard() {
       document.getElementById('preparing').textContent = '0.00';
       document.getElementById('delivered').textContent = '0';
       document.getElementById('shipping').textContent = '0.00';
+      document.getElementById('progressText').textContent = '0 / 6';
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('challengeBonusDisplay').textContent = '0.00';
       return;
     }
 
@@ -541,6 +607,7 @@ async function loadDashboard() {
     }
 
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
+    let totalDeliveredQty = 0; // حساب إجمالي عدد القطع المكتملة للتحدي
 
     // 3. الحساب البرمجي بالاعتماد على سعر الأوردر مضروباً في الكمية (o.price * o.qty)
     allOrders.forEach(o => {
@@ -553,6 +620,7 @@ async function loadDashboard() {
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
         deliveredPriceTotal += totalOrderValue;
         deliveredCount++; 
+        totalDeliveredQty += orderQty; // نزيد عدد القطع الموصلة بالتحدي فعلياً
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
         shippingPriceTotal += totalOrderValue;
@@ -562,7 +630,20 @@ async function loadDashboard() {
       }
     });
 
-    // 4. جلب طلبات السحب السابقة
+    // 4. تحديث وحساب شريط التحدي والمربع الإضافي بناءً على عدد القطع المستلمة (6 قطع لـ 300 جنيه)
+    const progressPercent = Math.min((totalDeliveredQty / 6) * 100, 100);
+    document.getElementById('progressText').textContent = `${totalDeliveredQty} / 6`;
+    document.getElementById('progressFill').style.width = `${progressPercent}%`;
+
+    if (totalDeliveredQty >= 6) {
+      document.getElementById('challengeBonusDisplay').textContent = '300.00';
+      document.getElementById('challengeHint').innerHTML = '🎉 <span style="color:var(--green); font-weight:bold;">مبروك! لقد أكملت التحدي بنجاح واستحققت بونص 300 جنيه!</span>';
+    } else {
+      document.getElementById('challengeBonusDisplay').textContent = '0.00';
+      document.getElementById('challengeHint').textContent = 'شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!';
+    }
+
+    // 5. جلب طلبات السحب السابقة
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
 
