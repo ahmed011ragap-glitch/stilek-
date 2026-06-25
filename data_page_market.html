@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>المحفظة والسحوبات - Stylek Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght=400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0a;
@@ -146,53 +146,16 @@ body {
   border: 1px solid #00aaff;
 }
 
-/* ===== شريط نظام الإحالة والمكافآت للمسوقين ===== */
+/* ===== شريط نظام الإحالة والمكافآت المطور ===== */
 .challenge-container {
-  background: linear-gradient(135deg, #151515, #222);
-  border: 1px solid var(--orange);
+  background: linear-gradient(135deg, #111, #1a1a1a);
+  border: 1px solid var(--card-border);
   border-radius: 14px;
   padding: 15px;
   margin-bottom: 20px;
 }
-.challenge-title {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #fff;
-}
-.progress-track {
-  background: #000;
-  border-radius: 20px;
-  height: 12px;
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid #333;
-}
-.progress-fill {
-  background: linear-gradient(90deg, var(--orange), #ffbb00);
-  width: 0%;
-  height: 100%;
-  border-radius: 20px;
-  transition: width 0.5s ease-in-out;
-}
-.challenge-hint {
-  font-size: 12px;
-  color: var(--green);
-  margin-top: 8px;
-  text-align: center;
-  font-weight: bold;
-}
-.challenge-sub-hint {
-  font-size: 11px;
-  color: #aaa;
-  margin-top: 4px;
-  text-align: center;
-  margin-bottom: 12px;
-}
 
-/* ===== خانات نسخ الروابط والأكواد المحدثة والمحسنة للموبايل ===== */
+/* خانة نسخ الروابط */
 .share-box {
   display: flex;
   flex-direction: column;
@@ -200,7 +163,7 @@ body {
   background: #000;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid #333;
+  border: 1px solid #222;
 }
 .share-row {
   display: flex;
@@ -302,9 +265,9 @@ h2 {
   border: 1px solid var(--green);
   background: #111a15;
 }
-.card.challenge-card {
-  border: 1px solid var(--orange);
-  background: #221505;
+.card.referral-count-card {
+  border: 1px solid var(--green);
+  background: #0a2215;
 }
 
 .card-header-row {
@@ -332,7 +295,6 @@ h2 {
   color: #fff;
 }
 .card-value.highlight { color: var(--green); }
-.card-value.orange-highlight { color: var(--orange); }
 
 .btns {
   display: grid;
@@ -441,26 +403,16 @@ h2 {
   </div>
 
   <div class="challenge-container" id="challengeBox">
-    <div class="challenge-title">
-      <span>👥 نظام الإحالة (دعوة المسوقين والشركاء)</span>
-      <span>المسوقين المتفاعلين: <strong id="progressText" style="color:var(--orange);">0 / 30</strong> شخص</span>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <div class="challenge-hint" id="challengeHint">📢 شارك كود الإحالة بتاعك واكسب على كل أوردر هيعملوه!</div>
-    <div class="challenge-sub-hint" id="challengeSubHint">عند دعوة 30 شخص متفاعل ويبدأوا بعمل أوردرات، ستحصل فوراً على بونص بقيمة 100 جنيه!</div>
-    
     <div class="share-box">
       <div class="share-row">
-        <span class="share-label">🔑 كود الإحالة:</span>
+        <span class="share-label">🔑 كود الإحالة الخاص بك:</span>
         <div class="share-input-wrapper">
           <input type="text" id="referralCodeInput" readonly value="-">
           <button class="btn-copy" onclick="copyValue('referralCodeInput')">نسخ الكود</button>
         </div>
       </div>
       <div class="share-row">
-        <span class="share-label">🔗 رابط الإحالة:</span>
+        <span class="share-label">🔗 رابط الإحالة الخاص بك:</span>
         <div class="share-input-wrapper">
           <input type="text" id="referralLinkInput" readonly value="-">
           <button class="btn-copy" onclick="copyValue('referralLinkInput')">نسخ الرابط</button>
@@ -525,12 +477,12 @@ h2 {
         <div class="card-value" id="delivered">0</div>
       </div>
 
-      <div class="card challenge-card">
+      <div class="card referral-count-card">
         <div class="card-header-row">
-          <span class="card-icon orange">🎁</span>
-          <div class="card-label">بونص الإحالة المكتملة</div>
+          <span class="card-icon green">👥</span>
+          <div class="card-label" style="color: #fff;">المسجلين عبر رابطك</div>
         </div>
-        <div class="card-value orange-highlight" id="challengeBonusDisplay">0.00</div>
+        <div class="card-value highlight" id="referralCountDisplay" style="font-size: 20px;">0</div>
       </div>
     </div>
 
@@ -622,14 +574,10 @@ if (storedUser && storedUser.trim() !== '') {
 document.getElementById('userName').textContent = currentUser;
 document.getElementById('userNameDisplay').textContent = currentUser;
 
-// ===== تم إزالة الكلمة الثابتة تماماً بناءً على طلبك والاعتماد فقط على اسم المستخدم النظيف =====
-const finalReferralCode = currentUser; // أصبح كود الإحالة يساوي اسم المستخدم النظيف تماماً
+const finalReferralCode = currentUser; 
 document.getElementById('referralCodeInput').value = finalReferralCode;
-
-// الرابط يظهر نظيفاً ومباشراً بدون إضافات ولا رموز مشفرة
 document.getElementById('referralLinkInput').value = `https://stylek.store/?ref=${finalReferralCode}`;
 
-// دالة النسخ الاحترافية للموبايل
 function copyValue(inputId) {
   const inputEl = document.getElementById(inputId);
   inputEl.select();
@@ -708,6 +656,7 @@ async function loadDashboard() {
       }
     });
 
+    // حساب عدد المسجلين الفعليين من خلال كود الإحالة بناءً على حركة الطلبات أو المستخدمين الفريدين
     const uniqueReferredUsers = new Set();
     allOrders.forEach(o => {
       const refCode = (o.referral_code || o.referrer_id || '').trim();
@@ -717,18 +666,8 @@ async function loadDashboard() {
       }
     });
 
-    const activeReferralsCount = uniqueReferredUsers.size;
-    const progressPercent = Math.min((activeReferralsCount / 30) * 100, 100);
-    document.getElementById('progressText').textContent = `${activeReferralsCount} / 30`;
-    document.getElementById('progressFill').style.width = `${progressPercent}%`;
-
-    if (activeReferralsCount >= 30) {
-      document.getElementById('challengeBonusDisplay').textContent = '100.00';
-      document.getElementById('challengeHint').innerHTML = '🎉 <span style="color:var(--green); font-weight:bold;">مبروك! نجحت في دعوة 30 مسوق متفاعل واستحققت بونص 100 جنيه!</span>';
-    } else {
-      document.getElementById('challengeBonusDisplay').textContent = '0.00';
-      document.getElementById('challengeHint').textContent = '📢 شارك كود الإحالة بتاعك واكسب على كل أوردر هيعملوه!';
-    }
+    // تحديث رقم المربع الأخضر الجديد بعدد المدعوين
+    document.getElementById('referralCountDisplay').textContent = uniqueReferredUsers.size;
 
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
