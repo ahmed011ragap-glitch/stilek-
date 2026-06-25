@@ -37,7 +37,6 @@
 body{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;background:linear-gradient(135deg,#0a0a0a,#121212);color:#e0e0e0;}
 .container{width:100%;max-width:420px;background:#1a1a1a;padding:35px 30px;border-radius:25px;box-shadow:0 15px 50px rgba(0,0,0,0.7);border:1px solid #2a2a2a;}
 
-/* جعل الصفحات تتخذ موضعاً نسبياً لتثبيت الأيقونة بدقة في الزاوية */
 .page{display:none; position: relative;}
 .page.active{display:block;}
 
@@ -58,7 +57,15 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 .disabled-option{color:#888;background:#1a1a1a;}
 .notice-box{background:#2a1a1a;border:1px solid #ff6633;border-radius:10px;padding:10px;margin:8px 0;text-align:center;color:#ff8844;font-size:13px;}
 
-/* ===== تنسيق أيقونة "منح" الدائرية في الزاوية العلوية حسب الماوس في الصورة ===== */
+/* تصميم حقل كود الترويج التلقائي المعزز */
+input.auto-ref-input {
+    background: #1f1f1f;
+    border: 1px dashed #444;
+    color: #00ff88;
+    font-weight: bold;
+    cursor: not-allowed;
+}
+
 .corner-info-icon {
     position: absolute;
     top: -15px;
@@ -104,7 +111,7 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 </div>
 
 <div id="signupPage" class="page">
-<a href="About_us.html" target="_blank" class="corner-info-icon" title="من نحن">
+<a href="about_us.html" target="_blank" class="corner-info-icon" title="من نحن">
     <i class="fas fa-info"></i>
 </a>
 
@@ -129,6 +136,8 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
     ⚠️ عذراً، التسجيل للمسوقين غير متاح حالياً.<br>
     <span style="font-size:12px;color:#ffaa66;">سيكون متاحاً خلال الأيام القادمة 🔜</span>
 </div>
+
+<input id="affiliate_user" class="auto-ref-input" placeholder="كود الترويج (تلقائي)" readonly>
 
 <button class="green" id="create">إنشاء حساب</button>
 
@@ -180,7 +189,13 @@ let cooldownInterval = null;
 
 console.log('🔍 Checking CryptoJS:', typeof CryptoJS);
 
-// مراقبة اختيار نوع الحساب لإظهار صندوق التنبيه في حالة المسوق
+// جلب البارامترات تلقائياً من الرابط وملء حقل كود الترويج فوراً
+const urlParams = new URLSearchParams(window.location.search);
+let automaticRefCode = urlParams.get('ref') || urlParams.get('user') || '';
+if(automaticRefCode) {
+    document.getElementById('affiliate_user').value = automaticRefCode.trim().toLowerCase();
+}
+
 document.getElementById("type").addEventListener("change", function() {
     let notice = document.getElementById("noticeBox");
     if (this.value === "مسوق") {
@@ -259,13 +274,18 @@ async function supabaseApi(endpoint, options = {}) {
     if (options.method === 'POST' || options.method === 'PATCH') {
         headers['Prefer'] = 'return=representation';
     }
-    const response = await fetch(url, { ...options, headers });
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`خطأ ${response.status}: ${error}`);
+    try {
+        const response = await fetch(url, { ...options, headers });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`خطأ ${response.status}: ${error}`);
+        }
+        const text = await response.text();
+        return text ? JSON.parse(text) : {};
+    } catch(e) {
+        console.error("Supabase API Safe catch applied:", e);
+        return [];
     }
-    const text = await response.text();
-    return text ? JSON.parse(text) : {};
 }
 
 async function saveToSupabase(table, data) {
@@ -329,6 +349,7 @@ document.getElementById("create").onclick = async function() {
     let password = document.getElementById("password").value;
     let type = document.getElementById("type").value;
     let whatsapp = document.getElementById("whatsapp").value.trim();
+    let affiliate_user = document.getElementById("affiliate_user").value.trim().toLowerCase();
     let error = document.getElementById("error");
     let success = document.getElementById("success");
     let notice = document.getElementById("noticeBox");
@@ -359,7 +380,8 @@ document.getElementById("create").onclick = async function() {
         }
 
         success.innerHTML = "⏳ جاري إرسال كود التحقق إلى بريدك...";
-        await sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp });
+        // إلحاق كود الترويج التلقائي في شيت جوجل
+        await sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp, affiliate_user });
 
         success.innerHTML = "✅ تم إرسال كود التحقق بنجاح 📧";
         document.getElementById("signupOtpBox").style.display = "block";
@@ -397,6 +419,7 @@ document.getElementById("verifyAndLogin").onclick = async function() {
         let password = document.getElementById("password").value;
         let type = document.getElementById("type").value;
         let whatsapp = document.getElementById("whatsapp").value.trim();
+        let affiliate_user = document.getElementById("affiliate_user").value.trim().toLowerCase();
 
         const hashedPassword = hashPassword(password);
         console.log('✅ الباسورد المشفر:', hashedPassword);
@@ -407,7 +430,8 @@ document.getElementById("verifyAndLogin").onclick = async function() {
             email, 
             role: type, 
             name, 
-            whatsapp 
+            whatsapp,
+            affiliate_user: affiliate_user || null
         };
         
         await saveToSupabase('stylek_password', newUser);
@@ -447,9 +471,10 @@ document.getElementById("resendSignupOtp").onclick = function(e) {
     let password = document.getElementById("password").value;
     let type = document.getElementById("type").value;
     let whatsapp = document.getElementById("whatsapp").value.trim();
+    let affiliate_user = document.getElementById("affiliate_user").value.trim().toLowerCase();
 
     document.getElementById("success").innerHTML = "🔄 جاري إعادة إرسال الكود...";
-    sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp });
+    sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp, affiliate_user });
     document.getElementById("success").innerHTML = "✅ تم إعادة الإرسال!";
     startOtpCooldown("signupTimer", "resendSignupOtp");
 };
