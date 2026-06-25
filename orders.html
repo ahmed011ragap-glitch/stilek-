@@ -197,6 +197,22 @@ function sellP(b){ const v=parseFloat(b)||0; return v+SITE_PROFIT; }
 function comm(b){ const v=parseFloat(b)||0; if(v<100)return 50; if(v<200)return 80; if(v<400)return 150; if(v<500)return 200; return 250; }
 function iurl(u){ return u?.toString().trim()||'https://placehold.co/400x400/2a2a2a/808080?text=🛍️'; }
 
+// ===== دالة حساب وفحص فترة الـ 5 جنيه للمستخدم (لمدة شهر فقط) =====
+function checkPromoBonus() {
+  const userCreatedAt = localStorage.getItem('userCreatedAt');
+  if (userCreatedAt) {
+    const regDate = new Date(userCreatedAt);
+    const currentDate = new Date();
+    const diffTime = Math.abs(currentDate - regDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 30) {
+      return 5; // الحساب في فترة العرض (أقل من شهر) ياخذ 5 جنيه
+    }
+  }
+  return 0; // بعد الشهر ويوم أو في حال عدم وجود تاريخ لا يضاف شيء
+}
+
 async function req(ep, opts={}){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${ep}`,{...opts,headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',...opts.headers}});
   const t=await r.text(); return t?JSON.parse(t):{};
@@ -232,7 +248,7 @@ async function callApi(action,data={}){
           marketer_username:data.marketer_username,
           marketer_id:data.marketer_id,
           order_status:data.order_status||'pending',
-          cart_id:data.cart_id // ===== إضافة العمود الجديد هنا ليرسل لـ Supabase =====
+          cart_id:data.cart_id 
         };
         return await req('orders',{method:'POST',body:JSON.stringify(orderBody)});
       }
@@ -280,7 +296,7 @@ let orderProducts=[];
 let currentProduct=null;
 let totalProductsPrice=0;
 let totalQty=0;
-let GlobalCartId = ''; // كود السلة الموحد للمجموعة الحالية
+let GlobalCartId = ''; 
 
 async function loadOrderData(){
   const productId=urlP.get('product_id');
@@ -293,7 +309,6 @@ async function loadOrderData(){
   if(fromCart){
     const localCart=JSON.parse(localStorage.getItem('cart_'+marketerId)||'[]');
     if(localCart.length){
-      // توليد كود سلة موحد فريد لجميع عناصر السلة الحالية
       GlobalCartId = 'CRT-' + Date.now() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
       
       orderProducts=localCart.map(item=>({
@@ -301,7 +316,7 @@ async function loadOrderData(){
         qty:item.qty||1,
         size:size||item.size||'',
         color:color||item.color||'',
-        cart_id: GlobalCartId // إسناد المعرف الموحد
+        cart_id: GlobalCartId 
       }));
       renderOrderForm();
     }else{
@@ -311,7 +326,6 @@ async function loadOrderData(){
     const result=await callApi('get_product',{product_id:productId});
     if(Array.isArray(result)&&result.length){
       currentProduct=result[0];
-      // في حالة منتج منفرد، نصنع له cart_id فريد خاص به
       GlobalCartId = 'CRT-' + Date.now() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
       
       orderProducts=[{
@@ -359,6 +373,10 @@ function renderOrderForm(){
   
   const govOpts = Object.keys(CITIES).map(g => `<option value="${g}">${g}</option>`).join('');
   
+  // فحص قيمة البونص المخصصة للأوردر ككل بناء على عمر الحساب
+  const promoBonus = checkPromoBonus();
+  const promoRowHtml = promoBonus > 0 ? `<div class="sum-row" style="color: #00ff88;"><span>🎁 هدية ترحيبية للأوردر الكامل (صلاحية شهر)</span><span>+ ${promoBonus} ج</span></div>` : '';
+  
   container.innerHTML = `
     <div class="order-badge">
       <img src="${iurl(p.image_url)}" onerror="this.src='https://placehold.co/60x60/2a2a2a/808080?text=🛍️'" alt="product">
@@ -388,7 +406,8 @@ function renderOrderForm(){
       <div class="sum-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><span>إجمالي المنتجات (مضروب في الكمية)</span><span style="color:var(--green);">${totalProductsPrice} ج</span></div>
       <div class="sum-row"><span>إجمالي العمولة (<span id="commPerItemTxt">${defaultComm}</span> ج × ${totalQty} قطع)</span><span style="color:var(--gold);" id="commissionDisplay">${defaultComm * totalQty} ج</span></div>
       <div class="sum-row"><span>رسوم الشحن</span><span style="color:var(--muted);" id="shippingDisplay">115 ج</span></div>
-      <div class="sum-total"><span>الإجمالي النهائي</span><span id="totalAmount">${totalProductsPrice + (defaultComm * totalQty) + 115} ج</span></div>
+      ${promoRowHtml}
+      <div class="sum-total"><span>الإجمالي النهائي</span><span id="totalAmount">${totalProductsPrice + (defaultComm * totalQty) + 115 + promoBonus} ج</span></div>
       <div class="shipping-note">🚚 مدة الشحن القصوى: <strong>4 أيام عمل</strong></div>
     </div>
     <div id="alertContainer"></div>
@@ -417,8 +436,9 @@ function updateOrderTotal(){
   const gov = document.getElementById('oGovernorate')?.value || '', ship = getShippingCost(gov);
   if(sd) sd.textContent = ship + ' ج';
   
-  // يتم إضافة سعر الشحن [مرة واحدة فقط] للإجمالي الكلي للمجموعة
-  td.textContent = (totalProductsPrice + totalComm + ship) + ' ج';
+  // فحص وإضافة الـ 5 جنيه الثابتة للأوردر ككل في المجموع النهائي
+  const promoBonus = checkPromoBonus();
+  td.textContent = (totalProductsPrice + totalComm + ship + promoBonus) + ' ج';
 }
 
 async function submitOrder(){
@@ -443,19 +463,28 @@ async function submitOrder(){
   if(alertContainer)alertContainer.innerHTML='';
 
   const shippingCost=getShippingCost(gov);
+  const promoBonus = checkPromoBonus(); // الـ 5 جنيه للأوردر بالكامل
 
   try{
     let allSuccess=true, errorMsg='';
     const createdOrders=[];
 
+    // لتوزيع الـ 5 جنيه على عناصر السلة بشكل برمجي دون تكرارها، نقوم بإضافتها لمرة واحدة فقط لأول منتج في الحلقة
+    let bonusDistributed = false;
+
     for(const item of orderProducts){
       const bp = parseFloat(item.base_price) || 0;
       const qty = parseInt(item.qty) || 1;
       
-      // ===== تعديل المعادلة الحسابية لكل منتج مفرد داخل المجموعة ليتوافق مع اللوحة الفنية الأساسية =====
-      // نضع في خانة التوتال برايس لكل سطر: (سعر المنتج مع ربح الموقع + العمولة) * الكمية. 
-      // ولا نضرب الشحن في المنتجات المنفصلة تلافياً للمشكلة القديمة.
-      const totalProductCost = ((bp + SITE_PROFIT) * qty) + (commissionPerItem * qty);
+      // المعادلة الأساسية لكل منتج مستقل: (السعر + الربح + العمولة) * الكمية
+      let totalProductCost = ((bp + SITE_PROFIT) * qty) + (commissionPerItem * qty);
+      
+      // إذا كان للمستخدم أحقية في الـ 5 جنيه، تُضاف [مرة واحدة فقط] للأوردر كله على أول منتج، ولن تضرب في الكمية نهائياً
+      if(promoBonus > 0 && !bonusDistributed) {
+        totalProductCost += promoBonus;
+        bonusDistributed = true;
+      }
+
       const oid='ORD-'+Date.now()+'-'+String(item.product_id)+'-'+Math.random().toString(36).substr(2,4);
 
       const result=await callApi('place_order',{
@@ -471,7 +500,7 @@ async function submitOrder(){
         size:item.size||'',
         color:item.color||'',
         price: bp, 
-        shipping:shippingCost, // الشحن يرسل كقيمة مرجعية للسطر
+        shipping:shippingCost, 
         total_price:totalProductCost, 
         commission: (commissionPerItem * qty), 
         site_profit: (SITE_PROFIT * qty), 
@@ -479,7 +508,7 @@ async function submitOrder(){
         marketer_username:marketerName,
         marketer_id:marketerId,
         order_status:'pending',
-        cart_id: GlobalCartId // ===== تخزين كود السلة الجديد بنجاح =====
+        cart_id: GlobalCartId 
       });
 
       if(result.status==='error'){ allSuccess=false; errorMsg=result.message||''; break; }
