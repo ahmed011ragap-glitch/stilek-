@@ -96,9 +96,10 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const SITE_PROFIT = 20;
 const WA_NUM = '201108712091';
+const REFERRAL_COMMISSION_PER_QTY = 5; // عمولة الإحالة للمسوق الفوقي لكل قطعة
 
 // ============================================================
-// ===== نظام الشحن (بدون سيناء) =====
+// ===== نظام الشحن =====
 // ============================================================
 const SHIPPING_COSTS = {
   'القاهرة':102,'الجيزة':102,'6 أكتوبر':102,'الشيخ زايد':102,
@@ -197,7 +198,7 @@ function sellP(b){ const v=parseFloat(b)||0; return v+SITE_PROFIT; }
 function comm(b){ const v=parseFloat(b)||0; if(v<100)return 50; if(v<200)return 80; if(v<400)return 150; if(v<500)return 200; return 250; }
 function iurl(u){ return u?.toString().trim()||'https://placehold.co/400x400/2a2a2a/808080?text=🛍️'; }
 
-// ===== دالة حساب وفحص فترة الـ 5 جنيه للمستخدم (لمدة شهر فقط) =====
+// ===== دالة فحص فترة الـ 5 جنيه للمستخدم (تضاف 5 جنيه واحدة فقط لكامل الطلب) =====
 function checkPromoBonus() {
   const userCreatedAt = localStorage.getItem('userCreatedAt');
   if (userCreatedAt) {
@@ -207,10 +208,10 @@ function checkPromoBonus() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays <= 30) {
-      return 5; // الحساب في فترة العرض (أقل من شهر) ياخذ 5 جنيه
+      return 5; 
     }
   }
-  return 0; // بعد الشهر ويوم أو في حال عدم وجود تاريخ لا يضاف شيء
+  return 0; 
 }
 
 async function req(ep, opts={}){
@@ -227,30 +228,7 @@ async function callApi(action,data={}){
         return p;
       }
       case 'place_order':{
-        const orderBody={
-          order_id:data.order_id,
-          product_id:String(data.product_id),
-          customer_name:data.customer_name,
-          phone:data.phone,
-          phone2:data.phone2||'',
-          governorate:data.governorate,
-          city:data.city,
-          address:data.address,
-          qty:data.qty||1,
-          size:data.size||'',
-          color:data.color||'',
-          price:data.price,
-          shipping:data.shipping||115,
-          total_price:data.total_price,
-          commission:data.commission,
-          site_profit:data.site_profit||20,
-          notes:data.notes||'',
-          marketer_username:data.marketer_username,
-          marketer_id:data.marketer_id,
-          order_status:data.order_status||'pending',
-          cart_id:data.cart_id 
-        };
-        return await req('orders',{method:'POST',body:JSON.stringify(orderBody)});
+        return await req('orders',{method:'POST',body:JSON.stringify(data)});
       }
       default: return {status:'error'};
     }
@@ -373,9 +351,8 @@ function renderOrderForm(){
   
   const govOpts = Object.keys(CITIES).map(g => `<option value="${g}">${g}</option>`).join('');
   
-  // فحص قيمة البونص المخصصة للأوردر ككل بناء على عمر الحساب
   const promoBonus = checkPromoBonus();
-  const promoRowHtml = promoBonus > 0 ? `<div class="sum-row" style="color: #00ff88;"><span>🎁 هدية ترحيبية للأوردر الكامل (صلاحية شهر)</span><span>+ ${promoBonus} ج</span></div>` : '';
+  const promoRowHtml = promoBonus > 0 ? `<div class="sum-row" style="color: #00ff88;"><span>🎁 هدية ترحيبية للطلب كاملاً</span><span>+ ${promoBonus} ج</span></div>` : '';
   
   container.innerHTML = `
     <div class="order-badge">
@@ -436,7 +413,6 @@ function updateOrderTotal(){
   const gov = document.getElementById('oGovernorate')?.value || '', ship = getShippingCost(gov);
   if(sd) sd.textContent = ship + ' ج';
   
-  // فحص وإضافة الـ 5 جنيه الثابتة للأوردر ككل في المجموع النهائي
   const promoBonus = checkPromoBonus();
   td.textContent = (totalProductsPrice + totalComm + ship + promoBonus) + ' ج';
 }
@@ -463,55 +439,77 @@ async function submitOrder(){
   if(alertContainer)alertContainer.innerHTML='';
 
   const shippingCost=getShippingCost(gov);
-  const promoBonus = checkPromoBonus(); // الـ 5 جنيه للأوردر بالكامل
+  const promoBonus = checkPromoBonus(); // الـ 5 جنيه الثابتة لكامل السلة/الأوردر
+
+  // جلب بيانات الإحالة المخزنة عند تسجيل دخول المسوق
+  const referredByMarketer = localStorage.getItem('affiliate_user') || null;
 
   try{
     let allSuccess=true, errorMsg='';
     const createdOrders=[];
 
-    // لتوزيع الـ 5 جنيه على عناصر السلة بشكل برمجي دون تكرارها، نقوم بإضافتها لمرة واحدة فقط لأول منتج في الحلقة
+    // متغير لضمان توزيع الـ 5 جنيه مرة واحدة فقط على مستوى أول صف في السلة بالكامل
     let bonusDistributed = false;
 
     for(const item of orderProducts){
       const bp = parseFloat(item.base_price) || 0;
       const qty = parseInt(item.qty) || 1;
       
-      // المعادلة الأساسية لكل منتج مستقل: (السعر + الربح + العمولة) * الكمية
+      // معادلة حساب التكلفة للمنتج الحالي: (سعر البيع + عمولة المسوق الحالى) * الكمية
       let totalProductCost = ((bp + SITE_PROFIT) * qty) + (commissionPerItem * qty);
       
-      // إذا كان للمستخدم أحقية في الـ 5 جنيه، تُضاف [مرة واحدة فقط] للأوردر كله على أول منتج، ولن تضرب في الكمية نهائياً
+      // إضافة الـ 5 جنيه مكافأة الحساب الجديد لمرة واحدة فقط للطلبية كلها على المنتج الأول
       if(promoBonus > 0 && !bonusDistributed) {
         totalProductCost += promoBonus;
         bonusDistributed = true;
       }
 
+      // حساب عمولة الإحالة للمسوق الفوقي (تضرب في عدد قطع هذا المنتج)
+      const currentOrderReferralProfit = referredByMarketer ? (REFERRAL_COMMISSION_PER_QTY * qty) : 0;
+      
+      // تحديد المورد الأساسي للمنتج وصافي ربحه (تكلفة التوريد الأساسية مضروبة في الكمية)
+      const supplierId = item.supplier_username || 'supplier_default';
+      const supplierProfitAmount = bp * qty;
+
       const oid='ORD-'+Date.now()+'-'+String(item.product_id)+'-'+Math.random().toString(36).substr(2,4);
 
-      const result=await callApi('place_order',{
-        order_id:oid,
-        product_id:String(item.product_id),
-        customer_name:name,
-        phone:phone,
-        phone2:phone2,
-        governorate:gov,
-        city:city,
-        address:address,
-        qty:qty,
-        size:item.size||'',
-        color:item.color||'',
+      const result = await callApi('place_order', {
+        order_id: oid,
+        product_id: String(item.product_id),
+        customer_name: name,
+        phone: phone,
+        phone2: phone2,
+        governorate: gov,
+        city: city,
+        address: address,
+        qty: qty,
+        size: item.size||'',
+        color: item.color||'',
         price: bp, 
-        shipping:shippingCost, 
-        total_price:totalProductCost, 
+        shipping: shippingCost, 
+        total_price: totalProductCost, 
         commission: (commissionPerItem * qty), 
         site_profit: (SITE_PROFIT * qty), 
-        notes:notes,
-        marketer_username:marketerName,
-        marketer_id:marketerId,
-        order_status:'pending',
+        
+        // ===== البيانات الجديدة لحسابات المورد والإحالة في الداتابيز =====
+        referred_by_marketer: referredByMarketer,
+        marketer_referral_profit: currentOrderReferralProfit,
+        supplier_id: supplierId,
+        supplier_profit: supplierProfitAmount,
+        // ============================================================
+        
+        notes: notes,
+        marketer_username: marketerName,
+        marketer_id: marketerId,
+        order_status: 'pending',
         cart_id: GlobalCartId 
       });
 
-      if(result.status==='error'){ allSuccess=false; errorMsg=result.message||''; break; }
+      if(result.status==='error' || (result.message && !Array.isArray(result))){ 
+        allSuccess=false; 
+        errorMsg=result.message||'خطأ أثناء الحفظ'; 
+        break; 
+      }
       createdOrders.push({order_id:oid, product_id:String(item.product_id), size:item.size||'', color:item.color||'', qty:qty});
     }
 
