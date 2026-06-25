@@ -174,32 +174,96 @@ body {
 }
 .header p { color: var(--muted); font-size: 14px; }
 
-/* ===== بطاقة معلومات المسوق الكبرى ===== */
+/* ===== بطاقة معلومات المسوق المطورة ===== */
 .user-card {
   background: linear-gradient(135deg, #0a2a0a, #0a1a0a);
   border: 1px solid var(--green);
   border-radius: 20px;
-  padding: 20px 25px;
+  padding: 25px;
   margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.user-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 15px;
 }
-.user-info h3 { color: var(--green); font-size: 20px; }
-.user-info .username { font-size: 14px; color: #aaa; margin-top: 4px; }
-.share-link {
-  background: #1a1a1a;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--green);
-  transition: 0.2s;
+.user-info h3 { color: var(--green); font-size: 24px; font-weight: 800; }
+.user-info .username { font-size: 15px; color: #aaa; margin-top: 4px; font-weight: 700; }
+
+.affiliate-boxes-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
 }
-.share-link:hover { background: #2a2a2a; transform: translateY(-1px); }
+
+.affiliate-box {
+  background: rgba(21, 21, 21, 0.6);
+  border: 1px dashed var(--green);
+  background: rgba(0, 255, 136, 0.03);
+  border-radius: 14px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.affiliate-box .lbl {
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* حاوية الرابط الجديد التفاعلي الأزرق للبروفايل */
+.link-copy-wrapper {
+  display: flex;
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 4px;
+  align-items: center;
+}
+.link-copy-wrapper a.clickable-link {
+  flex: 1;
+  padding: 12px 10px;
+  color: #00aaff;
+  font-size: 13px;
+  text-align: left;
+  direction: ltr;
+  text-decoration: underline;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+.link-copy-wrapper a.clickable-link:hover {
+  color: #00ff88;
+}
+.link-copy-wrapper button {
+  background: var(--blue);
+  color: #000;
+  border: none;
+  padding: 12px 22px;
+  font-family: 'Tajawal';
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+  height: 100%;
+}
+.link-copy-wrapper button:hover {
+  background: var(--green);
+  color: #000;
+}
 
 /* ===== شبكة الإحصائيات الذكية ===== */
 .stats-grid {
@@ -355,10 +419,8 @@ body {
     <a href="#" onclick="goToPage('manage_orders_market')">📋 طلباتي</a>
     <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
 
-    <!-- زر الدعم الفني عبر واتساب -->
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
 
-    <!-- زر تسجيل الخروج -->
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
@@ -371,11 +433,22 @@ body {
   </div>
 
   <div class="user-card">
-    <div class="user-info">
-      <h3 id="userName">مرحباً بك</h3>
-      <div class="username" id="userCode">...</div>
+    <div class="user-card-top">
+      <div class="user-info">
+        <h3 id="userName">👋 مرحباً بك، مسوق</h3>
+        <div class="username" id="userCode">كود المسوق: ...</div>
+      </div>
     </div>
-    <div class="share-link" onclick="copyProfileLink()">🔗 رابط صفحتك الشخصية - اضغط للنسخ</div>
+    
+    <div class="affiliate-boxes-container">
+      <div class="affiliate-box">
+        <div class="lbl">🔗 رابط الإحالة المباشر الخاص بك (جاهز للنشر في البروفايل Bio)</div>
+        <div class="link-copy-wrapper">
+          <a href="#" id="referralLinkInput" class="clickable-link" target="_blank">جاري إنشاء الرابط...</a>
+          <button onclick="copyProfileLink()">نسخ</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="stats-grid" id="stats">
@@ -396,14 +469,12 @@ function toggleSidebar() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
-// دالة التنقل الموحدة مع إغلاق السلايدر
 function goToPage(pageName) {
-  toggleSidebar(); // إغلاق السلايدر قبل التنقل
+  toggleSidebar();
   const currentUser = localStorage.getItem('username') || USER_CODE;
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
-// دالة تسجيل الخروج
 function logout() {
   if (confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
     localStorage.removeItem('username');
@@ -419,7 +490,6 @@ const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 const urlParams = new URLSearchParams(window.location.search);
 let rawUser = urlParams.get('user') || localStorage.getItem('username') || '';
-// توحيد كود المسوق فوراً لحروف صغيرة لمنع الحساسية للمدخلات
 let USER_CODE = rawUser.trim().toLowerCase(); 
 let USER_NAME = localStorage.getItem('userName') || 'مسوق';
 
@@ -431,12 +501,41 @@ localStorage.setItem('username', USER_CODE);
 document.getElementById('userCode').innerText = `كود المسوق: ${USER_CODE}`;
 document.getElementById('userName').innerHTML = `👋 مرحباً، ${USER_NAME}`;
 
+// توليد الرابط النظيف الصافي المباشر لصفحة المتجر الرئيسية
+const generatedProfileLink = `https://stylek.store/?ref=${USER_CODE}`;
+const profileLinkAnchor = document.getElementById('referralLinkInput');
+profileLinkAnchor.href = generatedProfileLink;
+profileLinkAnchor.innerText = generatedProfileLink;
+
+// دالة نسخ الرابط المحدثة لتعمل بشكل مطلق داخل البروفايلات وتطبيقات الهاتف
 function copyProfileLink() {
-  const link = `${window.location.origin}${window.location.pathname}?user=${encodeURIComponent(USER_CODE)}`;
-  navigator.clipboard.writeText(link);
-  alert('✅ تم نسخ رابط صفحتك الشخصية بنجاح');
+  const urlToCopy = document.getElementById('referralLinkInput').href;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(urlToCopy)
+      .then(() => alert('✅ تم نسخ رابط الإحالة الصافي بنجاح! جاهز للنشر في البروفايل الـ Bio.'))
+      .catch(() => fallbackCopyText(urlToCopy));
+  } else {
+    fallbackCopyText(urlToCopy);
+  }
 }
 
+function fallbackCopyText(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed"; 
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    document.execCommand('copy');
+    alert('✅ تم نسخ رابط الإحالة الصافي بنجاح! جاهز للنشر في البروفايل الـ Bio.');
+  } catch (err) {
+    alert('❌ فشل النسخ التلقائي، يرجى تحديد الرابط ونسخه يدوياً.');
+  }
+  document.body.removeChild(textArea);
+}
+
+// دالة الاتصال المحمية تمنع خطأ Unexpected end of JSON input
 async function supabaseApi(endpoint) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = {
@@ -444,9 +543,20 @@ async function supabaseApi(endpoint) {
     'Authorization': `Bearer ${SUPABASE_KEY}`,
     'Content-Type': 'application/json'
   };
-  const response = await fetch(url, { headers });
-  if (!response.ok) throw new Error(await response.text());
-  return await response.json();
+  
+  try {
+    const response = await fetch(url, { headers });
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return [];
+    }
+    const textData = await response.text();
+    if (!textData || textData.trim() === "") return [];
+    
+    return JSON.parse(textData);
+  } catch (e) {
+    console.error("API Fetch Exception handled safely:", e);
+    return [];
+  }
 }
 
 let dashboardData = {
@@ -615,7 +725,7 @@ function renderRecentOrders() {
   container.innerHTML = html;
 }
 
-// البدء في جلب البيانات فوراً
+// البدء في جلب البيانات فوراً عند فتح الصفحة
 loadAllData();
 setInterval(loadAllData, 20000); // تحديث تلقائي آمن كل 20 ثانية في الخلفية
 </script>
