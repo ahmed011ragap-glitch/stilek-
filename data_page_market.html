@@ -3,20 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>لوحة تحكم المسوق - Stylek Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<title>المحفظة والسحوبات - Stylek Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0a;
-  --card-bg: #151515;
-  --card-border: #2a2a2a;
+  --card-bg: #111;
+  --card-border: #222;
   --text: #ffffff;
   --muted: #888;
   --green: #00ff88;
   --red: #ff3366;
   --blue: #00aaff;
   --orange: #ff9900;
-  --gold: #ffd700;
   --purple: #aa44ff;
 }
 
@@ -25,37 +24,32 @@ body {
   font-family: "Tajawal", sans-serif;
   background: var(--bg);
   color: var(--text);
-  padding: 20px;
+  padding: 15px;
   min-height: 100vh;
 }
+.container { max-width: 1000px; margin: 0 auto; }
 
-.container { max-width: 1200px; margin: 0 auto; }
-
-/* ===== السليدر الجانبي (Sidebar) ===== */
+/* ===== السليدر الجانبي المطور للمسوق ===== */
 .menu-btn {
   position: fixed;
   top: 15px;
   right: 15px;
-  font-size: 28px;
+  font-size: 24px;
   color: var(--green);
   cursor: pointer;
   z-index: 1001;
   background: #151515;
-  width: 45px;
-  height: 45px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid #333;
   box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  transition: all 0.3s ease;
+  transition: 0.3s;
 }
-.menu-btn:hover {
-  background: var(--green);
-  color: #000;
-  transform: scale(1.05);
-}
+.menu-btn:hover { background: var(--green); color: #000; }
 
 .sidebar {
   position: fixed;
@@ -68,7 +62,6 @@ body {
   transition: right 0.3s ease;
   z-index: 1002;
   overflow-y: auto;
-  direction: rtl;
   box-shadow: -5px 0 30px rgba(0,0,0,0.5);
 }
 .sidebar.active { right: 0; }
@@ -80,22 +73,18 @@ body {
   justify-content: space-between;
   align-items: center;
   color: var(--green);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 900;
 }
 .sidebar-header button {
-  background: none;
-  border: none;
-  color: #ff4444;
-  font-size: 32px;
-  cursor: pointer;
-  transition: 0.2s;
+  background: none; border: none; color: var(--red); font-size: 32px; cursor: pointer;
 }
-.sidebar-header button:hover { transform: scale(1.1); }
 .sidebar-menu { padding: 15px 0; }
 .sidebar-menu a {
-  display: block;
-  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
   color: #e0e0e0;
   text-decoration: none;
   font-size: 15px;
@@ -103,21 +92,13 @@ body {
   margin: 4px 10px;
   border-radius: 10px;
   transition: 0.2s;
-  border-right: 4px solid transparent;
 }
-.sidebar-menu a:hover {
-  background: #151515;
-  color: var(--green);
-  border-right: 4px solid var(--green);
-  padding-right: 30px;
-}
-.sidebar-menu a.active {
+.sidebar-menu a:hover, .sidebar-menu a.active {
   background: #151515;
   color: var(--green);
   border-right: 4px solid var(--green);
 }
 
-/* زر الدعم الفني عبر واتساب */
 .whatsapp-chat-btn {
   display: flex;
   align-items: center;
@@ -128,279 +109,298 @@ body {
   font-weight: 700 !important;
   margin: 20px 15px 5px !important;
   box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-  border-radius: 10px;
 }
-.whatsapp-chat-btn:hover {
-  background: #20ba5a !important;
-  transform: translateY(-2px);
-}
+.whatsapp-chat-btn:hover { background: #20ba5a !important; transform: translateY(-2px); }
 
-/* زر تسجيل الخروج */
-.logout-btn {
-  color: var(--red) !important;
-  border-right: 4px solid transparent;
-}
-.logout-btn:hover {
-  background: #2a080c !important;
-  color: #ff4444 !important;
-  border-right: 4px solid var(--red);
-}
+.logout-btn { color: var(--red) !important; border-right: 4px solid transparent; }
+.logout-btn:hover { background: #2a080c !important; color: #ff4444 !important; }
 
 .overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.85);
-  display: none;
-  z-index: 1001;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); display: none; z-index: 1000;
 }
 .overlay.active { display: block; }
 
-/* ===== الهيدر الرئيسي ===== */
-.header {
-  text-align: center;
-  margin-bottom: 30px;
-  margin-top: 10px;
-}
-.header h1 {
-  font-size: 32px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  background: linear-gradient(90deg, #00ff88, #00c6ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.header p { color: var(--muted); font-size: 14px; }
-
-/* ===== بطاقة معلومات المسوق المطورة ===== */
-.user-card {
-  background: linear-gradient(135deg, #0a2a0a, #0a1a0a);
-  border: 1px solid var(--green);
-  border-radius: 20px;
-  padding: 25px;
-  margin-bottom: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.user-card-top {
+/* ===== بار معلومات المستخدم ===== */
+.user-bar {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  margin-top: 55px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 10px;
 }
-.user-info h3 { color: var(--green); font-size: 24px; font-weight: 800; }
-.user-info .username { font-size: 15px; color: #aaa; margin-top: 4px; font-weight: 700; }
-
-.affiliate-boxes-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 15px;
+.user-bar span { font-size: 14px; color: #b0b0b0; }
+.user-bar strong { color: var(--green); font-size: 16px; }
+.user-type {
+  padding: 4px 12px;
+  background: #0a1a2a;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #00aaff;
+  border: 1px solid #00aaff;
 }
 
-.affiliate-box {
-  background: rgba(21, 21, 21, 0.6);
-  border: 1px dashed var(--green);
-  background: rgba(0, 255, 136, 0.03);
+/* ===== شريط نظام الإحالة والمكافآت للمسوقين ===== */
+.challenge-container {
+  background: linear-gradient(135deg, #151515, #222);
+  border: 1px solid var(--orange);
   border-radius: 14px;
   padding: 15px;
+  margin-bottom: 20px;
+}
+.challenge-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
+}
+.progress-track {
+  background: #000;
+  border-radius: 20px;
+  height: 12px;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+.progress-fill {
+  background: linear-gradient(90deg, var(--orange), #ffbb00);
+  width: 0%;
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.5s ease-in-out;
+}
+.challenge-hint {
+  font-size: 12px;
+  color: var(--green);
+  margin-top: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+.challenge-sub-hint {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 4px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* ===== خانات نسخ الروابط والأكواد المحدثة والمحسنة للموبايل ===== */
+.share-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #000;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+.share-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.share-label {
+  font-size: 13px;
+  color: #bbb;
+  font-weight: bold;
+}
+.share-input-wrapper {
+  display: flex;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.share-input-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  color: #fff;
+  font-size: 13px;
+  text-align: left;
+  direction: ltr;
+}
+.share-input-wrapper input:focus { outline: none; }
+.btn-copy {
+  background: var(--orange);
+  color: #000;
+  border: none;
+  padding: 0 15px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: "Tajawal", sans-serif;
+  min-width: 80px;
+}
+.btn-copy:hover { background: #ffaa00; }
+
+/* ===== الهيدر ومحتوى الصفحة ===== */
+.header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
+.header h1 {
+  font-size: 24px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #00ff88, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  border-right: 3px solid var(--green);
+  padding-right: 10px;
+}
+
+.search-bar { margin-bottom: 15px; }
+.search-bar input {
+  width: 100%;
+  padding: 10px 15px;
+  background: #111;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-family: "Tajawal", sans-serif;
+  transition: 0.3s;
+}
+.search-bar input:focus { outline: none; border-color: var(--green); }
+
+/* ===== شبكة المربعات المالية ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+@media(max-width: 600px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  border: 1px solid var(--card-border);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  text-align: center;
+  transition: 0.3s;
+}
+.card.active {
+  border: 1px solid var(--green);
+  background: #111a15;
+}
+.card.challenge-card {
+  border: 1px solid var(--orange);
+  background: #221505;
 }
 
-.affiliate-box .lbl {
-  font-size: 13px;
+.card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.card-icon { font-size: 16px; }
+.orange { color: var(--orange); }
+.yellow { color: #ffdd00; }
+.green { color: var(--green); }
+.blue { color: var(--blue); }
+.purple { color: var(--purple); }
+
+.card-label {
+  font-size: 11px;
   color: #aaa;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-/* حاوية الرابط الجديد التفاعلي الأزرق للبروفايل */
-.link-copy-wrapper {
-  display: flex;
-  width: 100%;
-  background: #0a0a0a;
-  border: 1px solid #333;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-top: 4px;
-  align-items: center;
-}
-.link-copy-wrapper a.clickable-link {
-  flex: 1;
-  padding: 12px 10px;
-  color: #00aaff;
-  font-size: 13px;
-  text-align: left;
-  direction: ltr;
-  text-decoration: underline;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 700;
-}
-.link-copy-wrapper a.clickable-link:hover {
-  color: #00ff88;
-}
-.link-copy-wrapper button {
-  background: var(--blue);
-  color: #000;
-  border: none;
-  padding: 12px 22px;
-  font-family: 'Tajawal';
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: 0.2s;
-  height: 100%;
-}
-.link-copy-wrapper button:hover {
-  background: var(--green);
-  color: #000;
-}
-
-/* ===== شبكة الإحصائيات الذكية ===== */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin-bottom: 30px;
-}
-@media(max-width: 992px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-@media(max-width: 576px) { .stats-grid { grid-template-columns: 1fr; } }
-
-.stat-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  padding: 18px 16px;
-  transition: 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--green);
-  border-radius: 0 4px 4px 0;
-}
-.stat-card:hover {
-  border-color: var(--green);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(0,255,136,0.08);
-}
-.stat-card .label {
-  font-size: 13px;
-  color: var(--muted);
   font-weight: 500;
-  margin-bottom: 8px;
 }
-.stat-card .value {
-  font-size: 28px;
+.card-value {
+  font-size: 16px;
   font-weight: 800;
-  color: var(--text);
+  color: #fff;
 }
-.stat-card .value.green { color: var(--green); }
-.stat-card .value.orange { color: var(--orange); }
-.stat-card .value.blue { color: var(--blue); }
-.stat-card .value.purple { color: var(--purple); }
-.stat-card .value.gold { color: var(--gold); }
-.stat-card .sub {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 6px;
-}
+.card-value.highlight { color: var(--green); }
+.card-value.orange-highlight { color: var(--orange); }
 
-/* ===== قسم قائمة الطلبات الحديثة ===== */
-.section-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 30px 0 15px;
-  color: var(--green);
-  border-right: 4px solid var(--green);
-  padding-right: 14px;
+.btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
 }
-
-.orders-list {
-  background: var(--card-bg);
-  border-radius: 16px;
-  border: 1px solid var(--card-border);
-  overflow: hidden;
-}
-.order-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--card-border);
-  cursor: pointer;
-  transition: 0.2s;
-}
-.order-item:last-child { border-bottom: none; }
-.order-item:hover { background: #1a1a1a; }
-.order-info { flex: 1; }
-.order-customer { font-weight: 700; font-size: 15px; }
-.order-details {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-.order-status {
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.status-completed { background: #0a3a0a; color: var(--green); }
-.status-pending { background: #3a2a0a; color: var(--orange); }
-.status-delivery { background: #0a2a3a; color: var(--blue); }
-.status-returned { background: #3a0a0a; color: var(--red); }
-
-/* ===== أزرار التحديث والمؤشرات ===== */
-.btn-refresh {
-  background: var(--green);
+.btn {
+  padding: 12px;
   border: none;
-  padding: 14px 32px;
-  border-radius: 12px;
-  color: #000;
-  cursor: pointer;
-  margin: 25px auto 0;
-  display: block;
-  font-size: 15px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 700;
-  font-family: "Tajawal";
+  cursor: pointer;
+  font-family: "Tajawal", sans-serif;
   transition: 0.3s;
 }
-.btn-refresh:hover {
-  background: #00cc66;
-  transform: scale(1.02);
-}
+.btn-purple { background: #1a1a1a; border: 1px solid #333; color: #fff; }
+.btn-green { background: var(--green); color: #000; }
+.btn-green:hover { transform: translateY(-1px); }
 
-.loading {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.empty-state {
+.alert {
+  background: #15110a;
+  border: 1px solid #251f11;
+  color: var(--orange);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  margin-bottom: 15px;
   text-align: center;
-  padding: 40px;
-  color: var(--muted);
+}
+
+/* المودال ولوحة الأدمن */
+.modal {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; padding: 15px;
+}
+.modal-content { background: #111; border-radius: 14px; max-width: 400px; width: 100%; border: 1px solid #222; }
+
+.admin-panel { display: none; background: #111; border: 1px solid var(--orange); border-radius: 12px; padding: 15px; margin-top: 15px; }
+.admin-panel h3 { color: var(--orange); text-align: center; font-size: 16px; margin-bottom: 10px; }
+.admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; }
+.stat-card { background: #1a1a1a; padding: 8px; border-radius: 6px; text-align: center; }
+.stat-value { font-size: 14px; font-weight: 900; }
+.stat-label { font-size: 10px; color: #aaa; }
+.admin-table { width: 100%; font-size: 11px; overflow-x: auto; }
+.admin-table table { width: 100%; border-collapse: collapse; min-width: 650px; }
+.admin-table th { background: #1a1a1a; color: var(--green); padding: 8px 4px; border-bottom: 1px solid var(--green); }
+.admin-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #222; color: #fff; }
+
+/* ===== رسالة تأكيد الاسم الثابت ===== */
+.username-display {
+  background: #0a1a0a;
+  border: 1px solid var(--green);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 15px;
+  text-align: center;
+  color: var(--green);
+  font-weight: 700;
+  font-size: 14px;
+}
+.username-display span {
+  color: #fff;
+  background: #1a2a1a;
+  padding: 4px 14px;
+  border-radius: 6px;
+  margin-right: 6px;
 }
 </style>
 </head>
@@ -410,60 +410,240 @@ body {
 
 <div id="sidebar" class="sidebar">
   <div class="sidebar-header">
-    <span>📋 القائمة</span>
+    <span>📊 لوحة تحكم المسوق</span>
     <button onclick="toggleSidebar()">×</button>
   </div>
   <div class="sidebar-menu">
-    <a href="#" onclick="goToPage('data_page_market')" class="active">🏠 لوحة البيانات</a>
+    <a href="#" onclick="goToPage('data_page_market')">🏠 لوحة البيانات الرئيسية</a>
     <a href="#" onclick="goToPage('displayed_products')">🛍️ المنتجات المعروضة</a>
-    <a href="#" onclick="goToPage('manage_orders_market')">📋 طلباتي</a>
-    <a href="#" onclick="goToPage('my_wallet_market')">💰 المحفظة</a>
+    <a href="#" onclick="goToPage('manage_orders_market')">📋 إدارة الطلبات</a>
+    <a href="#" class="active">💰 المحفظة والسحوبات</a>
 
     <a href="https://wa.me/201108712091" target="_blank" class="whatsapp-chat-btn">💬 تواصل مع الدعم الفني</a>
-
     <a href="#" onclick="logout()" class="logout-btn">🚪 تسجيل الخروج</a>
   </div>
 </div>
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
+<div class="header">
+  <h1>Stylek Store</h1>
+</div>
+
 <div class="container">
-  <div class="header">
-    <h1>🏆 لوحة تحكم المسوق</h1>
-    <p>إحصائياتك وأداء مبيعاتك الفعلي والمباشر من السيرفر</p>
+  <div class="username-display">
+    👤 اسم المستخدم الحالي: <span id="userNameDisplay">-</span>
+    <span style="color: var(--muted); font-weight: 400; margin-right: 10px;">🔒 (ثابت لا يمكن تغييره)</span>
   </div>
 
-  <div class="user-card">
-    <div class="user-card-top">
-      <div class="user-info">
-        <h3 id="userName">👋 مرحباً بك، مسوق</h3>
-        <div class="username" id="userCode">كود المسوق: ...</div>
-      </div>
+  <div id="userBar" class="user-bar">
+    <span>المسوق: <strong id="userName">-</strong></span>
+    <span>نوع الحساب: <strong class="user-type">💰 مسوق</strong></span>
+  </div>
+
+  <div class="challenge-container" id="challengeBox">
+    <div class="challenge-title">
+      <span>👥 نظام الإحالة (دعوة المسوقين والشركاء)</span>
+      <span>المسوقين المتفاعلين: <strong id="progressText" style="color:var(--orange);">0 / 30</strong> شخص</span>
     </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="challenge-hint" id="challengeHint">📢 شارك كود الإحالة بتاعك واكسب على كل أوردر هيعملوه!</div>
+    <div class="challenge-sub-hint" id="challengeSubHint">عند دعوة 30 شخص متفاعل ويبدأوا بعمل أوردرات، ستحصل فوراً على بونص بقيمة 100 جنيه!</div>
     
-    <div class="affiliate-boxes-container">
-      <div class="affiliate-box">
-        <div class="lbl">🔗 رابط الإحالة المباشر الخاص بك (جاهز للنشر في البروفايل Bio)</div>
-        <div class="link-copy-wrapper">
-          <a href="#" id="referralLinkInput" class="clickable-link" target="_blank">جاري إنشاء الرابط...</a>
-          <button onclick="copyProfileLink()">نسخ</button>
+    <div class="share-box">
+      <div class="share-row">
+        <span class="share-label">🔑 كود الإحالة:</span>
+        <div class="share-input-wrapper">
+          <input type="text" id="referralCodeInput" readonly value="-">
+          <button class="btn-copy" onclick="copyValue('referralCodeInput')">نسخ الكود</button>
+        </div>
+      </div>
+      <div class="share-row">
+        <span class="share-label">🔗 رابط الإحالة:</span>
+        <div class="share-input-wrapper">
+          <input type="text" id="referralLinkInput" readonly value="-">
+          <button class="btn-copy" onclick="copyValue('referralLinkInput')">نسخ الرابط</button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="stats-grid" id="stats">
-    <div class="stat-card"><div class="label">⏳ جاري تحميل البيانات...</div></div>
+  <h2>💼 المحفظة والملخص المالي</h2>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="🔍 بحث أو تفعيل وضع الإدارة...">
   </div>
 
-  <div class="section-title">📋 آخر 5 طلبات مسجلة باسمك</div>
-  <div id="recentOrders" class="orders-list">
-    <div class="empty-state">⏳ جاري قراءة شيت الأوردرات...</div>
+  <div id="userMode">
+    <div class="grid">
+      <div class="card active">
+        <div class="card-header-row">
+          <span class="card-icon green">✓</span>
+          <div class="card-label">رصيد متاح للسحب</div>
+        </div>
+        <div class="card-value highlight" id="available">0.00</div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon yellow">⏳</span>
+          <div class="card-label">سحوبات معلقة</div>
+        </div>
+        <div class="card-value" id="pending">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon green">💵</span>
+          <div class="card-label">مسحوبة سابقاً</div>
+        </div>
+        <div class="card-value" id="withdrawn">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon orange">📦</span>
+          <div class="card-label">قيد التحضير</div>
+        </div>
+        <div class="card-value" id="preparing">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon purple">🚚</span>
+          <div class="card-label">قيد الشحن</div>
+        </div>
+        <div class="card-value" id="shipping">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-row">
+          <span class="card-icon blue">✅</span>
+          <div class="card-label">طلبات مكتملة</div>
+        </div>
+        <div class="card-value" id="delivered">0</div>
+      </div>
+
+      <div class="card challenge-card">
+        <div class="card-header-row">
+          <span class="card-icon orange">🎁</span>
+          <div class="card-label">بونص الإحالة المكتملة</div>
+        </div>
+        <div class="card-value orange-highlight" id="challengeBonusDisplay">0.00</div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="btn btn-purple" onclick="openHistory()">🕐 السجل</button>
+      <button class="btn btn-green" onclick="openWithdrawModal()">💵 طلب سحب</button>
+    </div>
+
+    <div class="alert">
+      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط.
+    </div>
   </div>
 
-  <button class="btn-refresh" onclick="loadAllData()">🔄 تحديث البيانات</button>
+  <div class="admin-panel" id="adminPanel">
+    <h3>🔐 طلبات سحب المسوقين (الأدمن)</h3>
+    <div class="admin-stats">
+      <div class="stat-card"><div class="stat-value" style="color:var(--orange);" id="pendingCount">0</div><div class="stat-label">معلق</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--green);" id="approvedCount">0</div><div class="stat-label">تم</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--red);" id="rejectedCount">0</div><div class="stat-label">مرفوض</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--blue);" id="totalCount">0</div><div class="stat-label">الإجمالي</div></div>
+    </div>
+    <div class="admin-table">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>المسوق</th><th>رقم السحب</th><th>الهاتف</th><th>المبلغ</th><th>الطريقة</th><th>الملاحظات</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+          <tr><td colspan="10">جاري التحميل...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="withdrawModal">
+  <div class="modal-content">
+    <div style="padding: 12px; text-align: center; position: relative; border-bottom: 1px solid #222;">
+      <h3 style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
+      <button type="button" onclick="closeWithdrawModal()" style="position: absolute; top: 8px; left: 15px; background: none; border: none; font-size: 24px; color: #fff; cursor: pointer;">×</button>
+    </div>
+    <form id="withdrawForm" style="padding: 15px;">
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">رقم هاتف المحفظة *</label>
+        <input type="tel" id="w_phone" required placeholder="01012345678" style="width:100%; padding:8px; background:#000; border:1px solid var(--green); border-radius:8px; color:#fff; text-align:center;" maxlength="11">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">وسيلة الاستلام *</label>
+        <select id="w_account" required style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#fff;">
+          <option value="">اختر الوسيلة</option>
+          <option value="فودافون كاش">فودافون كاش</option>
+          <option value="انستاباي">إنستا باي (InstaPay)</option>
+          <option value="اتصالات كاش">اتصالات كاش</option>
+          <option value="اورانج كاش">أورانج كاش</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">المبلغ المراد سحبه *</label>
+        <input type="number" id="w_amount" min="1" step="0.01" required placeholder="أدخل القيمة ج.م" style="width:100%; padding:8px; background:#000; border:1px solid var(--orange); border-radius:8px; color:var(--green); font-weight:700; text-align:center;">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <textarea id="w_notes" rows="2" maxlength="30" placeholder="ملاحظات إضافية أو اسم الحساب..." style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#aaa; resize:none; font-family:'Tajawal'; font-size:12px;"></textarea>
+      </div>
+      <button type="submit" style="width:100%; padding:10px; background:var(--green); border:none; color:#000; font-weight:700; border-radius:8px; cursor:pointer; font-size:14px;">تأكيد وإرسال الطلب</button>
+    </form>
+  </div>
 </div>
 
 <script>
+const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+
+let currentUser = '';
+
+const storedUser = localStorage.getItem('username');
+const urlUser = new URLSearchParams(window.location.search).get('user');
+
+if (storedUser && storedUser.trim() !== '') {
+  currentUser = storedUser.trim();
+} else if (urlUser && urlUser.trim() !== '') {
+  currentUser = urlUser.trim();
+  localStorage.setItem('username', currentUser);
+} else {
+  currentUser = 'بززبت';
+  localStorage.setItem('username', currentUser);
+}
+
+document.getElementById('userName').textContent = currentUser;
+document.getElementById('userNameDisplay').textContent = currentUser;
+
+// ===== تم إزالة الكلمة الثابتة تماماً بناءً على طلبك والاعتماد فقط على اسم المستخدم النظيف =====
+const finalReferralCode = currentUser; // أصبح كود الإحالة يساوي اسم المستخدم النظيف تماماً
+document.getElementById('referralCodeInput').value = finalReferralCode;
+
+// الرابط يظهر نظيفاً ومباشراً بدون إضافات ولا رموز مشفرة
+document.getElementById('referralLinkInput').value = `https://stylek.store/?ref=${finalReferralCode}`;
+
+// دالة النسخ الاحترافية للموبايل
+function copyValue(inputId) {
+  const inputEl = document.getElementById(inputId);
+  inputEl.select();
+  inputEl.setSelectionRange(0, 99999);
+  
+  try {
+    navigator.clipboard.writeText(inputEl.value);
+    alert('✅ تم نسخ البيانات بنجاح إلى الحافظة!');
+  } catch (err) {
+    document.execCommand('copy');
+    alert('✅ تم النسخ بنجاح!');
+  }
+}
+
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
@@ -471,263 +651,174 @@ function toggleSidebar() {
 
 function goToPage(pageName) {
   toggleSidebar();
-  const currentUser = localStorage.getItem('username') || USER_CODE;
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
 function logout() {
-  if (confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+  if(confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
     localStorage.removeItem('username');
-    localStorage.removeItem('userName');
     localStorage.removeItem('userType');
     window.location.href = 'index.html';
   }
 }
 
-// ===== إعدادات اتصال قاعدة بيانات Supabase الرسمية لـ Stylek Store =====
-const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
+let isAdmin = false;
+const ADMIN_CODE = 'Ahmed**##$$1';
+let globalAvailableBalance = 0;
 
-const urlParams = new URLSearchParams(window.location.search);
-let rawUser = urlParams.get('user') || localStorage.getItem('username') || '';
-let USER_CODE = rawUser.trim().toLowerCase(); 
-let USER_NAME = localStorage.getItem('userName') || 'مسوق';
-
-if(!USER_CODE) {
-  USER_CODE = 'marketer_' + Math.random().toString(36).substr(2, 6);
-}
-
-localStorage.setItem('username', USER_CODE);
-document.getElementById('userCode').innerText = `كود المسوق: ${USER_CODE}`;
-document.getElementById('userName').innerHTML = `👋 مرحباً، ${USER_NAME}`;
-
-// توليد الرابط النظيف الصافي المباشر لصفحة المتجر الرئيسية
-const generatedProfileLink = `https://stylek.store/?ref=${USER_CODE}`;
-const profileLinkAnchor = document.getElementById('referralLinkInput');
-profileLinkAnchor.href = generatedProfileLink;
-profileLinkAnchor.innerText = generatedProfileLink;
-
-// دالة نسخ الرابط المحدثة لتعمل بشكل مطلق داخل البروفايلات وتطبيقات الهاتف
-function copyProfileLink() {
-  const urlToCopy = document.getElementById('referralLinkInput').href;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(urlToCopy)
-      .then(() => alert('✅ تم نسخ رابط الإحالة الصافي بنجاح! جاهز للنشر في البروفايل الـ Bio.'))
-      .catch(() => fallbackCopyText(urlToCopy));
-  } else {
-    fallbackCopyText(urlToCopy);
-  }
-}
-
-function fallbackCopyText(text) {
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed"; 
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-  try {
-    document.execCommand('copy');
-    alert('✅ تم نسخ رابط الإحالة الصافي بنجاح! جاهز للنشر في البروفايل الـ Bio.');
-  } catch (err) {
-    alert('❌ فشل النسخ التلقائي، يرجى تحديد الرابط ونسخه يدوياً.');
-  }
-  document.body.removeChild(textArea);
-}
-
-// دالة الاتصال المحمية تمنع خطأ Unexpected end of JSON input
-async function supabaseApi(endpoint) {
+async function supabaseApi(endpoint, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-  const headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json'
+  const headers = { 
+    'apikey': SUPABASE_KEY, 
+    'Authorization': `Bearer ${SUPABASE_KEY}`, 
+    'Content-Type': 'application/json', 
+    ...options.headers 
   };
-  
-  try {
-    const response = await fetch(url, { headers });
-    if (response.status === 204 || response.headers.get('content-length') === '0') {
-      return [];
-    }
-    const textData = await response.text();
-    if (!textData || textData.trim() === "") return [];
-    
-    return JSON.parse(textData);
-  } catch (e) {
-    console.error("API Fetch Exception handled safely:", e);
-    return [];
-  }
+  if (options.method === 'POST') headers['Prefer'] = 'return=representation';
+
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) throw new Error(await response.text());
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
 }
 
-let dashboardData = {
-  totalOrders: 0,
-  completedOrders: 0,
-  pendingOrders: 0,
-  totalCommission: 0,
-  withdrawnCommission: 0,
-  remainingCommission: 0,
-  recentOrders: []
-};
-
-async function loadAllData() {
-  const refreshBtn = document.querySelector('.btn-refresh');
-  if(refreshBtn) refreshBtn.innerHTML = '<span class="loading"></span> جاري جلب الأرقام...';
-  
+async function loadDashboard() {
   try {
-    const orders = await supabaseApi(`orders?marketer_id=ilike.${USER_CODE}&select=*`) || [];
-    const withdrawals = await supabaseApi(`withdrawals?username=ilike.${USER_CODE}&select=*`) || [];
+    const allOrders = await supabaseApi(`orders?select=*`);
+    const lowerUser = currentUser.toLowerCase();
     
-    let totalOrders = 0;
-    let completedOrders = 0;
-    let pendingOrders = 0;
-    let totalCommission = 0;
-    let recentOrders = [];
-    
-    orders.forEach(order => {
-      const commission = parseFloat(order.commission) || 0;
-      totalOrders++;
-      
-      const orderStatus = (order.order_status || '').trim().toLowerCase();
-      
-      if (orderStatus === 'تم التسليم' || orderStatus === 'delivered' || orderStatus === 'تم التوصيل') {
-        completedOrders++;
-        totalCommission += commission;
-      } else if (orderStatus === 'مرتجع' || orderStatus === 'مرفوض') {
-        // الاستبعاد المالي والتنفيذي للمرتجعات والمرفوضات
-      } else {
-        pendingOrders++;
-      }
-      
-      recentOrders.push({
-        order_id: order.order_id,
-        customer_name: order.customer_name,
-        phone: order.phone,
-        total_price: order.total_price,
-        commission: commission,
-        status: order.order_status,
-        created_at: order.created_at
-      });
+    const marketerOrders = allOrders.filter(o => {
+      const id = (o.marketer_id || '').toLowerCase().trim();
+      const username = (o.marketer_username || '').toLowerCase().trim();
+      return id === lowerUser || username === lowerUser;
     });
-    
-    recentOrders = recentOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
-    
-    let withdrawnCommission = 0;
-    withdrawals.forEach(w => {
-      const wStatus = (w.status || '').trim();
-      if(wStatus === 'تم' || wStatus === 'تم الدفع') {
-        withdrawnCommission += parseFloat(w.amount) || 0;
+
+    let deliveredCommissionTotal = 0, shippingCommissionTotal = 0, preparingCommissionTotal = 0, deliveredCount = 0;
+
+    marketerOrders.forEach(o => {
+      const commission = parseFloat(o.commission) || 0;
+      const status = (o.order_status || '').trim();
+      if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
+        deliveredCommissionTotal += commission; 
+        deliveredCount++; 
+      } else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
+        shippingCommissionTotal += commission; 
+      } else if (status === 'تغليف') { 
+        preparingCommissionTotal += commission; 
       }
     });
-    
-    const remainingCommission = totalCommission - withdrawnCommission;
-    
-    dashboardData = {
-      totalOrders,
-      completedOrders,
-      pendingOrders,
-      totalCommission,
-      withdrawnCommission,
-      remainingCommission,
-      recentOrders
-    };
-    
-    renderStats();
-    renderRecentOrders();
-    
-  } catch(err) {
-    console.error('Error handling marketer dashboard data:', err);
-  }
-  
-  if(refreshBtn) refreshBtn.innerHTML = '🔄 تحديث البيانات';
-}
 
-function renderStats() {
-  const statsHtml = `
-    <div class="stat-card">
-      <div class="label">📦 إجمالي الطلبات</div>
-      <div class="value green">${dashboardData.totalOrders}</div>
-      <div class="sub">جميع الطلبات المقدمة من خلالك</div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="label">✅ الطلبات المكتملة</div>
-      <div class="value gold">${dashboardData.completedOrders}</div>
-      <div class="sub">تم توصيلها للعميل بنجاح وتم تأكيدها</div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="label">⏳ قيد التنفيذ بالشحن</div>
-      <div class="value orange">${dashboardData.pendingOrders}</div>
-      <div class="sub">طلبات جاري معالجتها وشحنها حالياً</div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="label">💰 إجمالي الأرباح المستلمة</div>
-      <div class="value green">${dashboardData.totalCommission.toFixed(2)} <small style="font-size:14px">ج.م</small></div>
-      <div class="sub">مجموع العمولات المعتمدة للأوردرات المكتملة</div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="label">💸 الأرباح المسحوبة سابقاً</div>
-      <div class="value blue">${dashboardData.withdrawnCommission.toFixed(2)} <small style="font-size:14px">ج.م</small></div>
-      <div class="sub">إجمالي المبالغ التي تم تحويلها لكاش</div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="label">📈 رصيد المحفظة المتاح حالياً</div>
-      <div class="value purple">${dashboardData.remainingCommission.toFixed(2)} <small style="font-size:14px">ج.م</small></div>
-      <div class="sub">جاهز لتقديم طلب سحب فوري من محفظتك</div>
-    </div>
-  `;
-  
-  document.getElementById('stats').innerHTML = statsHtml;
-}
+    const uniqueReferredUsers = new Set();
+    allOrders.forEach(o => {
+      const refCode = (o.referral_code || o.referrer_id || '').trim();
+      const buyerName = (o.marketer_username || o.customer || '').trim();
+      if ((refCode === finalReferralCode || refCode.toLowerCase() === lowerUser) && buyerName.toLowerCase() !== lowerUser && buyerName !== '') {
+        uniqueReferredUsers.add(buyerName.toLowerCase());
+      }
+    });
 
-function renderRecentOrders() {
-  const container = document.getElementById('recentOrders');
-  
-  if(dashboardData.recentOrders.length === 0) {
-    container.innerHTML = '<div class="empty-state">📭 لا توجد طلبات مسجلة باسمك حتى الآن</div>';
-    return;
-  }
-  
-  let html = '';
-  dashboardData.recentOrders.forEach(order => {
-    let statusClass = 'status-pending';
-    let statusText = order.status || 'قيد الانتظار';
-    const currentStatus = (order.status || '').trim().toLowerCase();
-    
-    if(currentStatus === 'تم التسليم' || currentStatus === 'تم التوصيل' || currentStatus === 'delivered') {
-      statusClass = 'status-completed';
-      statusText = '✅ مكتمل بالتوصيل';
-    } else if(currentStatus === 'مرتجع') {
-      statusClass = 'status-returned';
-      statusText = '↩️ أوردر مرتجع';
-    } else if(currentStatus === 'مرفوض') {
-      statusClass = 'status-returned';
-      statusText = '❌ أوردر مرفوض';
+    const activeReferralsCount = uniqueReferredUsers.size;
+    const progressPercent = Math.min((activeReferralsCount / 30) * 100, 100);
+    document.getElementById('progressText').textContent = `${activeReferralsCount} / 30`;
+    document.getElementById('progressFill').style.width = `${progressPercent}%`;
+
+    if (activeReferralsCount >= 30) {
+      document.getElementById('challengeBonusDisplay').textContent = '100.00';
+      document.getElementById('challengeHint').innerHTML = '🎉 <span style="color:var(--green); font-weight:bold;">مبروك! نجحت في دعوة 30 مسوق متفاعل واستحققت بونص 100 جنيه!</span>';
     } else {
-      statusClass = 'status-delivery';
-      statusText = '🚚 جاري المعالجة والشحن';
+      document.getElementById('challengeBonusDisplay').textContent = '0.00';
+      document.getElementById('challengeHint').textContent = '📢 شارك كود الإحالة بتاعك واكسب على كل أوردر هيعملوه!';
     }
-    
-    html += `
-      <div class="order-item" onclick="window.location.href='manage_orders_market.html?user=${encodeURIComponent(USER_CODE)}'">
-        <div class="order-info">
-          <div class="order-customer">👤 ${order.customer_name || 'عميل غير مسجل الاسم'}</div>
-          <div class="order-details">📞 ${order.phone || '-'} | 💰 إجمالي الأوردر: ${order.total_price || 0} ج.م | 🆔 كود: ${order.order_id || '-'}</div>
-        </div>
-        <div class="order-status ${statusClass}">${statusText}</div>
-      </div>
-    `;
-  });
-  
-  container.innerHTML = html;
+
+    const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
+    let pending = 0, withdrawn = 0;
+
+    withdrawals.forEach(w => {
+      const amount = parseFloat(w.amount) || 0;
+      if (w.status === 'قيد المراجعة') pending += amount;
+      else if (w.status === 'تم' || w.status === 'تم الدفع') withdrawn += amount;
+    });
+
+    globalAvailableBalance = deliveredCommissionTotal - (pending + withdrawn);
+    if(globalAvailableBalance < 0) globalAvailableBalance = 0;
+
+    document.getElementById('available').textContent = globalAvailableBalance.toFixed(2);
+    document.getElementById('pending').textContent = pending.toFixed(2);
+    document.getElementById('withdrawn').textContent = withdrawn.toFixed(2);
+    document.getElementById('preparing').textContent = preparingCommissionTotal.toFixed(2);
+    document.getElementById('delivered').textContent = deliveredCount;
+    document.getElementById('shipping').textContent = shippingCommissionTotal.toFixed(2);
+
+  } catch(err) { console.error('❌ خطأ:', err); }
 }
 
-// البدء في جلب البيانات فوراً عند فتح الصفحة
-loadAllData();
-setInterval(loadAllData, 20000); // تحديث تلقائي آمن كل 20 ثانية في الخلفية
+document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone = document.getElementById('w_phone').value.trim();
+  const requestedAmount = parseFloat(document.getElementById('w_amount').value) || 0;
+  if (!/^01[0125][0-9]{8}$/.test(phone)) { alert('❌ رقم هاتف غير صحيح'); return; }
+  if (requestedAmount > globalAvailableBalance) { alert('❌ الرصيد غير كافٍ'); return; }
+
+  try {
+    await supabaseApi('withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: currentUser, amount: requestedAmount, account: document.getElementById('w_account').value,
+        notes: `رقم تليفون تحويل المسوق: ${phone} | ${document.getElementById('w_notes').value}`,
+        order_id: 'MKT-WD-' + Math.floor(1000 + Math.random() * 9000), customer: 'مورد', status: 'قيد المراجعة',
+        due: requestedAmount, paid: 0, remaining: requestedAmount
+      })
+    });
+    alert('✅ تم إرسال طلب السحب!');
+    closeWithdrawModal();
+    document.getElementById('withdrawForm').reset();
+    await loadDashboard(); 
+  } catch(err) { alert('❌ خطأ: ' + err.message); }
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  const val = e.target.value;
+  if(val === ADMIN_CODE && !isAdmin) {
+    isAdmin = true;
+    document.getElementById('userMode').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    loadAdminPanel();
+  }
+  if(val !== ADMIN_CODE && isAdmin) {
+    isAdmin = false;
+    document.getElementById('userMode').style.display = 'block';
+    document.getElementById('adminPanel').style.display = 'none';
+  }
+});
+
+async function loadAdminPanel() {
+  try {
+    const data = await supabaseApi('withdrawals?select=*');
+    const tbody = document.getElementById('adminTableBody');
+    if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="10">لا توجد طلبات سحب</td></tr>'; return; }
+
+    tbody.innerHTML = data.map((w, i) => {
+      let displayPhone = '-', cleanNotes = w.notes || '';
+      if(cleanNotes.includes('رقم تليفون تحويل المسوق:')) {
+        const parts = cleanNotes.split('|');
+        displayPhone = parts[0].replace('رقم تليفون تحويل المسوق:', '').trim();
+        cleanNotes = parts[1] || '';
+      }
+      return `
+        <tr>
+          <td>${i+1}</td><td>${w.username || '-'}</td><td>${w.order_id || '-'}</td><td>${displayPhone}</td><td>${w.amount || 0}</td><td>${w.account || '-'}</td><td>${cleanNotes}</td><td>${w.created_at ? new Date(w.created_at).toLocaleDateString('ar-EG') : '-'}</td><td>${w.status || 'قيد المراجعة'}</td>
+          <td>${w.status === 'قيد المراجعة'? `<button onclick="approveWithdrawal(${w.id}, ${w.amount})">دفع</button>` : '-'}</td>
+        </tr>`;
+    }).join('');
+  } catch(err) { console.error(err); }
+}
+
+function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'flex'; }
+function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
+function openHistory() { alert('يظهر السجل المالي للأدمن عبر كود الإدارة.'); }
+
+loadDashboard();
+setInterval(loadDashboard, 15000);
 </script>
 </body>
 </html>
