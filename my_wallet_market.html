@@ -185,6 +185,26 @@ body {
   text-align: center;
 }
 
+/* زر سحب البونص المخصص */
+.btn-claim-bonus {
+  display: none;
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(90deg, #ff9900, #ffbb00);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-family: 'Tajawal', sans-serif;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+  transition: 0.2s;
+}
+.btn-claim-bonus:hover { transform: translateY(-1px); background: #ffaa00; }
+
 /* ===== الهيدر ومحتوى الصفحة ===== */
 .header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
 .header h1 {
@@ -390,6 +410,7 @@ h2 {
       <div class="progress-fill" id="progressFill"></div>
     </div>
     <div class="challenge-hint" id="challengeHint">شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!</div>
+    <button class="btn-claim-bonus" id="btnClaimBonus" onclick="openBonusWithdrawModal()">💰 اضغط هنا لسحب بونص التحدي (300 ج.م)</button>
   </div>
 
   <h2>💼 المحفظة والملخص المالي</h2>
@@ -493,10 +514,11 @@ h2 {
 <div class="modal" id="withdrawModal">
   <div class="modal-content">
     <div style="padding: 12px; text-align: center; position: relative; border-bottom: 1px solid #222;">
-      <h3 style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
+      <h3 id="modalTitle" style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
       <button type="button" onclick="closeWithdrawModal()" style="position: absolute; top: 8px; left: 15px; background: none; border: none; font-size: 24px; color: #fff; cursor: pointer;">×</button>
     </div>
     <form id="withdrawForm" style="padding: 15px;">
+      <input type="hidden" id="is_bonus_withdrawal" value="false">
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">رقم هاتف المحفظة *</label>
         <input type="tel" id="w_phone" required placeholder="01012345678" style="width:100%; padding:8px; background:#000; border:1px solid var(--green); border-radius:8px; color:#fff; text-align:center;" maxlength="11">
@@ -524,12 +546,11 @@ h2 {
 </div>
 
 <script>
-// ===== إعدادات Supabase =====
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
-// ===== ثبات اسم المستخدم - لا يمكن تغييره =====
 let currentUser = '';
+let currentBonusOrdersToReset = []; // مصفوفة لحفظ الأوردرات التي تم احتساب التحدي منها لتصفيرها لاحقاً
 
 const storedUser = localStorage.getItem('username');
 const urlUser = new URLSearchParams(window.location.search).get('user');
@@ -549,7 +570,6 @@ localStorage.setItem('username', currentUser);
 document.getElementById('userName').textContent = currentUser;
 document.getElementById('userNameDisplay').textContent = currentUser;
 
-// ===== دوال التنقل =====
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
@@ -571,8 +591,8 @@ function logout() {
 let isAdmin = false;
 const ADMIN_CODE = 'Ahmed**##$$1';
 let globalAvailableBalance = 0;
+let hasActiveBonus = false;
 
-// ===== دوال Supabase =====
 async function supabaseApi(endpoint, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = { 
@@ -582,7 +602,7 @@ async function supabaseApi(endpoint, options = {}) {
     ...options.headers 
   };
   
-  if (options.method === 'POST') {
+  if (options.method === 'POST' || options.method === 'PATCH') {
     headers['Prefer'] = 'return=representation';
   }
 
@@ -593,7 +613,6 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
-// ===== تحميل البيانات =====
 async function loadDashboard() {
   try {
     const allOrders = await supabaseApi(`orders?select=*`);
@@ -605,17 +624,23 @@ async function loadDashboard() {
     });
 
     let deliveredCommissionTotal = 0, shippingCommissionTotal = 0, preparingCommissionTotal = 0, deliveredCount = 0;
-    let totalDeliveredQty = 0; // حساب إجمالي قطع الأوردرات المكتملة للتحدي
+    let totalDeliveredQty = 0; 
+    currentBonusOrdersToReset = []; // تصفير مصفوفة التتبع لإعادة تعبئتها
 
     marketerOrders.forEach(o => {
       const commission = parseFloat(o.commission) || 0;
-      const orderQty = parseInt(o.qty) || 1; // جلب الكمية المحددة في الأوردر
+      const orderQty = parseInt(o.qty) || 1; 
       const status = (o.order_status || '').trim();
       
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
         deliveredCommissionTotal += commission; 
         deliveredCount++; 
-        totalDeliveredQty += orderQty; // إضافة الكمية لعداد قطع التحدي المكتملة
+        
+        // التحقق من أن هذا الأوردر لم يتم تصفير البونص منه مسبقاً (عبر حقل مخصص مثلاً bonus_claimed)
+        if (!o.bonus_claimed) {
+          totalDeliveredQty += orderQty; 
+          currentBonusOrdersToReset.push(o.id); // حفظ الـ ID لتحديثه عند السحب
+        }
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
         shippingCommissionTotal += commission; 
@@ -625,17 +650,20 @@ async function loadDashboard() {
       }
     });
 
-    // ===== تحديث شريط التحدي ومربع البونص للمسوقين =====
     const progressPercent = Math.min((totalDeliveredQty / 6) * 100, 100);
     document.getElementById('progressText').textContent = `${totalDeliveredQty} / 6`;
     document.getElementById('progressFill').style.width = `${progressPercent}%`;
 
     if (totalDeliveredQty >= 6) {
+      hasActiveBonus = true;
       document.getElementById('challengeBonusDisplay').textContent = '300.00';
       document.getElementById('challengeHint').innerHTML = '🎉 <span style="color:var(--green); font-weight:bold;">مبروك! لقد حققت التحدي بنجاح واستحققت بونص 300 جنيه!</span>';
+      document.getElementById('btnClaimBonus').style.display = 'block'; // إظهار زر سحب البونص
     } else {
+      hasActiveBonus = false;
       document.getElementById('challengeBonusDisplay').textContent = '0.00';
       document.getElementById('challengeHint').textContent = 'شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!';
+      document.getElementById('btnClaimBonus').style.display = 'none'; // إخفاء الزر
     }
 
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
@@ -662,11 +690,33 @@ async function loadDashboard() {
   }
 }
 
-// ===== تقديم طلب سحب =====
+// دالة لفتح مودال السحب العادي
+function openWithdrawModal() { 
+  document.getElementById('is_bonus_withdrawal').value = 'false';
+  document.getElementById('modalTitle').textContent = 'إنشاء طلب سحب جديد';
+  document.getElementById('w_amount').value = '';
+  document.getElementById('w_amount').readOnly = false;
+  document.getElementById('withdrawModal').style.display = 'flex'; 
+}
+
+// دالة لفتح المودال في وضع سحب البونص
+function openBonusWithdrawModal() {
+  if (!hasActiveBonus) return;
+  document.getElementById('is_bonus_withdrawal').value = 'true';
+  document.getElementById('modalTitle').textContent = '🎁 سحب بونص التحدي (300 جنيه)';
+  document.getElementById('w_amount').value = '300.00';
+  document.getElementById('w_amount').readOnly = true; // تثبيت القيمة على 300 جنيه للبونص
+  document.getElementById('withdrawModal').style.display = 'flex';
+}
+
+function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
+
+// ===== تقديم طلب السحب المعدل =====
 document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const phone = document.getElementById('w_phone').value.trim();
   const requestedAmount = parseFloat(document.getElementById('w_amount').value) || 0;
+  const isBonus = document.getElementById('is_bonus_withdrawal').value === 'true';
 
   const phoneRegex = /^01[0125][0-9]{8}$/;
   if (!phoneRegex.test(phone)) {
@@ -674,21 +724,27 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
     return;
   }
 
-  if (requestedAmount > globalAvailableBalance) {
+  if (!isBonus && requestedAmount > globalAvailableBalance) {
     alert(`❌ خطأ: الرصيد المتاح غير كافٍ. الرصيد المتاح: ${globalAvailableBalance.toFixed(2)} ج.م`);
     return;
   }
 
   try {
+    // تحديد صيغة الملاحظات بناءً على نوع السحب لتظهر بوضوح للأدمن
+    const noteText = isBonus 
+      ? `🚨 [طلب سحب بونص التحدي] | رقم تليفون تحويل المسوق: ${phone} | ${document.getElementById('w_notes').value}`
+      : `رقم تليفون تحويل المسوق: ${phone} | ${document.getElementById('w_notes').value}`;
+
+    // 1. إرسال طلب السحب إلى قاعدة البيانات
     await supabaseApi('withdrawals', {
       method: 'POST',
       body: JSON.stringify({
         username: currentUser,
         amount: requestedAmount,
         account: document.getElementById('w_account').value,
-        notes: `رقم تليفون تحويل المسوق: ${phone} | ${document.getElementById('w_notes').value}`,
-        order_id: 'MKT-WD-' + Math.floor(1000 + Math.random() * 9000),
-        customer: 'مسوق',
+        notes: noteText,
+        order_id: isBonus ? 'BONUS-WD-' + Math.floor(1000 + Math.random() * 9000) : 'MKT-WD-' + Math.floor(1000 + Math.random() * 9000),
+        customer: isBonus ? 'سحب بونص' : 'مسوق',
         status: 'قيد المراجعة',
         due: requestedAmount,
         paid: 0,
@@ -696,7 +752,17 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
       })
     });
 
-    alert('✅ تم إرسال طلب السحب بنجاح!');
+    // 2. إذا كان سحب بونص، نقوم بتصفير عداد الأوردرات الحالية ليرجع العداد لصفر تلقائياً
+    if (isBonus && currentBonusOrdersToReset.length > 0) {
+      for (const orderId of currentBonusOrdersToReset) {
+        await supabaseApi(`orders?id=eq.${orderId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ bonus_claimed: true })
+        });
+      }
+    }
+
+    alert(isBonus ? '🎉 تم إرسال طلب سحب البونص بنجاح وتصفير العداد لتحدي جديد!' : '✅ تم إرسال طلب السحب بنجاح!');
     closeWithdrawModal();
     document.getElementById('withdrawForm').reset();
     await loadDashboard(); 
@@ -738,13 +804,17 @@ async function loadAdminPanel() {
         const parts = cleanNotes.split('|');
         displayPhone = parts[0].replace('رقم تليفون تحويل المسوق:', '').trim();
         cleanNotes = parts[1] || '';
+      } else if (cleanNotes.includes('[طلب سحب بونص التحدي]')) {
+        const parts = cleanNotes.split('|');
+        displayPhone = (parts[1] || '').replace('رقم تليفون تحويل المسوق:', '').trim();
+        cleanNotes = `🎁 بونص تحدي | ${parts[2] || ''}`;
       }
 
       return `
         <tr>
           <td>${i+1}</td>
           <td>${w.username || '-'}</td>
-          <td style="color:var(--green); font-weight:700;">${w.order_id || '-'}</td>
+          <td style="color:${w.order_id.startsWith('BONUS') ? 'var(--orange)' : 'var(--green)'}; font-weight:700;">${w.order_id || '-'}</td>
           <td style="color:var(--blue); font-weight:bold;">${displayPhone}</td>
           <td style="color:var(--orange); font-weight:900;">${w.amount || 0}</td>
           <td>${w.account || '-'}</td>
@@ -795,11 +865,8 @@ async function rejectWithdrawal(id) {
   } catch(err) { alert(err.message); }
 }
 
-function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'flex'; }
-function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 function openHistory() { alert('السجل المالي يظهر للأدمن تلقائياً عند البحث بكود الإدارة.'); }
 
-// ===== تشغيل التحميل الأولي =====
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>
