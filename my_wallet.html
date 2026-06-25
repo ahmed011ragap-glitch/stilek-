@@ -428,7 +428,7 @@ h2 {
     </div>
 
     <div class="alert">
-      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط. لا يوجد حد أدنى للسحوبات العادية، بينما يشترط حد أدنى 300 ج.م لأرباح الإحالة (تُحسب بالطلب الكامل). ويجب مرور 5 ساعات بين أي طلب سحب وآخر.
+      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط. لا يوجد حد أدنى للسحوبات العادية، بينما يشترط حد أدنى 300 ج.م لأرباح الإحالة (تُحسب بالطلب الكامل على منتجات المورد المحال). ويجب مرور 5 ساعات بين أي طلب سحب وآخر.
     </div>
   </div>
 
@@ -563,59 +563,60 @@ async function supabaseApi(endpoint, options = {}) {
 
 async function loadDashboard() {
   try {
+    // 1. جلب المنتجات الخاصة بالمورد الحالي لحساب أرباحه العادية
     const myProducts = await supabaseApi(
       `products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id`
     );
     const myProductIds = myProducts.map(p => p.product_id);
     
-    if (myProductIds.length === 0) {
-      document.getElementById('available').textContent = '0.00';
-      document.getElementById('pending').textContent = '0.00';
-      document.getElementById('withdrawn').textContent = '0.00';
-      document.getElementById('preparing').textContent = '0.00';
-      document.getElementById('delivered').textContent = '0';
-      document.getElementById('shipping').textContent = '0.00';
-      document.getElementById('referralBonusDisplay').textContent = '0.00';
-      return;
-    }
-
+    // 2. جلب جميع الطلبات من قاعدة البيانات
     const allOrders = await supabaseApi(`orders?select=*`);
     
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
 
-    allOrders.forEach(o => {
-      if (myProductIds.includes(o.product_id)) {
-        const orderPrice = parseFloat(o.price) || 0;
-        const orderQty = parseInt(o.qty) || 1;
-        const totalOrderValue = orderPrice * orderQty;
-        
-        const status = (o.order_status || '').trim();
-        
-        if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
-          deliveredPriceTotal += totalOrderValue;
-          deliveredCount++; 
-        } 
-        else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
-          shippingPriceTotal += totalOrderValue;
-        } 
-        else if (status === 'تغليف') { 
-          preparingPriceTotal += totalOrderValue;
+    if (myProductIds.length > 0) {
+      allOrders.forEach(o => {
+        if (myProductIds.includes(o.product_id)) {
+          const orderPrice = parseFloat(o.price) || 0;
+          const orderQty = parseInt(o.qty) || 1;
+          const totalOrderValue = orderPrice * orderQty;
+          
+          const status = (o.order_status || '').trim();
+          
+          if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
+            deliveredPriceTotal += totalOrderValue;
+            deliveredCount++; 
+          } 
+          else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
+            shippingPriceTotal += totalOrderValue;
+          } 
+          else if (status === 'تغليف') { 
+            preparingPriceTotal += totalOrderValue;
+          }
         }
-      }
-    });
+      });
+    }
 
-    // ===== نظام حساب أرباح الإحالة (5 جنيه لكل أوردر كامل / سلة كاملة) =====
+    // ===== 3. النظام الجديد والذكي لحساب أرباح الإحالة للمورد =====
+    // نبحث عن الموردين (أو المستخدمين الآخرين) الذين سجلوا باستخدام كود/اسم المستخدم الحالي (currentUser) كمُحيل
+    // ثم نقوم بجلب المنتجات التي يمتلكونها لمعرفة الطلبات التي جاءت عليها
     globalReferralBalance = 0;
     currentReferralOrdersToReset = [];
-    
+
+    // جلب المنتجات التي تم وضع هذا الحساب (currentUser) فيها كـ referrer_username أو جلب المنتجات التابعة للمستخدمين المسجلين عبره
+    // الطريقة المباشرة والأكثر أماناً بناءً على هيكلية الطلبات: فلترة الطلبات التي يكون فيها `referrer_username` هو المستخدم الحالي
+    // وبما أن الطلبات تأتي للمورد المحال على منتجاته، فإن السلة الكاملة المحسوبة تحتوي على كود الفريد (order_id)
     const uniqueReferralOrders = [];
+    
     allOrders.forEach(o => {
       const referrer = (o.referrer_username || o.referrer_id || '').toLowerCase().trim();
+      // إذا كان المورد الحالي هو صاحب الإحالة (محمد) والطلب ناجح ومكتمل
       if (referrer === currentUser) {
         const status = (o.order_status || '').trim();
         if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') {
           if (!o.referral_bonus_claimed) {
             const uniqueKey = o.order_id || o.id;
+            // حساب الـ 5 جنيه مرة واحدة فقط على الأوردر الكامل (السلة كاملة) مهما احتوى على قطع
             if (!uniqueReferralOrders.includes(uniqueKey)) {
               uniqueReferralOrders.push(uniqueKey);
               globalReferralBalance += 5; 
@@ -625,8 +626,10 @@ async function loadDashboard() {
         }
       }
     });
+    
     document.getElementById('referralBonusDisplay').textContent = globalReferralBalance.toFixed(2);
 
+    // 4. حساب السحوبات والعمليات المعلقة للمورد
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount,created_at&order=created_at.desc`);
     let pending = 0, withdrawn = 0;
 
