@@ -54,8 +54,6 @@ button:disabled{background:#444 !important;color:#aaa;cursor:not-allowed;}
 .success{text-align:center;margin-top:12px;color:#00ff88;font-weight:600;font-size:14px;min-height:20px;}
 .link{text-align:center;margin-top:15px;color:#00c6ff;cursor:pointer;text-decoration:underline;font-size:14px;}
 .otp-timer{font-size:13px;color:#ffaa00;text-align:center;margin-top:5px;}
-.disabled-option{color:#888;background:#1a1a1a;}
-.notice-box{background:#2a1a1a;border:1px solid #ff6633;border-radius:10px;padding:10px;margin:8px 0;text-align:center;color:#ff8844;font-size:13px;}
 
 /* تصميم حقل كود الترويج التلقائي المعزز */
 input.auto-ref-input {
@@ -129,13 +127,7 @@ input.auto-ref-input {
 <select id="type">
     <option value="">نوع الحساب</option>
     <option value="تاجر">تاجر</option>
-    <option value="مسوق" class="disabled-option" disabled>مسوق (🚫 غير متاح حالياً - قريباً)</option>
-</select>
-
-<div id="noticeBox" class="notice-box" style="display:none;">
-    ⚠️ عذراً، التسجيل للمسوقين غير متاح حالياً.<br>
-    <span style="font-size:12px;color:#ffaa66;">سيكون متاحاً خلال الأيام القادمة 🔜</span>
-</div>
+    <option value="مسوق">مسوق</option> </select>
 
 <input id="affiliate_user" class="auto-ref-input" placeholder="كود الترويج (تلقائي)" readonly>
 
@@ -189,21 +181,11 @@ let cooldownInterval = null;
 
 console.log('🔍 Checking CryptoJS:', typeof CryptoJS);
 
-// جلب البارامترات تلقائياً من الرابط وملء حقل كود الترويج فوراً
 const urlParams = new URLSearchParams(window.location.search);
 let automaticRefCode = urlParams.get('ref') || urlParams.get('user') || '';
 if(automaticRefCode) {
     document.getElementById('affiliate_user').value = automaticRefCode.trim().toLowerCase();
 }
-
-document.getElementById("type").addEventListener("change", function() {
-    let notice = document.getElementById("noticeBox");
-    if (this.value === "مسوق") {
-        notice.style.display = "block";
-    } else {
-        notice.style.display = "none";
-    }
-});
 
 // ============================================================
 // ===== دوال التشفير =====
@@ -256,7 +238,6 @@ function showPage(id) {
     if (cooldownInterval) clearInterval(cooldownInterval);
     isCooldownActive = false;
     document.getElementById("signupTimer").innerHTML = "";
-    document.getElementById("noticeBox").style.display = "none";
     document.getElementById("type").value = "";
 }
 
@@ -352,7 +333,6 @@ document.getElementById("create").onclick = async function() {
     let affiliate_user = document.getElementById("affiliate_user").value.trim().toLowerCase();
     let error = document.getElementById("error");
     let success = document.getElementById("success");
-    let notice = document.getElementById("noticeBox");
     error.innerHTML = "";
     success.innerHTML = "";
 
@@ -362,12 +342,6 @@ document.getElementById("create").onclick = async function() {
     if (password.length < 8) { error.innerHTML = "⚠️ كلمة المرور 8 أحرف على الأقل"; return; }
     if (whatsapp.length < 5) { error.innerHTML = "⚠️ رقم واتساب غير صحيح"; return; }
     if (type === "") { error.innerHTML = "⚠️ اختر نوع الحساب"; return; }
-
-    if (type === "مسوق") {
-        error.innerHTML = "";
-        notice.style.display = "block";
-        return;
-    }
 
     this.disabled = true;
     try {
@@ -380,7 +354,6 @@ document.getElementById("create").onclick = async function() {
         }
 
         success.innerHTML = "⏳ جاري إرسال كود التحقق إلى بريدك...";
-        // إلحاق كود الترويج التلقائي في شيت جوجل
         await sendToGoogleSheet("signup", { name, username, email, password, role: type, whatsapp, affiliate_user });
 
         success.innerHTML = "✅ تم إرسال كود التحقق بنجاح 📧";
@@ -400,9 +373,7 @@ document.getElementById("verifyAndLogin").onclick = async function() {
     let enteredOtp = document.getElementById("signupOtpCode").value.trim();
     let error = document.getElementById("error");
     let success = document.getElementById("success");
-    let notice = document.getElementById("noticeBox");
     error.innerHTML = "";
-    notice.style.display = "none";
 
     if (enteredOtp !== generatedCurrentOtp) {
         error.innerHTML = "❌ كود OTP غير صحيح";
