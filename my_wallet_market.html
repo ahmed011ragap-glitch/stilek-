@@ -146,6 +146,45 @@ body {
   border: 1px solid #00aaff;
 }
 
+/* ===== شريط تحدي الـ 300 جنيه للمسوقين ===== */
+.challenge-container {
+  background: linear-gradient(135deg, #151515, #222);
+  border: 1px solid var(--orange);
+  border-radius: 14px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+.challenge-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #fff;
+}
+.challenge-title span gold { color: var(--orange); }
+.progress-track {
+  background: #000;
+  border-radius: 20px;
+  height: 12px;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+.progress-fill {
+  background: linear-gradient(90deg, var(--orange), #ffbb00);
+  width: 0%;
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.5s ease-in-out;
+}
+.challenge-hint {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 6px;
+  text-align: center;
+}
+
 /* ===== الهيدر ومحتوى الصفحة ===== */
 .header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
 .header h1 {
@@ -204,6 +243,10 @@ h2 {
   border: 1px solid var(--green);
   background: #111a15;
 }
+.card.challenge-card {
+  border: 1px solid var(--orange);
+  background: #221505;
+}
 
 .card-header-row {
   display: flex;
@@ -230,6 +273,7 @@ h2 {
   color: #fff;
 }
 .card-value.highlight { color: var(--green); }
+.card-value.orange-highlight { color: var(--orange); }
 
 .btns {
   display: grid;
@@ -327,7 +371,6 @@ h2 {
 </div>
 
 <div class="container">
-  <!-- رسالة تأكيد الاسم الثابت -->
   <div class="username-display">
     👤 اسم المستخدم الحالي: <span id="userNameDisplay">-</span>
     <span style="color: var(--muted); font-weight: 400; margin-right: 10px;">🔒 (ثابت لا يمكن تغييره)</span>
@@ -336,6 +379,17 @@ h2 {
   <div id="userBar" class="user-bar">
     <span>المسوق: <strong id="userName">-</strong></span>
     <span>نوع الحساب: <strong class="user-type">💰 مسوق</strong></span>
+  </div>
+
+  <div class="challenge-container" id="challengeBox">
+    <div class="challenge-title">
+      <span>🏆 تحدي المسوقين الحالي (توصيل 6 قطع)</span>
+      <span>التقدم: <strong id="progressText" style="color:var(--orange);">0 / 6</strong> قطعة</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="challenge-hint" id="challengeHint">شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!</div>
   </div>
 
   <h2>💼 المحفظة والملخص المالي</h2>
@@ -392,6 +446,14 @@ h2 {
           <div class="card-label">طلبات مكتملة</div>
         </div>
         <div class="card-value" id="delivered">0</div>
+      </div>
+
+      <div class="card challenge-card">
+        <div class="card-header-row">
+          <span class="card-icon orange">🎁</span>
+          <div class="card-label">بونص التحدي الحالي</div>
+        </div>
+        <div class="card-value orange-highlight" id="challengeBonusDisplay">0.00</div>
       </div>
     </div>
 
@@ -467,9 +529,8 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
 // ===== ثبات اسم المستخدم - لا يمكن تغييره =====
-let currentUser = ''; // سيتم تعيينه مرة واحدة فقط
+let currentUser = '';
 
-// محاولة قراءة الاسم من localStorage أولاً، ثم من الرابط
 const storedUser = localStorage.getItem('username');
 const urlUser = new URLSearchParams(window.location.search).get('user');
 
@@ -479,16 +540,12 @@ if (storedUser && storedUser.trim() !== '') {
   currentUser = urlUser.toLowerCase().trim();
   localStorage.setItem('username', currentUser);
 } else {
-  // اسم افتراضي إذا لم يوجد أي شيء
   currentUser = 'marketer_default';
   localStorage.setItem('username', currentUser);
 }
 
-// منع أي محاولة لتغيير الاسم من localStorage أو الرابط لاحقاً
-// نعيد كتابة localStorage بالاسم الثابت
 localStorage.setItem('username', currentUser);
 
-// عرض الاسم في كل الأماكن
 document.getElementById('userName').textContent = currentUser;
 document.getElementById('userNameDisplay').textContent = currentUser;
 
@@ -500,7 +557,6 @@ function toggleSidebar() {
 
 function goToPage(pageName) {
   toggleSidebar();
-  // تمرير الاسم الثابت في الرابط
   window.location.href = `${pageName}.html?user=${encodeURIComponent(currentUser)}&type=marketer`;
 }
 
@@ -549,14 +605,17 @@ async function loadDashboard() {
     });
 
     let deliveredCommissionTotal = 0, shippingCommissionTotal = 0, preparingCommissionTotal = 0, deliveredCount = 0;
+    let totalDeliveredQty = 0; // حساب إجمالي قطع الأوردرات المكتملة للتحدي
 
     marketerOrders.forEach(o => {
       const commission = parseFloat(o.commission) || 0;
+      const orderQty = parseInt(o.qty) || 1; // جلب الكمية المحددة في الأوردر
       const status = (o.order_status || '').trim();
       
       if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
         deliveredCommissionTotal += commission; 
         deliveredCount++; 
+        totalDeliveredQty += orderQty; // إضافة الكمية لعداد قطع التحدي المكتملة
       } 
       else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
         shippingCommissionTotal += commission; 
@@ -565,6 +624,19 @@ async function loadDashboard() {
         preparingCommissionTotal += commission; 
       }
     });
+
+    // ===== تحديث شريط التحدي ومربع البونص للمسوقين =====
+    const progressPercent = Math.min((totalDeliveredQty / 6) * 100, 100);
+    document.getElementById('progressText').textContent = `${totalDeliveredQty} / 6`;
+    document.getElementById('progressFill').style.width = `${progressPercent}%`;
+
+    if (totalDeliveredQty >= 6) {
+      document.getElementById('challengeBonusDisplay').textContent = '300.00';
+      document.getElementById('challengeHint').innerHTML = '🎉 <span style="color:var(--green); font-weight:bold;">مبروك! لقد حققت التحدي بنجاح واستحققت بونص 300 جنيه!</span>';
+    } else {
+      document.getElementById('challengeBonusDisplay').textContent = '0.00';
+      document.getElementById('challengeHint').textContent = 'شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!';
+    }
 
     const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
     let pending = 0, withdrawn = 0;
