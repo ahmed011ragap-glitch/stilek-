@@ -166,45 +166,6 @@ body {
   margin-right: 6px;
 }
 
-/* ===== شريط تحدي الـ 300 جنيه المضاف للموردين ===== */
-.challenge-container {
-  background: linear-gradient(135deg, #151515, #222);
-  border: 1px solid var(--orange);
-  border-radius: 14px;
-  padding: 15px;
-  margin-bottom: 20px;
-}
-.challenge-title {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #fff;
-}
-.challenge-title span gold { color: var(--orange); }
-.progress-track {
-  background: #000;
-  border-radius: 20px;
-  height: 12px;
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid #333;
-}
-.progress-fill {
-  background: linear-gradient(90deg, var(--orange), #ffbb00);
-  width: 0%;
-  height: 100%;
-  border-radius: 20px;
-  transition: width 0.5s ease-in-out;
-}
-.challenge-hint {
-  font-size: 11px;
-  color: #aaa;
-  margin-top: 6px;
-  text-align: center;
-}
-
 /* ===== الهيدر ومحتوى الصفحة ===== */
 .header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
 .header h1 {
@@ -263,9 +224,9 @@ h2 {
   border: 1px solid var(--green);
   background: #111a15;
 }
-.card.challenge-card {
-  border: 1px solid var(--orange);
-  background: #221505;
+.card.referral-card {
+  border: 1px solid var(--blue);
+  background: #0a1a2a;
 }
 
 .card-header-row {
@@ -276,7 +237,6 @@ h2 {
 }
 
 .card-icon { font-size: 16px; }
-.orange { color: var(--orange); }
 .yellow { color: #ffdd00; }
 .green { color: var(--green); }
 .blue { color: var(--blue); }
@@ -293,7 +253,7 @@ h2 {
   color: #fff;
 }
 .card-value.highlight { color: var(--green); }
-.card-value.orange-highlight { color: var(--orange); }
+.card-value.blue-highlight { color: var(--blue); }
 
 .btns {
   display: grid;
@@ -315,6 +275,17 @@ h2 {
 .btn-green { background: var(--green); color: #000; }
 .btn-green:hover { transform: translateY(-1px); }
 
+.alert {
+  background: #15110a;
+  border: 1px solid #251f11;
+  color: var(--orange);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 /* المودال ولوحة الأدمن */
 .modal {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -332,6 +303,20 @@ h2 {
 .admin-table table { width: 100%; border-collapse: collapse; min-width: 650px; }
 .admin-table th { background: #1a1a1a; color: var(--green); padding: 8px 4px; border-bottom: 1px solid var(--green); }
 .admin-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #222; color: #fff; }
+
+/* تنبيه الحسابات */
+.bonus-text-hint {
+  display: none;
+  font-size: 12px;
+  color: var(--orange);
+  background: #221505;
+  border: 1px dashed var(--orange);
+  padding: 6px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -371,17 +356,6 @@ h2 {
     <span>نوع الحساب: <strong class="user-type">🏭 مورد</strong></span>
   </div>
 
-  <div class="challenge-container" id="challengeBox">
-    <div class="challenge-title">
-      <span>🏆 تحدي الموردين الحالي (توصيل 6 قطع)</span>
-      <span>التقدم: <strong id="progressText" style="color:var(--orange);">0 / 6</strong> قطعة</span>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <div class="challenge-hint" id="challengeHint">شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!</div>
-  </div>
-
   <h2>💼 المحفظة والملخص المالي</h2>
 
   <div class="search-bar">
@@ -416,7 +390,7 @@ h2 {
 
       <div class="card">
         <div class="card-header-row">
-          <span class="card-icon orange">📦</span>
+          <span class="card-icon orange" style="color: var(--orange);">📦</span>
           <div class="card-label">قيد التحضير</div>
         </div>
         <div class="card-value" id="preparing">0.00</div>
@@ -438,18 +412,23 @@ h2 {
         <div class="card-value" id="delivered">0</div>
       </div>
 
-      <div class="card challenge-card">
+      <div class="card referral-card" id="referralCardClick" style="cursor:pointer;" onclick="openReferralWithdrawModal()">
         <div class="card-header-row">
-          <span class="card-icon orange">🎁</span>
-          <div class="card-label">بونص التحدي الحالي</div>
+          <span class="card-icon blue">🔗</span>
+          <div class="card-label">أرباح الإحالة الحالية</div>
         </div>
-        <div class="card-value orange-highlight" id="challengeBonusDisplay">0.00</div>
+        <div class="card-value blue-highlight" id="referralBonusDisplay">0.00</div>
+        <span style="font-size:9px; color:#aaa; margin-top:4px;">💰 (اضغط للسحب)</span>
       </div>
     </div>
 
     <div class="btns">
       <button class="btn btn-purple" onclick="openHistory()">🕐 السجل</button>
       <button class="btn btn-green" onclick="openWithdrawModal()">💵 طلب سحب</button>
+    </div>
+
+    <div class="alert">
+      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط. لا يوجد حد أدنى للسحوبات العادية، بينما يشترط حد أدنى 300 ج.م لأرباح الإحالة (تُحسب بالطلب الكامل). ويجب مرور 5 ساعات بين أي طلب سحب وآخر.
     </div>
   </div>
 
@@ -479,10 +458,14 @@ h2 {
 <div class="modal" id="withdrawModal">
   <div class="modal-content">
     <div style="padding: 12px; text-align: center; position: relative; border-bottom: 1px solid #222;">
-      <h3 style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
+      <h3 id="modalTitle" style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
       <button type="button" onclick="closeWithdrawModal()" style="position: absolute; top: 8px; left: 15px; background: none; border: none; font-size: 24px; color: #fff; cursor: pointer;">×</button>
     </div>
     <form id="withdrawForm" style="padding: 15px;">
+      <input type="hidden" id="withdrawal_type" value="normal">
+      
+      <div class="bonus-text-hint" id="bonusHintText">⚠️ يرجى كتابة نوع السحب المختار في الملاحظات للتأكيد.</div>
+
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">رقم هاتف المحفظة *</label>
         <input type="tel" id="w_phone" required placeholder="01012345678" style="width:100%; padding:8px; background:#000; border:1px solid var(--green); border-radius:8px; color:#fff; text-align:center;" maxlength="11">
@@ -499,10 +482,11 @@ h2 {
       </div>
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">المبلغ المراد سحبه *</label>
-        <input type="number" id="w_amount" min="1" step="0.01" required placeholder="أدخل القيمة ج.م" style="width:100%; padding:8px; background:#000; border:1px solid var(--orange); border-radius:8px; color:var(--green); font-weight:700; text-align:center;">
+        <input type="number" id="w_amount" min="0.01" step="0.01" required placeholder="أدخل القيمة ج.م" style="width:100%; padding:8px; background:#000; border:1px solid var(--orange); border-radius:8px; color:var(--green); font-weight:700; text-align:center;">
       </div>
       <div style="margin-bottom: 12px;">
-        <textarea id="w_notes" rows="2" maxlength="30" placeholder="ملاحظات إضافية أو اسم الحساب..." style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#aaa; resize:none; font-family:'Tajawal'; font-size:12px;"></textarea>
+        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">الملاحظات *</label>
+        <textarea id="w_notes" rows="2" maxlength="30" placeholder="ملاحظات إضافية أو اسم الحساب..." style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#fff; resize:none; font-family:'Tajawal'; font-size:12px;"></textarea>
       </div>
       <button type="submit" style="width:100%; padding:10px; background:var(--green); border:none; color:#000; font-weight:700; border-radius:8px; cursor:pointer; font-size:14px;">تأكيد وإرسال الطلب</button>
     </form>
@@ -510,12 +494,13 @@ h2 {
 </div>
 
 <script>
-// ===== إعدادات Supabase =====
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 
-// ===== ثبات اسم المستخدم =====
 let currentUser = '';
+let currentReferralOrdersToReset = []; 
+let globalReferralBalance = 0;
+let userLastWithdrawalTime = null; 
 
 const storedUser = localStorage.getItem('username');
 const urlUser = new URLSearchParams(window.location.search).get('user');
@@ -534,7 +519,6 @@ localStorage.setItem('username', currentUser);
 document.getElementById('userName').textContent = currentUser;
 document.getElementById('userNameDisplay').textContent = currentUser;
 
-// ===== دوال التنقل =====
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
@@ -566,7 +550,7 @@ async function supabaseApi(endpoint, options = {}) {
     ...options.headers 
   };
   
-  if (options.method === 'POST') {
+  if (options.method === 'POST' || options.method === 'PATCH') {
     headers['Prefer'] = 'return=representation';
   }
 
@@ -577,10 +561,8 @@ async function supabaseApi(endpoint, options = {}) {
   return text ? JSON.parse(text) : {};
 }
 
-// ===== تحميل البيانات المحدث - الاعتماد على جدول orders وعمود (price * qty) مباشرة =====
 async function loadDashboard() {
   try {
-    // 1. نجيب كل المنتجات بتاعة المورد لاستخراج المعرفات فقط
     const myProducts = await supabaseApi(
       `products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id`
     );
@@ -593,59 +575,66 @@ async function loadDashboard() {
       document.getElementById('preparing').textContent = '0.00';
       document.getElementById('delivered').textContent = '0';
       document.getElementById('shipping').textContent = '0.00';
-      document.getElementById('progressText').textContent = '0 / 6';
-      document.getElementById('progressFill').style.width = '0%';
-      document.getElementById('challengeBonusDisplay').textContent = '0.00';
+      document.getElementById('referralBonusDisplay').textContent = '0.00';
       return;
     }
 
-    // 2. نجيب كل الطلبات الخاصة بمنتجات المورد
-    let allOrders = [];
-    for (const pid of myProductIds) {
-      const ordersForProduct = await supabaseApi(`orders?product_id=ilike.${encodeURIComponent(pid)}&select=*`);
-      allOrders = allOrders.concat(ordersForProduct);
-    }
-
+    const allOrders = await supabaseApi(`orders?select=*`);
+    
     let deliveredPriceTotal = 0, shippingPriceTotal = 0, preparingPriceTotal = 0, deliveredCount = 0;
-    let totalDeliveredQty = 0; // حساب إجمالي عدد القطع المكتملة للتحدي
 
-    // 3. الحساب البرمجي بالاعتماد على سعر الأوردر مضروباً في الكمية (o.price * o.qty)
     allOrders.forEach(o => {
-      const orderPrice = parseFloat(o.price) || 0;
-      const orderQty = parseInt(o.qty) || 1;
-      const totalOrderValue = orderPrice * orderQty; // المعادلة: السعر * الكمية
-      
-      const status = (o.order_status || '').trim();
-      
-      if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
-        deliveredPriceTotal += totalOrderValue;
-        deliveredCount++; 
-        totalDeliveredQty += orderQty; // نزيد عدد القطع الموصلة بالتحدي فعلياً
-      } 
-      else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
-        shippingPriceTotal += totalOrderValue;
-      } 
-      else if (status === 'تغليف') { 
-        preparingPriceTotal += totalOrderValue;
+      if (myProductIds.includes(o.product_id)) {
+        const orderPrice = parseFloat(o.price) || 0;
+        const orderQty = parseInt(o.qty) || 1;
+        const totalOrderValue = orderPrice * orderQty;
+        
+        const status = (o.order_status || '').trim();
+        
+        if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') { 
+          deliveredPriceTotal += totalOrderValue;
+          deliveredCount++; 
+        } 
+        else if (status === 'جديد' || status === 'توصيل' || status === 'شحن') { 
+          shippingPriceTotal += totalOrderValue;
+        } 
+        else if (status === 'تغليف') { 
+          preparingPriceTotal += totalOrderValue;
+        }
       }
     });
 
-    // 4. تحديث وحساب شريط التحدي والمربع الإضافي بناءً على عدد القطع المستلمة (6 قطع لـ 300 جنيه)
-    const progressPercent = Math.min((totalDeliveredQty / 6) * 100, 100);
-    document.getElementById('progressText').textContent = `${totalDeliveredQty} / 6`;
-    document.getElementById('progressFill').style.width = `${progressPercent}%`;
+    // ===== نظام حساب أرباح الإحالة (5 جنيه لكل أوردر كامل / سلة كاملة) =====
+    globalReferralBalance = 0;
+    currentReferralOrdersToReset = [];
+    
+    const uniqueReferralOrders = [];
+    allOrders.forEach(o => {
+      const referrer = (o.referrer_username || o.referrer_id || '').toLowerCase().trim();
+      if (referrer === currentUser) {
+        const status = (o.order_status || '').trim();
+        if (status === 'تم التسليم' || status === 'delivered' || status === 'تم التوصيل' || status === 'تم') {
+          if (!o.referral_bonus_claimed) {
+            const uniqueKey = o.order_id || o.id;
+            if (!uniqueReferralOrders.includes(uniqueKey)) {
+              uniqueReferralOrders.push(uniqueKey);
+              globalReferralBalance += 5; 
+            }
+            currentReferralOrdersToReset.push(o.id);
+          }
+        }
+      }
+    });
+    document.getElementById('referralBonusDisplay').textContent = globalReferralBalance.toFixed(2);
 
-    if (totalDeliveredQty >= 6) {
-      document.getElementById('challengeBonusDisplay').textContent = '300.00';
-      document.getElementById('challengeHint').innerHTML = '🎉 <span style="color:var(--green); font-weight:bold;">مبروك! لقد أكملت التحدي بنجاح واستحققت بونص 300 جنيه!</span>';
-    } else {
-      document.getElementById('challengeBonusDisplay').textContent = '0.00';
-      document.getElementById('challengeHint').textContent = 'شحن وتوصيل 6 قطع للحصول على بونص إضافي بقيمة 300 جنيه!';
-    }
-
-    // 5. جلب طلبات السحب السابقة
-    const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount`);
+    const withdrawals = await supabaseApi(`withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount,created_at&order=created_at.desc`);
     let pending = 0, withdrawn = 0;
+
+    if (withdrawals && withdrawals.length > 0) {
+      userLastWithdrawalTime = withdrawals[0].created_at; 
+    } else {
+      userLastWithdrawalTime = null;
+    }
 
     withdrawals.forEach(w => {
       const amount = parseFloat(w.amount) || 0;
@@ -653,7 +642,6 @@ async function loadDashboard() {
       else if (w.status === 'تم' || w.status === 'تم الدفع') withdrawn += amount;
     });
 
-    // الرصيد المتاح = إجمالي المكتمل - (المعلق + المسحوب)
     globalAvailableBalance = deliveredPriceTotal - (pending + withdrawn);
     if(globalAvailableBalance < 0) globalAvailableBalance = 0;
 
@@ -669,11 +657,60 @@ async function loadDashboard() {
   }
 }
 
-// ===== تقديم طلب سحب =====
+function checkWithdrawalTimeout() {
+  if (!userLastWithdrawalTime) return true; 
+  const lastTime = new Date(userLastWithdrawalTime).getTime();
+  const now = new Date().getTime();
+  const hoursPassed = (now - lastTime) / (1000 * 60 * 60);
+  
+  if (hoursPassed < 5) {
+    const minutesLeft = Math.ceil((5 - hoursPassed) * 60);
+    alert(`⚠️ حماية المحفظة: يرجى الانتظار! غير مسموح بإنشاء أي طلب سحب جديد إلا بعد مرور 5 ساعات من آخر سحبة لك. متبقي: ${minutesLeft} دقيقة.`);
+    return false;
+  }
+  return true;
+}
+
+function openWithdrawModal() { 
+  if (!checkWithdrawalTimeout()) return;
+  if (globalAvailableBalance <= 0) {
+    alert(`⚠️ عذراً، ليس لديك رصيد متاح للسحب حالياً.`);
+    return;
+  }
+  document.getElementById('withdrawal_type').value = 'normal';
+  document.getElementById('bonusHintText').style.display = 'none';
+  document.getElementById('modalTitle').textContent = 'إنشاء طلب سحب جديد';
+  document.getElementById('w_amount').value = '';
+  document.getElementById('w_amount').readOnly = false;
+  document.getElementById('w_notes').value = '';
+  document.getElementById('withdrawModal').style.display = 'flex'; 
+}
+
+function openReferralWithdrawModal() {
+  if (!checkWithdrawalTimeout()) return;
+  if (globalReferralBalance < 300) {
+    alert(`⚠️ عذراً، الحد الأدنى لسحب أرباح الإحالة هو 300 جنيه. أرباحك الحالية: ${globalReferralBalance} ج.م`);
+    return;
+  }
+  document.getElementById('withdrawal_type').value = 'referral_bonus';
+  document.getElementById('bonusHintText').style.display = 'block';
+  document.getElementById('bonusHintText').textContent = '⚠️ يرجى كتابة كلمة "سحب إحالة" في الملاحظات بالأسفل للتأكيد.';
+  document.getElementById('modalTitle').textContent = `🔗 سحب أرباح الإحالة (${globalReferralBalance} ج.م)`;
+  document.getElementById('w_amount').value = globalReferralBalance.toFixed(2);
+  document.getElementById('w_amount').readOnly = true;
+  document.getElementById('w_notes').value = 'سحب إحالة';
+  document.getElementById('withdrawModal').style.display = 'flex';
+}
+
+function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
+
 document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!checkWithdrawalTimeout()) return;
+
   const phone = document.getElementById('w_phone').value.trim();
   const requestedAmount = parseFloat(document.getElementById('w_amount').value) || 0;
+  const wType = document.getElementById('withdrawal_type').value;
 
   const phoneRegex = /^01[0125][0-9]{8}$/;
   if (!phoneRegex.test(phone)) {
@@ -681,27 +718,44 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
     return;
   }
 
-  if (requestedAmount > globalAvailableBalance) {
+  if (wType === 'normal' && requestedAmount > globalAvailableBalance) {
     alert(`❌ خطأ: الرصيد المتاح غير كافٍ. الرصيد المتاح: ${globalAvailableBalance.toFixed(2)} ج.م`);
     return;
   }
 
   try {
+    let noteText = `رقم تليفون تحويل المورد: ${phone} | ${document.getElementById('w_notes').value}`;
+    let prefix = 'SUP-WD-';
+    
+    if (wType === 'referral_bonus') {
+      noteText = `🔗 [طلب سحب أرباح إحالة] | رقم تليفون تحويل المورد: ${phone} | ${document.getElementById('w_notes').value}`;
+      prefix = 'REF-WD-';
+    }
+
     await supabaseApi('withdrawals', {
       method: 'POST',
       body: JSON.stringify({
         username: currentUser,
         amount: requestedAmount,
         account: document.getElementById('w_account').value,
-        notes: `رقم تليفون تحويل المورد: ${phone} | ${document.getElementById('w_notes').value}`,
-        order_id: 'SUP-WD-' + Math.floor(1000 + Math.random() * 9000),
-        customer: 'مورد',
+        notes: noteText,
+        order_id: prefix + Math.floor(1000 + Math.random() * 9000),
+        customer: wType === 'normal' ? 'مورد' : 'أرباح إحالة',
         status: 'قيد المراجعة',
         due: requestedAmount,
         paid: 0,
         remaining: requestedAmount
       })
     });
+
+    if (wType === 'referral_bonus' && currentReferralOrdersToReset.length > 0) {
+      for (const orderId of currentReferralOrdersToReset) {
+        await supabaseApi(`orders?id=eq.${orderId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ referral_bonus_claimed: true })
+        });
+      }
+    }
 
     alert('✅ تم إرسال طلب السحب بنجاح!');
     closeWithdrawModal();
@@ -711,7 +765,6 @@ document.getElementById('withdrawForm').addEventListener('submit', async (e) => 
   } catch(err) { alert('❌ خطأ: ' + err.message); }
 });
 
-// ===== تفعيل لوحة الأدمن =====
 document.getElementById('searchInput').addEventListener('input', e => {
   const val = e.target.value;
   if(val === ADMIN_CODE && !isAdmin) {
@@ -728,7 +781,6 @@ document.getElementById('searchInput').addEventListener('input', e => {
   }
 });
 
-// ===== لوحة الأدمن =====
 async function loadAdminPanel() {
   try {
     const data = await supabaseApi('withdrawals?select=*');
@@ -747,16 +799,19 @@ async function loadAdminPanel() {
         cleanNotes = parts[1] || '';
       }
 
+      let orderIdStyle = 'var(--green)';
+      if (w.order_id.startsWith('REF')) orderIdStyle = 'var(--blue)';
+
       return `
         <tr>
           <td>${i+1}</td>
           <td>${w.username || '-'}</td>
-          <td style="color:var(--green); font-weight:700;">${w.order_id || '-'}</td>
+          <td style="color:${orderIdStyle}; font-weight:700;">${w.order_id || '-'}</td>
           <td style="color:var(--blue); font-weight:bold;">${displayPhone}</td>
           <td style="color:var(--orange); font-weight:900;">${w.amount || 0}</td>
           <td>${w.account || '-'}</td>
           <td>${cleanNotes}</td>
-          <td>${w.date1 ? new Date(w.date1).toLocaleDateString('ar-EG') : '-'}</td>
+          <td>${w.created_at ? new Date(w.created_at).toLocaleDateString('ar-EG') : '-'}</td>
           <td style="color:${w.status === 'قيد المراجعة'? 'var(--orange)' : w.status === 'تم'? 'var(--green)' : 'var(--red)'}; font-weight:700;">${w.status || 'قيد المراجعة'}</td>
           <td>
             ${w.status === 'قيد المراجعة'? `
@@ -802,11 +857,8 @@ async function rejectWithdrawal(id) {
   } catch(err) { alert(err.message); }
 }
 
-function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'flex'; }
-function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 function openHistory() { alert('السجل المالي يظهر للأدمن تلقائياً عند البحث بكود الإدارة.'); }
 
-// ===== تشغيل التحميل الأولي =====
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>
