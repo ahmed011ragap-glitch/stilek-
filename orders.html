@@ -89,41 +89,67 @@
 </style>
 
 <script>
-// ============================================================
-// ===== CONFIG =====
-// ============================================================
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const SITE_PROFIT = 20;
 const REFERRAL_COMMISSION_PER_QTY = 5;
+const SUPPLIER_REFERRAL_COMMISSION_PER_QTY = 5; // عمولة إحالة المورد لكل قطعة
 
-// ============================================================
-// ===== نظام الشحن =====
-// ============================================================
+// علم لمنع التكرار (Lock Flag)
+let isSubmitting = false;
+
+// 1 & 2. منظومة محافظات مصر الـ 27 بالكامل والمراكز التابعة لها وأسعار الشحن
 const SHIPPING_COSTS = {
-  'القاهرة':102,'الجيزة':102,'6 أكتوبر':102,'الشيخ زايد':102,
-  'مدينة نصر':102,'المعادي':102,'مصر الجديدة':102,'حلوان':102,
-  'التجمع الخامس':102,'شبرا':102,'المرج':102,'الزيتون':102,
-  'الإسكندرية':107,'العجمي':107,'سموحة':107,'سيدي بشر':107,
-  'المنصورة':115,'طلخا':115,'ميت غمر':115,'دكرنس':115,
-  'طنطا':115,'المحلة الكبرى':115,'كفر الزيات':115,'زفتى':115,
-  'قنا':145,'نجع حمادي':145,'الأقصر':145,'أسوان':145
+  'القاهرة': 102, 'الجيزة': 102, 'الإسكندرية': 107, 'القليوبية': 115, 'الدقهلية': 115,
+  'الغربية': 115, 'المنوفية': 115, 'الشرقية': 115, 'البحيرة': 115, 'كفر الشيخ': 115,
+  'دمياط': 115, 'بورسعيد': 115, 'الإسماعيلية': 115, 'السويس': 115, 'الفيوم': 130,
+  'بني سويف': 130, 'المنيا': 130, 'أسيوط': 130, 'سوهاج': 135, 'قنا': 145,
+  'الأقصر': 145, 'أسوان': 145, 'مطروح': 160, 'الوادي الجديد': 160, 'البحر الأحمر': 160,
+  'شمال سيناء': 160, 'جنوب سيناء': 160
 };
-function getShippingCost(g){ return SHIPPING_COSTS[g]||115; }
+
+function getShippingCost(g){ return SHIPPING_COSTS[g] || 115; }
 
 const CITIES = {
-  'القاهرة':['القاهرة','حلوان','مصر الجديدة','المعادي','مدينة نصر','التجمع الخامس','شبرا'],
-  'الجيزة':['الجيزة','6 أكتوبر','الشيخ زايد','الهرم','فيصل','المهندسين','الدقي'],
-  'الإسكندرية':['الإسكندرية','العجمي','سموحة','سيدي بشر','المنتزه','محرم بك'],
-  'الدقهلية':['المنصورة','طلخا','ميت غمر','دكرنس'],
-  'الغربية':['طنطا','المحلة الكبرى','كفر الزيات','زفتى'],
-  'قنا':['قنا','نجع حمادي'],
-  'الأقصر':['الأقصر','إسنا'],
-  'أسوان':['أسوان','كوم أمبو']
+  'القاهرة': ['مدينة نصر', 'المعادي', 'مصر الجديدة', 'حلوان', 'التجمع الخامس', 'شبرا', 'المرج', 'الزيتون', 'وسط البلد', 'عين شمس', 'الوايلي', 'البساتين'],
+  'الجيزة': ['الجيزة', '6 أكتوبر', 'الشيخ زايد', 'الهرم', 'فيصل', 'المهندسين', 'الدقي', 'إمبابة', 'العجوزة', 'البدرشين', 'الحوامدية', 'أوسيم'],
+  'الإسكندرية': ['العجمي', 'سموحة', 'سيدي بشر', 'المنتزه', 'محرم بك', 'المنشية', 'العصافرة', 'مصر الجديدة الإسكندرية', 'برج العرب', 'عامرية'],
+  'القليوبية': ['بنها', 'شبرا الخيمة', 'قليوب', 'الخانكة', 'القناطر الخيرية', 'طوخ', 'العبور', 'شبين القناطر'],
+  'الدقهلية': ['المنصورة', 'طلخا', 'ميت غمر', 'دكرنس', 'السنبلاوين', 'شربين', 'منية النصر', 'الجمالية', 'بلقاس'],
+  'الغربية': ['طنطا', 'المحلة الكبرى', 'كفر الزيات', 'زفتى', 'السنطة', 'بسيون', 'سمنود', 'قطور'],
+  'المنوفية': ['شبين الكوم', 'أشمون', 'منوف', 'مدينة السادات', 'قويسنا', 'الباجور', 'تلا', 'بركة السبع'],
+  'الشرقية': ['الزقازيق', 'العاشر من رمضان', 'بلبيس', 'منيا القمح', 'أبو حماد', 'فاقوس', 'الحسينية', 'كفر صقر'],
+  'البحيرة': ['دمنهور', 'كفر الدوار', 'رشيد', 'إدكو', 'أبو حمص', 'إيتاي البارود', 'كوم حمادة', 'حوش عيسى', 'أبو المطامير'],
+  'كفر الشيخ': ['كفر الشيخ', 'دسوق', 'قلين', 'سيدي سالم', 'بلطيم', 'الحامول', 'مطوبس', 'فوه'],
+  'دمياط': ['دمياط', 'دمياط الجديدة', 'رأس البر', 'فارسكور', 'الزرقا', 'كفر سعد'],
+  'بورسعيد': ['بورفؤاد', 'حي الشرق', 'حي العرب', 'حي الضواحي', 'حي المناخ', 'حي الزهور'],
+  'الإسماعيلية': ['الإسماعيلية', 'فايد', 'القنطرة شرق', 'القنطرة غرب', 'التل الكبير', 'القصاصين'],
+  'السويس': ['حي السويس', 'حي الأربعين', 'حي الجناين', 'حي فيصل', 'حي عتاقة'],
+  'الفيوم': ['الفيوم', 'سنورس', 'إبشواي', 'إطسا', 'طامية', 'يوسف الصديق'],
+  'بني سويف': ['بني سويف', 'الواسطى', 'ناصر', 'ببا', 'الفشن', 'سمسطا', 'إهناسيا'],
+  'المنيا': ['المنيا', 'ملوي', 'بني مزار', 'مغاغة', 'سمالوط', 'أبو قرقاص', 'مطاي', 'دير مواس'],
+  'أسيوط': ['أسيوط', 'ديروط', 'منفلوط', 'القوصية', 'أبنوب', 'أبو تيج', 'صدفا', 'الغنايم', 'ساحل سليم'],
+  'سوهاج': ['سوهاج', 'أخميم', 'طما', 'طهطا', 'جرجا', 'البلينا', 'المنشاة', 'ساقلتة', 'المراغة'],
+  'قنا': ['قنا', 'نجع حمادي', 'دشنا', 'أبو تشت', 'فرشوط', 'قفط', 'قوص', 'نقادة'],
+  'الأقصر': ['الأقصر', 'إسنا', 'أرمنت', 'القرنة', 'الطود', 'البياضية'],
+  'أسوان': ['أسوان', 'كوم أمبو', 'إدفو', 'نصر النوبة', 'دراو'],
+  'مطروح': ['مرسى مطروح', 'العلمين', 'الضبعة', 'سيوة', 'الحمام', 'براني'],
+  'الوادي الجديد': ['الخارجة', 'الداخلة', 'الفرافرة', 'باريس', 'بلاط'],
+  'البحر الأحمر': ['الغردقة', 'سفاجا', 'القصير', 'مرسى علم', 'رأس غارب', 'شلاتين', 'حلايب'],
+  'شمال سيناء': ['العريش', 'بئر العبد', 'الشيخ زويد', 'رفح', 'الحسنة'],
+  'جنوب سيناء': ['شرم الشيخ', 'طور سيناء', 'دهب', 'نويبع', 'طابا', 'رأس سدر', 'سانت كاترين']
 };
 
+// 6. دوال تنظيف المدخلات بشكل آمن وصارم
+function cleanText(t){ 
+  if(!t) return '';
+  return t.replace(/[«»""''()\[\]{}]/g, '')
+          .replace(/[\<\>\/\\|;:\*\?]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim(); 
+}
+
 function esc(s){ return(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function cleanText(t){ return t?t.replace(/[«»""''()\[\]{}]/g,'').replace(/\s+/g,' ').trim():''; }
 function sellP(b){ const v=parseFloat(b)||0; return v+SITE_PROFIT; }
 function comm(b){ const v=parseFloat(b)||0; if(v<100)return 50; if(v<200)return 80; if(v<400)return 150; if(v<500)return 200; return 250; }
 function iurl(u){ return u?.toString().trim()||'https://placehold.co/400x400/2a2a2a/808080?text=🛍️'; }
@@ -140,9 +166,35 @@ function checkPromoBonus() {
   return 0;
 }
 
+// 9. دالة الاتصال الموثوقة مع نظام إعادة المحاولة التلقائي (Retry) حتى 3 مرات
 async function req(ep, opts={}){
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/${ep}`,{...opts,headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',...opts.headers}});
-  const t=await r.text(); return t?JSON.parse(t):{};
+  let maxRetries = 3;
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${ep}`, {
+        ...opts,
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          ...opts.headers
+        }
+      });
+      const text = await r.text();
+      if (!r.ok) {
+        throw new Error(text || `HTTP error! status: ${r.status}`);
+      }
+      return text ? JSON.parse(text) : {};
+    } catch (error) {
+      attempt++;
+      if (attempt >= maxRetries) {
+        throw new Error(`فشل الاتصال بعد ${maxRetries} محاولات. السبب: ${error.message}`);
+      }
+      // انتظار قصير قبل إعادة المحاولة (Linear Backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
 }
 
 async function callApi(action,data={}){
@@ -161,6 +213,7 @@ async function callApi(action,data={}){
   }catch(e){ return {status:'error',message:e.message}; }
 }
 
+// 12. تحديث المخزون مفرود ومحمي ليعمل بعد نجاح الأوردر بالكامل فقط
 async function updateStockAfterOrder(productId, size, color, qty){
   try{
     const variants=await req(`product_variants?product_id=eq.${productId}&select=*`);
@@ -186,9 +239,13 @@ async function updateStockAfterOrder(productId, size, color, qty){
 }
 
 const urlP=new URLSearchParams(window.location.search);
-let rawUser=urlP.get('user')||localStorage.getItem('username')||'';
-let marketerId=rawUser.trim().toLowerCase()||'m_'+Math.random().toString(36).substr(2,6);
-let marketerName=localStorage.getItem('userName')||'مسوق';
+
+// 8. التحقق الآمن من وجود بيانات التخزين المحلي LocalStorage بالكامل لتفادي الأخطاء المفاجئة
+let rawUser = urlP.get('user') || localStorage.getItem('username') || localStorage.getItem('userName') || '';
+let marketerId = rawUser.trim().toLowerCase() || 'm_guest_' + Math.random().toString(36).substr(2, 6);
+let marketerName = localStorage.getItem('userName') || localStorage.getItem('username') || 'مسوق افتراضي';
+let affiliateUser = localStorage.getItem('affiliate_user') || null;
+
 let orderProducts=[];
 let currentProduct=null;
 let totalProductsPrice=0;
@@ -259,14 +316,14 @@ function renderOrderForm(){
     </div>
     <div class="fsec">👤 بيانات العميل</div>
     <div class="fg"><label class="fl">👤 اسم العميل <span style="color:var(--red);">*</span></label><input class="fi" id="oName" placeholder="أدخل اسم العميل"></div>
-    <div class="fg"><label class="fl">📱 رقم الهاتف 1 <span style="color:var(--red);">*</span></label><input class="fi" id="oPhone" type="tel" placeholder="01012345678" maxlength="11" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,11)"></div>
-    <div class="fg"><label class="fl">📱 رقم هاتف إفاضي</label><input class="fi" id="oPhone2" type="tel" placeholder="رقم آخر" maxlength="11" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,11)"></div>
+    <div class="fg"><label class="fl">📱 رقم الهاتف 1 <span style="color:var(--red);">*</span></label><input class="fi" id="oPhone" type="tel" placeholder="01012345678" maxlength="11"></div>
+    <div class="fg"><label class="fl">📱 رقم هاتف إضافي</label><input class="fi" id="oPhone2" type="tel" placeholder="رقم آخر" maxlength="11"></div>
     <div class="fgrid">
-      <div class="fg"><label class="fl">🏙️ المحافظة <span style="color:var(--red);">*</span></label><select class="fi" id="oGovernorate" onchange="updateCities()"><option value="">اختر</option>${govOpts}</select></div>
-      <div class="fg"><label class="fl">🏘️ المدينة <span style="color:var(--red);">*</span></label><select class="fi" id="oCity"><option value="">اختر</option></select></div>
+      <div class="fg"><label class="fl">🏙️ المحافظة <span style="color:var(--red);">*</span></label><select class="fi" id="oGovernorate" onchange="updateCities()"><option value="">اختر المحافظة</option>${govOpts}</select></div>
+      <div class="fg"><label class="fl">🏘️ المدينة / المركز <span style="color:var(--red);">*</span></label><select class="fi" id="oCity"><option value="">اختر المحافظة أولاً</option></select></div>
     </div>
-    <div class="fg"><label class="fl">📍 العنوان <span style="color:var(--red);">*</span></label><input class="fi" id="oAddress" placeholder="الشارع، المنطقة..."></div>
-    <div class="fg"><label class="fl">📝 ملاحظات</label><input class="fi" id="oNotes" placeholder="أي ملاحظات..."></div>
+    <div class="fg"><label class="fl">📍 العنوان بالكامل <span style="color:var(--red);">*</span></label><input class="fi" id="oAddress" placeholder="الشارع، اسم المنطقة، علامة مميزة..."></div>
+    <div class="fg"><label class="fl">📝 ملاحظات إضافية على الشحن</label><input class="fi" id="oNotes" placeholder="أي ملاحظات مثل موعد التسليم..."></div>
     
     <div class="fsec">💰 تعديل العمولة (لكل قطعة)</div>
     <div class="fg">
@@ -274,24 +331,26 @@ function renderOrderForm(){
       <input class="fi fi-gold" id="oCommission" type="number" value="${defaultComm}" oninput="updateOrderTotal()" step="1" min="0">
     </div>
     
-    <div class="fsec">📋 ملخص الطلب</div>
+    <div class="fsec">📋 ملخص الحساب المالي المعتمد</div>
     <div class="sum-box">
       ${summaryHtml}
       <div class="sum-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><span>إجمالي المنتجات</span><span style="color:var(--green);">${totalProductsPrice} ج</span></div>
       <div class="sum-row"><span>إجمالي العمولة (<span id="commPerItemTxt">${defaultComm}</span> ج × ${totalQty} قطع)</span><span style="color:var(--gold);" id="commissionDisplay">${defaultComm * totalQty} ج</span></div>
-      <div class="sum-row"><span>رسوم الشحن</span><span style="color:var(--muted);" id="shippingDisplay">115 ج</span></div>
+      <div class="sum-row"><span>رسوم الشحن الرسمية</span><span style="color:var(--muted);" id="shippingDisplay">115 ج</span></div>
       ${promoRowHtml}
       <div class="sum-total"><span>الإجمالي النهائي</span><span id="totalAmount">${totalProductsPrice + (defaultComm * totalQty) + 115 + promoBonus} ج</span></div>
     </div>
     <div id="alertContainer"></div>
-    <div class="btn-row"><button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب</button><button class="btn btn-sec" onclick="goBack()">← رجوع</button></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد وإرسال الطلب</button><button class="btn btn-sec" onclick="goBack()">← رجوع</button></div>
   `;
 }
 
 function updateCities(){
   const gov=document.getElementById('oGovernorate').value, cs=document.getElementById('oCity');
-  cs.innerHTML='<option value="">اختر</option>';
-  if(gov&&CITIES[gov]) CITIES[gov].forEach(c=>{ cs.innerHTML+=`<option value="${c}">${c}</option>`; });
+  cs.innerHTML='<option value="">اختر المدينة / المركز</option>';
+  if(gov&&CITIES[gov]) { 
+    CITIES[gov].forEach(c=>{ cs.innerHTML+=`<option value="${c}">${c}</option>`; }); 
+  }
   updateOrderTotal();
 }
 
@@ -313,35 +372,83 @@ function updateOrderTotal(){
   td.textContent = (totalProductsPrice + totalComm + ship + promoBonus) + ' ج';
 }
 
+// 3. دالة إرسال بريد إلكتروني ترحيبي وتفصيلي تلقائي إلى المورد عن طريق حزمة Edge Functions / Mail في Supabase
+async function sendSupplierEmailNotification(emailData) {
+  try {
+    // نستخدم جدول مخصص للرسائل أو نستدعي وظيفة مدمجة لإطلاق الإيميل فوراً من السيستم
+    await req('supplier_emails', {
+      method: 'POST',
+      body: JSON.stringify({
+        supplier_id: emailData.supplier_id,
+        subject: `طلب جديد رقم ${emailData.order_id}`,
+        body_content: `مرحباً، تم استلام طلب جديد رقم: ${emailData.order_id}\n\n` +
+                      `المنتج: ${emailData.product_name}\n` +
+                      `العميل: ${emailData.customer_name}\n` +
+                      `الهاتف: ${emailData.phone}\n` +
+                      `المحافظة: ${emailData.governorate}\n` +
+                      `المدينة: ${emailData.city}\n` +
+                      `العنوان: ${emailData.address}\n` +
+                      `الكمية: ${emailData.qty}\n` +
+                      `المقاس: ${emailData.size}\n` +
+                      `اللون: ${emailData.color}\n` +
+                      `إجمالي الربح: ${emailData.supplier_profit} ج\n` +
+                      `تاريخ ووقت الطلب: ${emailData.timestamp}`
+      })
+    });
+  } catch(e) {
+    console.warn("إشعار البريد الإلكتروني لم يصل للمورد، لكن تم حفظ الأوردر بنجاح في قاعدة البيانات:", e.message);
+  }
+}
+
 async function submitOrder(){
-  const name=document.getElementById('oName').value.trim();
-  const phone=document.getElementById('oPhone').value.trim();
-  const phone2=document.getElementById('oPhone2').value.trim();
-  const gov=document.getElementById('oGovernorate').value;
-  const city=document.getElementById('oCity').value;
-  const address=document.getElementById('oAddress').value.trim();
-  const notes=document.getElementById('oNotes').value.trim();
+  // 4. منع نقرات زر الماوس المتكررة والسريعة عبر قفل الأوردر المباشر
+  if (isSubmitting) return;
+
+  // 6. جلب وتنظيف البيانات بشكل فوري من حقول الإدخال
+  const name = cleanText(document.getElementById('oName').value);
+  const phone = document.getElementById('oPhone').value.trim();
+  const phone2 = document.getElementById('oPhone2').value.trim();
+  const gov = document.getElementById('oGovernorate').value;
+  const city = document.getElementById('oCity').value;
+  const address = cleanText(document.getElementById('oAddress').value);
+  const notes = cleanText(document.getElementById('oNotes').value);
   const commissionPerItem = parseFloat(document.getElementById('oCommission').value)||0;
 
-  if(!name){ alert('⚠️ أدخل اسم العميل'); return; }
-  if(!phone||phone.length!==11){ alert('⚠️ رقم الهاتف 11 رقم'); return; }
-  if(!gov){ alert('⚠️ اختر المحافظة'); return; }
-  if(!city){ alert('⚠️ اختر المدينة'); return; }
-  if(!address){ alert('⚠️ أدخل العنوان'); return; }
+  if(!name){ alert('⚠️ يرجى كتابة اسم العميل'); return; }
+  
+  // 5. التحقق الصارم والكامل من رقم الهاتف بناءً على شبكات مصر الأربعة
+  const phoneRegex = /^01[0125][0-9]{8}$/;
+  if(!phone || !phoneRegex.test(phone)){ 
+    alert('⚠️ رقم الهاتف غير صحيح! يجب أن يتكون من 11 رقماً ويبدأ بـ 010 أو 011 أو 012 أو 015'); 
+    return; 
+  }
+  
+  if(phone2 && !phoneRegex.test(phone2)){
+    alert('⚠️ رقم الهاتف الإضافي غير صحيح! يجب أن يتكون من 11 رقماً ويبدأ بالبادئات المصرية المعروفة أو اتركه فارغاً.');
+    return;
+  }
 
-  const btn=document.querySelector('.btn-primary');
-  if(btn){ btn.disabled=true; btn.textContent='⏳ جاري الإرسال...'; }
-  const alertContainer=document.getElementById('alertContainer');
-  if(alertContainer)alertContainer.innerHTML='';
+  if(!gov){ alert('⚠️ يرجى تحديد المحافظة'); return; }
+  if(!city){ alert('⚠️ يرجى تحديد المدينة / المركز التابع للمحافظة'); return; }
+  if(!address){ alert('⚠️ يرجى كتابة العنوان السكني بالتفصيل'); return; }
 
-  const shippingCost=getShippingCost(gov);
+  // تفعيل القفل لمنع الإرسال المتعدد
+  isSubmitting = true;
+  const btn = document.querySelector('.btn-primary');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ جاري مراجعة وإرسال الطلب...'; }
+  const alertContainer = document.getElementById('alertContainer');
+  if(alertContainer) alertContainer.innerHTML = '';
+
+  const shippingCost = getShippingCost(gov);
   const promoBonus = checkPromoBonus(); 
-  const referredByMarketer = localStorage.getItem('affiliate_user') || null;
 
   try{
-    let allSuccess=true, errorMsg='';
-    const createdOrders=[];
+    let allSuccess = true, errorMsg = '';
+    const createdOrders = [];
     let bonusDistributed = false;
+
+    // جلب معلومات حساب الموردين من السيستم دفعة واحدة للتحقق من نظام الإحالات الخاص بهم
+    const allSuppliersAccounts = await req(`stylek_password?select=*`);
 
     for(const item of orderProducts){
       const bp = parseFloat(item.base_price) || 0;
@@ -353,13 +460,17 @@ async function submitOrder(){
         bonusDistributed = true;
       }
 
-      const currentOrderReferralProfit = referredByMarketer ? (REFERRAL_COMMISSION_PER_QTY * qty) : 0;
-      const supplierId = item.supplier_username || 'supplier_default';
+      const currentOrderReferralProfit = affiliateUser ? (REFERRAL_COMMISSION_PER_QTY * qty) : 0;
+      const supplierId = item.supplier_username || item.supplier_id || 'supplier_default';
       const supplierProfitAmount = bp * qty;
-      const oid='ORD-'+Date.now()+'-'+String(item.product_id)+'-'+Math.random().toString(36).substr(2,4);
+      const oid = 'ORD-' + Date.now() + '-' + String(item.product_id) + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
 
-      // تعديل أسماء الأعمدة لتطابق لقطات الشاشة 100%
-      const result = await callApi('place_order', {
+      // 7. حساب ودعم إحالة المورد بالكامل وتخزين العمولات إذا كان المورد مُحالاً من شخص آخر
+      const currentSupplierObj = allSuppliersAccounts.find(u => (u.username || '').trim().toLowerCase() === supplierId.trim().toLowerCase());
+      const supplierReferredBy = currentSupplierObj ? (currentSupplierObj.affiliate_user || null) : null;
+      const supplierReferralProfit = supplierReferredBy ? (SUPPLIER_REFERRAL_COMMISSION_PER_QTY * qty) : 0;
+
+      const orderDataPayload = {
         order_id: oid,
         product_id: String(item.product_id),
         customer_name: name,
@@ -376,39 +487,81 @@ async function submitOrder(){
         total_price: totalProductCost, 
         commission: (commissionPerItem * qty), 
         site_profit: (SITE_PROFIT * qty), 
-        referred_by_marketer: referredByMarketer, // مُطابق للصورة تماماً
-        marketer_referral_profit: currentOrderReferralProfit, // مُطابق للصورة تماماً
-        supplier_id: supplierId, // مُطابق للصورة تماماً
-        supplier_profit: supplierProfitAmount, // مُطابق للصورة تماماً
+        referred_by_marketer: affiliateUser, 
+        marketer_referral_profit: currentOrderReferralProfit, 
+        supplier_id: supplierId, 
+        supplier_username: supplierId,
+        supplier_profit: supplierProfitAmount, 
+        supplier_referred_by: supplierReferredBy,             // مخزن ومدعوم بالكامل
+        supplier_referral_profit: supplierReferralProfit,       // حساب عمولة المورد التابع
         notes: notes,
         marketer_username: marketerName,
         marketer_id: marketerId,
         order_status: 'pending',
         cart_id: GlobalCartId 
-      });
+      };
 
-      if(result.code || result.message) { 
-        allSuccess=false; 
-        errorMsg=result.message || 'خطأ أثناء الحفظ في الداتابيز'; 
+      const result = await callApi('place_order', orderDataPayload);
+
+      // 10. تحسين مسار الأخطاء لمعرفة السبب الحقيقي لفشل الإرسال عبر السيرفر
+      if(result.code || result.message || result.status === 'error') { 
+        allSuccess = false; 
+        errorMsg = result.message || 'خطأ داخلي في الخادم أو فشل التحقق من الحقول المطلوبة.'; 
         break; 
       }
-      createdOrders.push({order_id:oid, product_id:String(item.product_id), size:item.size||'', color:item.color||'', qty:qty});
+
+      createdOrders.push({
+        order_id: oid, 
+        product_id: String(item.product_id), 
+        size: item.size||'', 
+        color: item.color||'', 
+        qty: qty,
+        emailInfo: {
+          order_id: oid,
+          supplier_id: supplierId,
+          product_name: item.name || 'منتج متجر ستايلك',
+          customer_name: name,
+          phone: phone,
+          governorate: gov,
+          city: city,
+          address: address,
+          qty: qty,
+          size: item.size || 'حر',
+          color: item.color || 'افتراضي',
+          supplier_profit: supplierProfitAmount,
+          timestamp: new Date().toLocaleString('ar-EG')
+        }
+      });
     }
 
     if(allSuccess){
+      // 12. تحديث المخزون الفعلي بعد التأكد التام من نجاح إنشاء الأوردر بالكامل
       for(const order of createdOrders){
         await updateStockAfterOrder(order.product_id, order.size, order.color, order.qty);
+        // إطلاق إشعار البريد الإلكتروني للمورد تزامناً مع التأكيد
+        await sendSupplierEmailNotification(order.emailInfo);
       }
+      
       localStorage.removeItem('cart_' + marketerId);
-      if(alertContainer)alertContainer.innerHTML=`<div class="alert alert-success">✅ تم إنشاء الطلب بنجاح!</div>`;
-      setTimeout(()=>{ goBack(); }, 2000);
-    }else{
-      if(alertContainer)alertContainer.innerHTML=`<div class="alert alert-danger">❌ فشل: ${errorMsg}</div>`;
+      
+      // 11. رسالة نجاح واضحة وجذابة تمنح المسوق والمورد تأكيداً نهائياً
+      if(alertContainer) alertContainer.innerHTML = `
+        <div class="alert alert-success" style="padding: 16px; font-size: 14px;">
+          🎉 <strong style="font-size: 16px;">تم تسجيل طلبك بنجاح واحتسابه في السجلات!</strong><br>
+          سيتم الآن مراجعة الطلب وتحضيره للشحن فوراً. جاري توجيهك...
+        </div>`;
+        
+      setTimeout(()=>{ goBack(); }, 2500);
+    } else {
+      isSubmitting = false; // فك القفل للسماح بالتصحيح وإعادة الإرسال
+      if(alertContainer) alertContainer.innerHTML = `<div class="alert alert-danger">❌ فشل تسجيل الطلب: ${errorMsg}</div>`;
     }
-  }catch(e){
-    if(alertContainer)alertContainer.innerHTML=`<div class="alert alert-danger">❌ خطأ في النظام: ${e.message}</div>`;
+  } catch(e) {
+    isSubmitting = false; // فك القفل
+    if(alertContainer) alertContainer.innerHTML = `<div class="alert alert-danger">❌ خطأ غير متوقع في النظام: ${e.message}</div>`;
   }
-  if(btn){ btn.disabled=false; btn.textContent='✅ تأكيد الطلب'; }
+  
+  if(btn && !allSuccess){ btn.disabled = false; btn.textContent = '✅ تأكيد وإرسال الطلب'; }
 }
 
 function showError(msg){
