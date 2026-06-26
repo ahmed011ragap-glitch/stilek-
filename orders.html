@@ -93,12 +93,10 @@ const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const SITE_PROFIT = 20;
 const REFERRAL_COMMISSION_PER_QTY = 5;
-const SUPPLIER_REFERRAL_COMMISSION_PER_QTY = 5; // عمولة إحالة المورد لكل قطعة
+const SUPPLIER_REFERRAL_COMMISSION_PER_QTY = 5; 
 
-// علم لمنع التكرار (Lock Flag)
 let isSubmitting = false;
 
-// 1 & 2. منظومة محافظات مصر الـ 27 بالكامل والمراكز التابعة لها وأسعار الشحن
 const SHIPPING_COSTS = {
   'القاهرة': 102, 'الجيزة': 102, 'الإسكندرية': 107, 'القليوبية': 115, 'الدقهلية': 115,
   'الغربية': 115, 'المنوفية': 115, 'الشرقية': 115, 'البحيرة': 115, 'كفر الشيخ': 115,
@@ -140,7 +138,6 @@ const CITIES = {
   'جنوب سيناء': ['شرم الشيخ', 'طور سيناء', 'دهب', 'نويبع', 'طابا', 'رأس سدر', 'سانت كاترين']
 };
 
-// 6. دوال تنظيف المدخلات بشكل آمن وصارم
 function cleanText(t){ 
   if(!t) return '';
   return t.replace(/[«»""''()\[\]{}]/g, '')
@@ -166,7 +163,6 @@ function checkPromoBonus() {
   return 0;
 }
 
-// 9. دالة الاتصال الموثوقة مع نظام إعادة المحاولة التلقائي (Retry) حتى 3 مرات
 async function req(ep, opts={}){
   let maxRetries = 3;
   let attempt = 0;
@@ -191,7 +187,6 @@ async function req(ep, opts={}){
       if (attempt >= maxRetries) {
         throw new Error(`فشل الاتصال بعد ${maxRetries} محاولات. السبب: ${error.message}`);
       }
-      // انتظار قصير قبل إعادة المحاولة (Linear Backoff)
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
   }
@@ -213,7 +208,6 @@ async function callApi(action,data={}){
   }catch(e){ return {status:'error',message:e.message}; }
 }
 
-// 12. تحديث المخزون مفرود ومحمي ليعمل بعد نجاح الأوردر بالكامل فقط
 async function updateStockAfterOrder(productId, size, color, qty){
   try{
     const variants=await req(`product_variants?product_id=eq.${productId}&select=*`);
@@ -240,11 +234,16 @@ async function updateStockAfterOrder(productId, size, color, qty){
 
 const urlP=new URLSearchParams(window.location.search);
 
-// 8. التحقق الآمن من وجود بيانات التخزين المحلي LocalStorage بالكامل لتفادي الأخطاء المفاجئة
 let rawUser = urlP.get('user') || localStorage.getItem('username') || localStorage.getItem('userName') || '';
 let marketerId = rawUser.trim().toLowerCase() || 'm_guest_' + Math.random().toString(36).substr(2, 6);
 let marketerName = localStorage.getItem('userName') || localStorage.getItem('username') || 'مسوق افتراضي';
-let affiliateUser = localStorage.getItem('affiliate_user') || null;
+
+// ⭐ [تحديث ذكي فوري] آلية فحص ثلاثية لالتقاط اسم المسوق المُحيل (من الرابط أو التخزين) لضمان عدم ضياعه
+let affiliateUser = urlP.get('ref') || urlP.get('affiliate_user') || localStorage.getItem('affiliate_user') || null;
+if (affiliateUser) {
+  affiliateUser = affiliateUser.trim().toLowerCase();
+  localStorage.setItem('affiliate_user', affiliateUser); // تثبيته في المتصفح فوراً
+}
 
 let orderProducts=[];
 let currentProduct=null;
@@ -372,10 +371,8 @@ function updateOrderTotal(){
   td.textContent = (totalProductsPrice + totalComm + ship + promoBonus) + ' ج';
 }
 
-// 3. دالة إرسال بريد إلكتروني ترحيبي وتفصيلي تلقائي إلى المورد عن طريق حزمة Edge Functions / Mail في Supabase
 async function sendSupplierEmailNotification(emailData) {
   try {
-    // نستخدم جدول مخصص للرسائل أو نستدعي وظيفة مدمجة لإطلاق الإيميل فوراً من السيستم
     await req('supplier_emails', {
       method: 'POST',
       body: JSON.stringify({
@@ -396,15 +393,13 @@ async function sendSupplierEmailNotification(emailData) {
       })
     });
   } catch(e) {
-    console.warn("إشعار البريد الإلكتروني لم يصل للمورد، لكن تم حفظ الأوردر بنجاح في قاعدة البيانات:", e.message);
+    console.warn("إشعار البريد الإلكتروني لم يصل للمورد، لكن تم حفظ الأوردر بنجاح:", e.message);
   }
 }
 
 async function submitOrder(){
-  // 4. منع نقرات زر الماوس المتكررة والسريعة عبر قفل الأوردر المباشر
   if (isSubmitting) return;
 
-  // 6. جلب وتنظيف البيانات بشكل فوري من حقول الإدخال
   const name = cleanText(document.getElementById('oName').value);
   const phone = document.getElementById('oPhone').value.trim();
   const phone2 = document.getElementById('oPhone2').value.trim();
@@ -416,7 +411,6 @@ async function submitOrder(){
 
   if(!name){ alert('⚠️ يرجى كتابة اسم العميل'); return; }
   
-  // 5. التحقق الصارم والكامل من رقم الهاتف بناءً على شبكات مصر الأربعة
   const phoneRegex = /^01[0125][0-9]{8}$/;
   if(!phone || !phoneRegex.test(phone)){ 
     alert('⚠️ رقم الهاتف غير صحيح! يجب أن يتكون من 11 رقماً ويبدأ بـ 010 أو 011 أو 012 أو 015'); 
@@ -424,15 +418,14 @@ async function submitOrder(){
   }
   
   if(phone2 && !phoneRegex.test(phone2)){
-    alert('⚠️ رقم الهاتف الإضافي غير صحيح! يجب أن يتكون من 11 رقماً ويبدأ بالبادئات المصرية المعروفة أو اتركه فارغاً.');
+    alert('⚠️ رقم الهاتف الإضافي غير صحيح!');
     return;
   }
 
   if(!gov){ alert('⚠️ يرجى تحديد المحافظة'); return; }
-  if(!city){ alert('⚠️ يرجى تحديد المدينة / المركز التابع للمحافظة'); return; }
+  if(!city){ alert('⚠️ يرجى تحديد المدينة / المركز'); return; }
   if(!address){ alert('⚠️ يرجى كتابة العنوان السكني بالتفصيل'); return; }
 
-  // تفعيل القفل لمنع الإرسال المتعدد
   isSubmitting = true;
   const btn = document.querySelector('.btn-primary');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ جاري مراجعة وإرسال الطلب...'; }
@@ -447,8 +440,16 @@ async function submitOrder(){
     const createdOrders = [];
     let bonusDistributed = false;
 
-    // جلب معلومات حساب الموردين من السيستم دفعة واحدة للتحقق من نظام الإحالات الخاص بهم
-    const allSuppliersAccounts = await req(`stylek_password?select=*`);
+    // جلب معلومات الحسابات دفعة واحدة للبحث عن التابعين والإحالات بشكل دقيق
+    const allUsersAccounts = await req(`stylek_password?select=*`);
+
+    // ⭐ [تحديث خطير وجوهري]: التحقق من أن المسوق الحالي نفسه مسجل عبر إحالة مسوق آخر إذا لم يلتقط الرابط
+    if (!affiliateUser) {
+      const currentMarketerObj = allUsersAccounts.find(u => (u.username || '').trim().toLowerCase() === marketerId);
+      if (currentMarketerObj && currentMarketerObj.affiliate_user) {
+        affiliateUser = currentMarketerObj.affiliate_user.trim().toLowerCase();
+      }
+    }
 
     for(const item of orderProducts){
       const bp = parseFloat(item.base_price) || 0;
@@ -461,13 +462,13 @@ async function submitOrder(){
       }
 
       const currentOrderReferralProfit = affiliateUser ? (REFERRAL_COMMISSION_PER_QTY * qty) : 0;
-      const supplierId = item.supplier_username || item.supplier_id || 'supplier_default';
+      const supplierId = (item.supplier_username || item.supplier_id || 'supplier_default').trim().toLowerCase();
       const supplierProfitAmount = bp * qty;
       const oid = 'ORD-' + Date.now() + '-' + String(item.product_id) + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
 
-      // 7. حساب ودعم إحالة المورد بالكامل وتخزين العمولات إذا كان المورد مُحالاً من شخص آخر
-      const currentSupplierObj = allSuppliersAccounts.find(u => (u.username || '').trim().toLowerCase() === supplierId.trim().toLowerCase());
-      const supplierReferredBy = currentSupplierObj ? (currentSupplierObj.affiliate_user || null) : null;
+      // ⭐ [تفنيط إحالة المورد]: البحث عن المورد في السيستم ومعرفة اليوزر نيم الخاص بـ (الشخص الذي أحاله) لتوزيع الأرباح بدقة
+      const currentSupplierObj = allUsersAccounts.find(u => (u.username || '').trim().toLowerCase() === supplierId);
+      const supplierReferredBy = currentSupplierObj && currentSupplierObj.affiliate_user ? currentSupplierObj.affiliate_user.trim().toLowerCase() : null;
       const supplierReferralProfit = supplierReferredBy ? (SUPPLIER_REFERRAL_COMMISSION_PER_QTY * qty) : 0;
 
       const orderDataPayload = {
@@ -492,8 +493,8 @@ async function submitOrder(){
         supplier_id: supplierId, 
         supplier_username: supplierId,
         supplier_profit: supplierProfitAmount, 
-        supplier_referred_by: supplierReferredBy,             // مخزن ومدعوم بالكامل
-        supplier_referral_profit: supplierReferralProfit,       // حساب عمولة المورد التابع
+        supplier_referred_by: supplierReferredBy,             // مخزن ومطابق بنسبة 100%
+        supplier_referral_profit: supplierReferralProfit,       // الأرباح الصافية المحسوبة للقطعة
         notes: notes,
         marketer_username: marketerName,
         marketer_id: marketerId,
@@ -503,7 +504,6 @@ async function submitOrder(){
 
       const result = await callApi('place_order', orderDataPayload);
 
-      // 10. تحسين مسار الأخطاء لمعرفة السبب الحقيقي لفشل الإرسال عبر السيرفر
       if(result.code || result.message || result.status === 'error') { 
         allSuccess = false; 
         errorMsg = result.message || 'خطأ داخلي في الخادم أو فشل التحقق من الحقول المطلوبة.'; 
@@ -535,16 +535,13 @@ async function submitOrder(){
     }
 
     if(allSuccess){
-      // 12. تحديث المخزون الفعلي بعد التأكد التام من نجاح إنشاء الأوردر بالكامل
       for(const order of createdOrders){
         await updateStockAfterOrder(order.product_id, order.size, order.color, order.qty);
-        // إطلاق إشعار البريد الإلكتروني للمورد تزامناً مع التأكيد
         await sendSupplierEmailNotification(order.emailInfo);
       }
       
       localStorage.removeItem('cart_' + marketerId);
       
-      // 11. رسالة نجاح واضحة وجذابة تمنح المسوق والمورد تأكيداً نهائياً
       if(alertContainer) alertContainer.innerHTML = `
         <div class="alert alert-success" style="padding: 16px; font-size: 14px;">
           🎉 <strong style="font-size: 16px;">تم تسجيل طلبك بنجاح واحتسابه في السجلات!</strong><br>
@@ -553,11 +550,11 @@ async function submitOrder(){
         
       setTimeout(()=>{ goBack(); }, 2500);
     } else {
-      isSubmitting = false; // فك القفل للسماح بالتصحيح وإعادة الإرسال
+      isSubmitting = false; 
       if(alertContainer) alertContainer.innerHTML = `<div class="alert alert-danger">❌ فشل تسجيل الطلب: ${errorMsg}</div>`;
     }
   } catch(e) {
-    isSubmitting = false; // فك القفل
+    isSubmitting = false; 
     if(alertContainer) alertContainer.innerHTML = `<div class="alert alert-danger">❌ خطأ غير متوقع في النظام: ${e.message}</div>`;
   }
   
