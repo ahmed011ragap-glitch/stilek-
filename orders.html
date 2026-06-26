@@ -460,16 +460,19 @@ async function submitOrder(){
 
       const currentOrderReferralProfit = affiliateUser ? (REFERRAL_COMMISSION_PER_QTY * qty) : 0;
       
-      // اسم المستخدم لصاحب المنتج (المورد)
       const productOwner = (item.supplier_username || item.supplier_id || 'supplier_default').trim().toLowerCase();
       const supplierProfitAmount = bp * qty;
       const oid = 'ORD-' + Date.now() + '-' + String(item.product_id) + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
 
       const currentSupplierObj = allUsersAccounts.find(u => (u.username || '').trim().toLowerCase() === productOwner);
-      const supplierReferredBy = currentSupplierObj && currentSupplierObj.affiliate_user ? currentSupplierObj.affiliate_user.trim().toLowerCase() : null;
-      const supplierReferralProfit = supplierReferredBy ? (SUPPLIER_REFERRAL_COMMISSION_PER_QTY * qty) : 0;
+      
+      // التعديل الجديد: استخراج بيانات المورد بدقة وتوزيعها على الأعمدة المطلوبة
+      const supplierUsername = currentSupplierObj && currentSupplierObj.username ? currentSupplierObj.username.trim() : productOwner;
+      const supplierAffiliateUser = currentSupplierObj && currentSupplierObj.affiliate_user ? currentSupplierObj.affiliate_user.trim() : null;
+      
+      // حساب الأرباح بناءً على رمز الإحالة التابع للمورد (إن وجد)
+      const supplierReferralProfit = supplierAffiliateUser ? (SUPPLIER_REFERRAL_COMMISSION_PER_QTY * qty) : 0;
 
-      // تعديل الـ Payload بناء على طلبك بدقة
       const orderDataPayload = {
         order_id: oid,
         product_id: String(item.product_id),
@@ -489,10 +492,11 @@ async function submitOrder(){
         site_profit: (SITE_PROFIT * qty), 
         referred_by_marketer: affiliateUser, 
         marketer_referral_profit: currentOrderReferralProfit, 
-        supplier_id: marketerId,                  // الشخص الذي سجل من رابط الإحالة (المستخدم المشتري/المسوق الحالي)
-        supplier_username: productOwner,          // اسم المستخدم لصاحب المنتج (المورد)
+        supplier_id: marketerId,                  
+        supplier_username: productOwner,          
         supplier_profit: supplierProfitAmount, 
-        supplier_referred_by: supplierReferredBy, 
+        supplier_referred_by: supplierUsername, // تم تعديلها لتأخذ الـ username الخاص بالمورد
+        username: supplierAffiliateUser,       // تم تعديلها لتأخذ الـ affiliate_user الخاص بالمورد
         supplier_referral_profit: supplierReferralProfit, 
         notes: notes,
         marketer_username: marketerName,
