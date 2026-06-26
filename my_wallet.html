@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>المحفظة والسحوبات - Stylek Store</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght=400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0a;
@@ -455,7 +455,6 @@ h2 {
   </div>
 </div>
 
-<!-- مودال السحب -->
 <div class="modal" id="withdrawModal">
   <div class="modal-content">
     <div style="padding: 12px; text-align: center; position: relative; border-bottom: 1px solid #222;">
@@ -726,9 +725,21 @@ document.getElementById('withdrawForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (!checkWithdrawalTimeout()) return;
 
+  const wType           = document.getElementById('withdrawal_type').value;
   const phone           = document.getElementById('w_phone').value.trim();
   const requestedAmount = parseFloat(document.getElementById('w_amount').value) || 0;
-  const wType           = document.getElementById('withdrawal_type').value;
+
+  // 🛡️ [تعديل الحماية المزدوجة]: منع سحب أرباح الإحالة إذا كانت أقل من 300 جنيه أو عند تعديل القيمة يدويًا
+  if (wType === 'referral_bonus') {
+      if (globalReferralBalance < 300) {
+          alert('❌ لا يمكن سحب أرباح الإحالة إلا بعد الوصول إلى 300 جنيه.');
+          return;
+      }
+      if (requestedAmount !== globalReferralBalance) {
+          alert('❌ لا يمكن تعديل مبلغ سحب أرباح الإحالة.');
+          return;
+      }
+  }
 
   if (!/^01[0125][0-9]{8}$/.test(phone)) {
     alert('❌ رقم هاتف مصري غير صحيح');
