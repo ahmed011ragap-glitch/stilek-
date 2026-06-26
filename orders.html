@@ -95,101 +95,31 @@
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tIG9XDZeHVZpZjz74e-dBA_ui5GIYw7';
 const SITE_PROFIT = 20;
-const WA_NUM = '201108712091';
 const REFERRAL_COMMISSION_PER_QTY = 5;
 
 // ============================================================
-// ===== نظام الشحن السليم ماليًا وجغرافيًا =====
+// ===== نظام الشحن =====
 // ============================================================
 const SHIPPING_COSTS = {
   'القاهرة':102,'الجيزة':102,'6 أكتوبر':102,'الشيخ زايد':102,
   'مدينة نصر':102,'المعادي':102,'مصر الجديدة':102,'حلوان':102,
   'التجمع الخامس':102,'شبرا':102,'المرج':102,'الزيتون':102,
-  'السلام':102,'العباسية':102,'وسط البلد':102,'جاردن سيتي':102,
-  'المنيل':102,'الوراق':102,'إمبابة':102,'بولاق':102,
-  'المقطم':102,'الوايلي':102,'روض الفرج':102,'شبرا الخيمة':102,
-  'المهندسين':102,'الدقي':102,'العجوزة':102,'أبو رواش':102,
-  'أوسيم':102,'حدائق الأهرام':102,'المنيب':102,'الهرم':102,
-  'فيصل':102,'بولاق الدكرور':102,'كفر طهرمس':102,
-  'منشأة القناطر':102,'الواحات':102,'نزلة السمان':102,
   'الإسكندرية':107,'العجمي':107,'سموحة':107,'سيدي بشر':107,
-  'المنتزه':107,'محرم بك':107,'الرمل':107,'برج العرب':107,
-  'الدخيلة':107,'العامرية':107,'مينا البصل':107,'أنفوشي':107,
-  'جليم':107,'ستانلي':107,'رشدي':107,'لوران':107,
-  'سيدي جابر':107,'كليوباترا':107,'فيكتوريا':107,'الحضرة':107,
-  'إبراهيمية الإسكندرية':107,'العطارين':107,'القباري':107,'السواحل':107,
-  'الظاهرية':107,'جناكليس':107,'مرسى مطروح':107,
-  'الضبعة':107,'العلمين':107,'سيوة':107,'النجيلة':107,
-  'سيدي براني':107,'الحمام':107,'راس الحكمة':107,'فوكة':107,
   'المنصورة':115,'طلخا':115,'ميت غمر':115,'دكرنس':115,
-  'السنبلاوين':115,'شربين':115,'أجا':115,'بلقاس':115,
-  'المطرية':115,'منية النصر':115,'الجمالية':115,'تمي الأمديد':115,
-  'المنزلة':115,'بنها':115,'قليوب':115,'الخانكة':115,
-  'الخصوص':115,'طوخ':115,'قها':115,'كفر شكر':115,
-  'شبين القناطر':115,'القناطر الخيرية':115,'العبور':115,
   'طنطا':115,'المحلة الكبرى':115,'كفر الزيات':115,'زفتى':115,
-  'بسيون':115,'sمنود':115,'قطور':115,'السنطة':115,
-  'كفر الشيخ':115,'دسوق':115,'قلين':115,'سيدي سالم':115,
-  'بلطيم':115,'فوه':115,'الرياض':115,'مطوبس':115,
-  'برج البرلس':115,'الحامول':115,'شبين الكوم':115,'قويسنا':115,
-  'أشمون':115,'باجور':115,'منوف':115,'مدينة السادات':115,
-  'بركة السبع':115,'تلا':115,'الشهداء':115,'سرس الليان':115,
-  'الزقازيق':115,'العاشر من رمضان':115,'بلبيس':115,'منيا القمح':115,
-  'فاقوس':115,'أبو حماد':115,'كفر صقر':115,'أبو كبير':115,
-  'ههيا':115,'ديرب نجم':115,'إبراهيمية الشرقية':115,'الحسينية':115,
-  'دمياط':115,'دمياط الجديدة':115,'رأس البر':115,'فارسكور':115,
-  'الزرقا':115,'ميت أبو غالب':115,'بورسعيد':115,'بورفؤاد':115,
-  'الضاحية':115,'المناخ':115,'العرب':115,'الإسماعيلية':115,
-  'faيد':115,'القنطرة شرق':115,'التل الكبير':115,'أبو صوير':115,
-  'السويس':115,'الأربعين':115,'الجناين':115,'عتاقة':115,
-  'الفيوم':129,'إطسا':129,'سنورس':129,'طامية':129,
-  'أبشواي':129,'يوسف الصديق':129,'الفيوم الجديدة':129,
-  'بني سويف':129,'الواسطى':129,'ناصر':129,'ببا':129,
-  'الفشن':129,'سمسطا':129,'إهناسيا':129,'المنيا':129,
-  'ملوي':129,'بني مزار':129,'مغاغة':129,'سمالوط':129,
-  'أبو قرقاص':129,'دير مواس':129,'العدوة':129,'مطاي':129,
-  'أسيوط':129,'ديروط':129,'منفلوط':129,'القوصية':129,
-  'أبنوب':129,'أبو تيج':129,'الغنايم':129,'صدفا':129,
-  'سوهاج':129,'أخميم':129,'طهطا':129,'جرجا':129,
-  'طma':129,'البلينا':129,'المراغة':129,'ساقلته':129,
-  'قنا':145,'نجع حمادي':145,'دشنا':145,'أبو تشت':145,
-  'فرشوط':145,'قوص':145,'الوقف':145,'نقادة':145,
-  'الأقصر':145,'إسنا':145,'أرمنت':145,'القرنة':145,
-  'البياضية':145,'الطود':145,'الكرنك':145,'أسوان':145,
-  'كوم أمبو':145,'إدفو':145,'نصر النوبة':145,'دراو':145,
-  'كشكول':145,'أبو سمبل':145,'الغردقة':145,'سفاجا':145,
-  'رأس غارب':145,'مرسى علم':145,'القصير':145,'الشلاتين':145,
-  'الخارجة':149,'الداخلة':149,'الفرافرة':149,'بلاط':149,
-  'موط':149,'القصر الوادي':149,'باريس':149
+  'قنا':145,'نجع حمادي':145,'الأقصر':145,'أسوان':145
 };
 function getShippingCost(g){ return SHIPPING_COSTS[g]||115; }
 
 const CITIES = {
-  'القاهرة':['القاهرة','حلوان','مصر الجديدة','المعادي','مدينة نصر','التجمع الخامس','شبرا','المرج','الزيتون','السلام','العباسية','وسط البلد','المقطم'],
-  'الجيزة':['الجيزة','6 أكتوبر','الشيخ زايد','الهرم','فيصل','المهندسين','الدقي','العجوزة'],
-  'الإسكندرية':['الإسكندرية','العجمي','سموحة','سيدي بشر','المنتزه','محرم بك','الرمل','برج العرب','إبراهيمية الإسكندرية'],
-  'القليوبية':['بنها','شبرا الخيمة','قليوب','الخانكة','الخصوص','طوخ','قها','كفر شكر'],
-  'الشرقية':['الزقازيق','العاشر من رمضان','بلبيس','منيا القمح','فاقوس','أبو حماد','كفر صقر','أبو كبير','إبراهيمية الشرقية'],
-  'الدقهلية':['المنصورة','طلخا','ميت غمر','دكرنس','السنبلاوين','شربين','أجا','بلقاس'],
-  'الغربية':['طنطا','المحلة الكبرى','كفر الزيات','زفتى','بسيون','سمنود','قطور','السنطة'],
-  'المنوفية':['شبين الكوم','قويسنا','أشمون','باجور','منوف','مدينة السادات','بركة السبع','تلا'],
-  'البحيرة':['دمنهور','كفر الدوار','رشيد','إدكو','أبو حمص','إيتاي البارود','كوم حمادة','المحمودية'],
-  'دمياط':['دمياط','دمياط الجديدة','رأس البر','فارسكور','الزرقا','كفر سعد'],
-  'بورسعيد':['بورسعيد','بورفؤاد','الضاحية','المناخ','العرب','الجنوب','الشرق','الغرب'],
-  'الإسماعيلية':['الإسماعيلية','فايد','القنطرة شرق','التل الكبير','أبو صوير','القصاصين'],
-  'السويس':['السويس','الأربعين','الجناين','عتاقة','فيصل'],
-  'كفر الشيخ':['كفر الشيخ','دسوق','قلين','سيدي سالم','بلطيم','فوه','الرياض','مطوبس'],
-  'الفيوم':['الفيوم','إطسا','سنورس','طامية','أبشواي','يوسف الصديق'],
-  'بني سويف':['بني سويف','الواسطى','ناصر','ببا','الفشن','سمسطا','إهناسيا'],
-  'المنيا':['المنيا','ملوي','بني مزار','مغاغة','سمالوط','أبو قرقاص','دير مواس','العدوة'],
-  'أسيوط':['أسيوط','ديروط','منفلوط','القوصية','أبنوب','أبو تيج','الغنايم','صدفا'],
-  'سوهاج':['سوهاج','أخميم','طهطا','جرجا','طما','البلينا','المراغة','ساقلته'],
-  'قنا':['قنا','نجع حمادي','دشنا','أبو تشت','فرشوط','قوص','الوقف','نقادة'],
-  'الأقصر':['الأقصر','إسنا','أرمنت','القرنة','البياضية','الطود','الكرنك'],
-  'أسوان':['أسوان','كوم أمبو','إدفو','نصر النوبة','دراو','كشكول','أبو سمبل'],
-  'مطروح':['مرسى مطروح','الضبعة','العلمين','سيوة','النجيلة','سيدي براني','الحمام'],
-  'الوادي الجديد':['الخارجة','الداخلة','الفرافرة','بلاط','موط','القصر الوادي','باريس'],
-  'البحر الأحمر':['الغردقة','سفاجا','رأس غارب','مرسى علم','القصير','الشلاتين','حلايب']
+  'القاهرة':['القاهرة','حلوان','مصر الجديدة','المعادي','مدينة نصر','التجمع الخامس','شبرا'],
+  'الجيزة':['الجيزة','6 أكتوبر','الشيخ زايد','الهرم','فيصل','المهندسين','الدقي'],
+  'الإسكندرية':['الإسكندرية','العجمي','سموحة','سيدي بشر','المنتزه','محرم بك'],
+  'الدقهلية':['المنصورة','طلخا','ميت غمر','دكرنس'],
+  'الغربية':['طنطا','المحلة الكبرى','كفر الزيات','زفتى'],
+  'قنا':['قنا','نجع حمادي'],
+  'الأقصر':['الأقصر','إسنا'],
+  'أسوان':['أسوان','كوم أمبو']
 };
 
 function esc(s){ return(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -205,12 +135,9 @@ function checkPromoBonus() {
     const currentDate = new Date();
     const diffTime = Math.abs(currentDate - regDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays <= 30) {
-      return 5; 
-    }
+    if (diffDays <= 30) return 5;
   }
-  return 0; 
+  return 0;
 }
 
 async function req(ep, opts={}){
@@ -244,21 +171,14 @@ async function updateStockAfterOrder(productId, size, color, qty){
       const currentStock=parseInt(matchedVariant.stock)||0;
       const newStock=Math.max(0,currentStock-qty);
       
-      await req(`product_variants?id=eq.${matchedVariant.id}`,{
-        method:'PATCH',
-        body:JSON.stringify({stock:newStock})
-      });
+      await req(`product_variants?id=eq.${matchedVariant.id}`,{method:'PATCH',body:JSON.stringify({stock:newStock})});
       
       const totalStock=variants.reduce((sum,v)=>{
         if(v.id===matchedVariant.id)return sum+newStock;
         return sum+(parseInt(v.stock)||0);
       },0);
       
-      await req(`products?product_id=eq.${productId}`,{
-        method:'PATCH',
-        body:JSON.stringify({stock:totalStock})
-      });
-      
+      await req(`products?product_id=eq.${productId}`,{method:'PATCH',body:JSON.stringify({stock:totalStock})});
       return true;
     }
     return false;
@@ -287,38 +207,18 @@ async function loadOrderData(){
     const localCart=JSON.parse(localStorage.getItem('cart_'+marketerId)||'[]');
     if(localCart.length){
       GlobalCartId = 'CRT-' + Date.now() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
-      
-      orderProducts=localCart.map(item=>({
-        ...item,
-        qty:item.qty||1,
-        size:size||item.size||'',
-        color:color||item.color||'',
-        cart_id: GlobalCartId 
-      }));
+      orderProducts=localCart.map(item=>({ ...item, qty:item.qty||1, size:size||item.size||'', color:color||item.color||'', cart_id: GlobalCartId }));
       renderOrderForm();
-    }else{
-      showError('السلة فارغة');
-    }
+    }else{ showError('السلة فارغة'); }
   }else if(productId){
     const result=await callApi('get_product',{product_id:productId});
     if(Array.isArray(result)&&result.length){
       currentProduct=result[0];
       GlobalCartId = 'CRT-' + Date.now() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
-      
-      orderProducts=[{
-        ...currentProduct,
-        qty:1,
-        size:size||'',
-        color:color||'',
-        cart_id: GlobalCartId
-      }];
+      orderProducts=[{ ...currentProduct, qty:1, size:size||'', color:color||'', cart_id: GlobalCartId }];
       renderOrderForm();
-    }else{
-      showError('المنتج غير موجود');
-    }
-  }else{
-    showError('لا توجد بيانات للطلب');
-  }
+    }else{ showError('المنتج غير موجود'); }
+  }else{ showError('لا توجد بيانات للطلب'); }
 }
 
 function renderOrderForm(){
@@ -349,7 +249,6 @@ function renderOrderForm(){
   });
   
   const govOpts = Object.keys(CITIES).map(g => `<option value="${g}">${g}</option>`).join('');
-  
   const promoBonus = checkPromoBonus();
   const promoRowHtml = promoBonus > 0 ? `<div class="sum-row" style="color: #00ff88;"><span>🎁 هدية ترحيبية للطلب كاملاً</span><span>+ ${promoBonus} ج</span></div>` : '';
   
@@ -361,7 +260,7 @@ function renderOrderForm(){
     <div class="fsec">👤 بيانات العميل</div>
     <div class="fg"><label class="fl">👤 اسم العميل <span style="color:var(--red);">*</span></label><input class="fi" id="oName" placeholder="أدخل اسم العميل"></div>
     <div class="fg"><label class="fl">📱 رقم الهاتف 1 <span style="color:var(--red);">*</span></label><input class="fi" id="oPhone" type="tel" placeholder="01012345678" maxlength="11" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,11)"></div>
-    <div class="fg"><label class="fl">📱 رقم هاتف إضافي</label><input class="fi" id="oPhone2" type="tel" placeholder="رقم آخر" maxlength="11" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,11)"></div>
+    <div class="fg"><label class="fl">📱 رقم هاتف إفاضي</label><input class="fi" id="oPhone2" type="tel" placeholder="رقم آخر" maxlength="11" oninput="this.value=this.value.replace(/\\D/g,'').slice(0,11)"></div>
     <div class="fgrid">
       <div class="fg"><label class="fl">🏙️ المحافظة <span style="color:var(--red);">*</span></label><select class="fi" id="oGovernorate" onchange="updateCities()"><option value="">اختر</option>${govOpts}</select></div>
       <div class="fg"><label class="fl">🏘️ المدينة <span style="color:var(--red);">*</span></label><select class="fi" id="oCity"><option value="">اختر</option></select></div>
@@ -369,22 +268,20 @@ function renderOrderForm(){
     <div class="fg"><label class="fl">📍 العنوان <span style="color:var(--red);">*</span></label><input class="fi" id="oAddress" placeholder="الشارع، المنطقة..."></div>
     <div class="fg"><label class="fl">📝 ملاحظات</label><input class="fi" id="oNotes" placeholder="أي ملاحظات..."></div>
     
-    <div class="fsec">💰 تعديل العمولة (لكل منتج/قطعة)</div>
+    <div class="fsec">💰 تعديل العمولة (لكل قطعة)</div>
     <div class="fg">
-      <label class="fl">⭐ عمولة القطعة الواحدة (ج) <span style="color:var(--gold);">تطبق على كل كمية</span></label>
+      <label class="fl">⭐ عمولة القطعة الواحدة (ج)</label>
       <input class="fi fi-gold" id="oCommission" type="number" value="${defaultComm}" oninput="updateOrderTotal()" step="1" min="0">
-      <div class="fi-hint">القيمة الافتراضية للقطعة: ${defaultComm} ج (تضرب تلقائياً في إجمالي عدد القطع)</div>
     </div>
     
     <div class="fsec">📋 ملخص الطلب</div>
     <div class="sum-box">
       ${summaryHtml}
-      <div class="sum-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><span>إجمالي المنتجات (مضروب في الكمية)</span><span style="color:var(--green);">${totalProductsPrice} ج</span></div>
+      <div class="sum-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><span>إجمالي المنتجات</span><span style="color:var(--green);">${totalProductsPrice} ج</span></div>
       <div class="sum-row"><span>إجمالي العمولة (<span id="commPerItemTxt">${defaultComm}</span> ج × ${totalQty} قطع)</span><span style="color:var(--gold);" id="commissionDisplay">${defaultComm * totalQty} ج</span></div>
       <div class="sum-row"><span>رسوم الشحن</span><span style="color:var(--muted);" id="shippingDisplay">115 ج</span></div>
       ${promoRowHtml}
       <div class="sum-total"><span>الإجمالي النهائي</span><span id="totalAmount">${totalProductsPrice + (defaultComm * totalQty) + 115 + promoBonus} ج</span></div>
-      <div class="shipping-note">🚚 مدة الشحن القصوى: <strong>4 أيام عمل</strong></div>
     </div>
     <div id="alertContainer"></div>
     <div class="btn-row"><button class="btn btn-primary" onclick="submitOrder()">✅ تأكيد الطلب</button><button class="btn btn-sec" onclick="goBack()">← رجوع</button></div>
@@ -439,7 +336,6 @@ async function submitOrder(){
 
   const shippingCost=getShippingCost(gov);
   const promoBonus = checkPromoBonus(); 
-
   const referredByMarketer = localStorage.getItem('affiliate_user') || null;
 
   try{
@@ -451,9 +347,7 @@ async function submitOrder(){
       const bp = parseFloat(item.base_price) || 0;
       const qty = parseInt(item.qty) || 1;
       
-      // تصحيح 1: إضافة رسوم الشحن للمنتج لتتطابق الداتابيز مع الفاتورة النهائية للعميل
       let totalProductCost = ((bp + SITE_PROFIT) * qty) + (commissionPerItem * qty) + shippingCost;
-      
       if(promoBonus > 0 && !bonusDistributed) {
         totalProductCost += promoBonus;
         bonusDistributed = true;
@@ -462,9 +356,9 @@ async function submitOrder(){
       const currentOrderReferralProfit = referredByMarketer ? (REFERRAL_COMMISSION_PER_QTY * qty) : 0;
       const supplierId = item.supplier_username || 'supplier_default';
       const supplierProfitAmount = bp * qty;
-
       const oid='ORD-'+Date.now()+'-'+String(item.product_id)+'-'+Math.random().toString(36).substr(2,4);
 
+      // تعديل أسماء الأعمدة لتطابق لقطات الشاشة 100%
       const result = await callApi('place_order', {
         order_id: oid,
         product_id: String(item.product_id),
@@ -482,10 +376,10 @@ async function submitOrder(){
         total_price: totalProductCost, 
         commission: (commissionPerItem * qty), 
         site_profit: (SITE_PROFIT * qty), 
-        referred_by_marketer: referredByMarketer,
-        marketer_referral_profit: currentOrderReferralProfit,
-        supplier_id: supplierId,
-        supplier_profit: supplierProfitAmount,
+        referred_by_marketer: referredByMarketer, // مُطابق للصورة تماماً
+        marketer_referral_profit: currentOrderReferralProfit, // مُطابق للصورة تماماً
+        supplier_id: supplierId, // مُطابق للصورة تماماً
+        supplier_profit: supplierProfitAmount, // مُطابق للصورة تماماً
         notes: notes,
         marketer_username: marketerName,
         marketer_id: marketerId,
@@ -493,7 +387,6 @@ async function submitOrder(){
         cart_id: GlobalCartId 
       });
 
-      // تصحيح 2: معالجة فحص الخطأ لـ Supabase (لأن الـ Insert الناجح لا يعيد حقل status)
       if(result.code || result.message) { 
         allSuccess=false; 
         errorMsg=result.message || 'خطأ أثناء الحفظ في الداتابيز'; 
@@ -506,11 +399,8 @@ async function submitOrder(){
       for(const order of createdOrders){
         await updateStockAfterOrder(order.product_id, order.size, order.color, order.qty);
       }
-      
-      // تصحيح 3: تفريغ السلة بالكامل للمسوق الحالي فور نجاح الطلب لضمان عدم تعليق المنتجات
       localStorage.removeItem('cart_' + marketerId);
-
-      if(alertContainer)alertContainer.innerHTML=`<div class="alert alert-success">✅ تم إنشاء الطلب بنجاح وبانتظار التجهيز!</div>`;
+      if(alertContainer)alertContainer.innerHTML=`<div class="alert alert-success">✅ تم إنشاء الطلب بنجاح!</div>`;
       setTimeout(()=>{ goBack(); }, 2000);
     }else{
       if(alertContainer)alertContainer.innerHTML=`<div class="alert alert-danger">❌ فشل: ${errorMsg}</div>`;
