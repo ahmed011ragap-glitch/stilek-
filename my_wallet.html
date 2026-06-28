@@ -29,7 +29,6 @@ body {
 }
 .container { max-width: 1000px; margin: 0 auto; }
 
-/* ── Sidebar ── */
 .menu-btn {
   position: fixed;
   top: 15px;
@@ -107,7 +106,7 @@ body {
   color: #fff !important;
   font-weight: 700 !important;
   margin: 20px 15px 5px !important;
-  box-shadow: 0 4px 15px rgba(37,211,102,0.3);
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
 }
 .whatsapp-chat-btn:hover { background: #20ba5a !important; transform: translateY(-2px); }
 .logout-btn { color: var(--red) !important; border-right: 4px solid transparent; }
@@ -119,24 +118,13 @@ body {
 }
 .overlay.active { display: block; }
 
-/* ── Header ── */
-.header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
-.header h1 {
-  font-size: 24px;
-  font-weight: 900;
-  background: linear-gradient(90deg, #00ff88, #00aaff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ── User Bar ── */
 .user-bar {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 14px 20px;
   margin-bottom: 20px;
-  margin-top: 55px;
+  margin-top: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -154,24 +142,13 @@ body {
   border: 1px solid #00aaff;
 }
 
-/* ── Username display ── */
-.username-display {
-  background: #0a1a0a;
-  border: 1px solid var(--green);
-  border-radius: 10px;
-  padding: 10px 16px;
-  margin-bottom: 15px;
-  text-align: center;
-  color: var(--green);
-  font-weight: 700;
-  font-size: 14px;
-}
-.username-display span {
-  color: #fff;
-  background: #1a2a1a;
-  padding: 4px 14px;
-  border-radius: 6px;
-  margin-right: 6px;
+.header { text-align: center; margin-bottom: 20px; margin-top: 10px; }
+.header h1 {
+  font-size: 24px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #00ff88, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 h2 {
@@ -181,29 +158,15 @@ h2 {
   padding-right: 10px;
 }
 
-/* ── Search ── */
-.search-bar { margin-bottom: 15px; }
-.search-bar input {
-  width: 100%;
-  padding: 10px 15px;
-  background: #111;
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  color: #fff;
-  font-size: 14px;
-  font-family: "Tajawal", sans-serif;
-  transition: 0.3s;
-}
-.search-bar input:focus { outline: none; border-color: var(--green); }
-
-/* ── Grid / Cards ── */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 15px;
 }
-@media(max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width: 600px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
 
 .card {
   background: var(--card-bg);
@@ -217,22 +180,34 @@ h2 {
   align-items: center;
   transition: 0.3s;
 }
-.card.active  { border: 1px solid var(--green); background: #111a15; }
+.card.active {
+  border: 1px solid var(--green);
+  background: #111a15;
+}
 .card.referral-card { border: 1px solid var(--blue); background: #0a1a2a; }
-
-.card-header-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-.card-icon  { font-size: 16px; }
-.yellow     { color: #ffdd00; }
-.green      { color: var(--green); }
-.blue       { color: var(--blue); }
-.purple     { color: var(--purple); }
+.card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.card-icon { font-size: 16px; }
+.orange { color: var(--orange); }
+.yellow { color: #ffdd00; }
+.green { color: var(--green); }
+.blue { color: var(--blue); }
+.purple { color: var(--purple); }
 .card-label { font-size: 11px; color: #aaa; font-weight: 500; }
 .card-value { font-size: 16px; font-weight: 800; color: #fff; }
-.card-value.highlight      { color: var(--green); }
-.card-value.blue-highlight { color: var(--blue); }
+.card-value.highlight { color: var(--green); }
+.card-value.blue-highlight { color: var(--blue); font-size: 16px; font-weight: 800; }
 
-/* ── Buttons ── */
-.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+.btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
 .btn {
   padding: 12px;
   border: none;
@@ -244,10 +219,9 @@ h2 {
   transition: 0.3s;
 }
 .btn-purple { background: #1a1a1a; border: 1px solid #333; color: #fff; }
-.btn-green  { background: var(--green); color: #000; }
+.btn-green { background: var(--green); color: #000; }
 .btn-green:hover { transform: translateY(-1px); }
 
-/* ── Alert ── */
 .alert {
   background: #15110a;
   border: 1px solid #251f11;
@@ -259,45 +233,74 @@ h2 {
   text-align: center;
 }
 
-/* ── Modal ── */
 .modal {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.85); z-index: 2000;
-  align-items: center; justify-content: center; padding: 15px;
+  background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; padding: 15px;
 }
 .modal-content { background: #111; border-radius: 14px; max-width: 400px; width: 100%; border: 1px solid #222; }
 
-/* ── Admin Panel ── */
-.admin-panel { display: none; background: #111; border: 1px solid var(--orange); border-radius: 12px; padding: 15px; margin-top: 15px; }
-.admin-panel h3 { color: var(--orange); text-align: center; font-size: 16px; margin-bottom: 10px; }
-.admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; }
-.stat-card { background: #1a1a1a; padding: 8px; border-radius: 6px; text-align: center; }
-.stat-value { font-size: 14px; font-weight: 900; }
-.stat-label { font-size: 10px; color: #aaa; }
-.admin-table { width: 100%; font-size: 11px; overflow-x: auto; }
-.admin-table table { width: 100%; border-collapse: collapse; min-width: 650px; }
-.admin-table th { background: #1a1a1a; color: var(--green); padding: 8px 4px; border-bottom: 1px solid var(--green); }
-.admin-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #222; color: #fff; }
-
-.bonus-text-hint {
-  display: none;
-  font-size: 12px;
-  color: var(--orange);
-  background: #221505;
-  border: 1px dashed var(--orange);
-  padding: 6px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  text-align: center;
-  font-weight: bold;
+.username-edit-box {
+  background: #111;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 15px;
+  margin-bottom: 15px;
+  margin-top: 55px;
+}
+.edit-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
 }
 
-.loading-box { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+/* Orders Table */
+.orders-table-wrap {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.orders-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.orders-table-wrap thead tr { background: #1a1a1a; }
+.orders-table-wrap thead th {
+  padding: 10px 12px;
+  text-align: right;
+  color: var(--green);
+  font-size: 12px;
+  border-bottom: 1px solid #222;
+}
+.orders-table-wrap tbody tr { border-bottom: 1px solid #1a1a1a; }
+.orders-table-wrap tbody tr:hover { background: #151515; }
+.orders-table-wrap tbody td { padding: 10px 12px; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-delivered { background: rgba(0,255,136,.15); color: var(--green); }
+.badge-pending   { background: rgba(255,153,0,.15); color: var(--orange); }
+.badge-other     { background: rgba(136,136,136,.12); color: #888; }
+
+.loading-row td { text-align: center; padding: 30px; color: #888; }
+
+/* مودال أرباح الإحالات المستقل */
+.modal-demo {
+  margin-top: 15px; background: #111; padding: 15px; border-radius: 10px; 
+  border: 1px dashed #333; display: none; text-align: center; margin-bottom: 25px;
+}
 </style>
 </head>
 <body>
 
-<!-- ── Sidebar ── -->
 <div class="menu-btn" onclick="toggleSidebar()">☰</div>
 
 <div id="sidebar" class="sidebar">
@@ -317,141 +320,136 @@ h2 {
 </div>
 <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
 
-<!-- ── Header ── -->
 <div class="header">
   <h1>Stylek Store</h1>
 </div>
 
 <div class="container">
 
-  <div class="username-display">
-    👤 اسم المستخدم الحالي: <span id="userNameDisplay">-</span>
-    <span style="color: var(--muted); font-weight: 400; margin-right: 10px;">🔒 (ثابت لا يمكن تغييره)</span>
+  <div class="username-edit-box">
+    <label style="font-size: 13px; color: var(--green); font-weight: bold;">👤 اسم المستخدم الحالي:</label>
+    <div class="edit-row">
+      <input type="text" id="usernameChangeInput" style="flex:1; padding:10px; background:#000; border:1px solid #222; border-radius:8px; color:#888; font-family:'Tajawal'; font-size:14px; cursor: not-allowed;" readonly>
+    </div>
   </div>
 
-  <div id="userBar" class="user-bar">
-    <span>المورد: <strong id="userName">-</strong></span>
-    <span>نوع الحساب: <strong class="user-type">🏭 مورد</strong></span>
+  <div id="userBar" class="user-bar" style="margin-top: 0;">
+    <span>المورد الحالي: <strong id="userName">-</strong></span>
+    <span>نوع الحساب: <strong class="user-type">📦 مورد</strong></span>
   </div>
 
   <h2>💼 المحفظة والملخص المالي</h2>
 
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="🔍 بحث أو تفعيل وضع الإدارة...">
-  </div>
-
-  <div id="userMode">
-    <div class="grid">
-      <div class="card active">
-        <div class="card-header-row">
-          <span class="card-icon green">✓</span>
-          <div class="card-label">رصيد متاح للسحب</div>
-        </div>
-        <div class="card-value highlight" id="available">0.00</div>
+  <div class="grid">
+    <div class="card active">
+      <div class="card-header-row">
+        <span class="card-icon green">✓</span>
+        <div class="card-label">رصيد متاح للسحب</div>
       </div>
-
-      <div class="card">
-        <div class="card-header-row">
-          <span class="card-icon yellow">⏳</span>
-          <div class="card-label">سحوبات معلقة</div>
-        </div>
-        <div class="card-value" id="pending">0.00</div>
-      </div>
-
-      <div class="card">
-        <div class="card-header-row">
-          <span class="card-icon green">💵</span>
-          <div class="card-label">مسحوبة سابقاً</div>
-        </div>
-        <div class="card-value" id="withdrawn">0.00</div>
-      </div>
-
-      <div class="card">
-        <div class="card-header-row">
-          <span class="card-icon" style="color:var(--orange);">📦</span>
-          <div class="card-label">قيد التحضير</div>
-        </div>
-        <div class="card-value" id="preparing">0.00</div>
-      </div>
-
-      <div class="card">
-        <div class="card-header-row">
-          <span class="card-icon purple">🚚</span>
-          <div class="card-label">قيد الشحن</div>
-        </div>
-        <div class="card-value" id="shipping">0.00</div>
-      </div>
-
-      <div class="card">
-        <div class="card-header-row">
-          <span class="card-icon blue">✅</span>
-          <div class="card-label">طلبات مكتملة</div>
-        </div>
-        <div class="card-value" id="delivered">0</div>
-      </div>
-
-      <div class="card referral-card" style="cursor:pointer;" onclick="openReferralWithdrawModal()">
-        <div class="card-header-row">
-          <span class="card-icon blue">🔗</span>
-          <div class="card-label">أرباح الإحالة الحالية</div>
-        </div>
-        <div class="card-value blue-highlight" id="referralBonusDisplay">0.00</div>
-        <span style="font-size:9px; color:#aaa; margin-top:4px;">💰 (اضغط للسحب)</span>
-      </div>
+      <div class="card-value highlight" id="available">0.00</div>
     </div>
 
-    <div class="btns">
-      <button class="btn btn-purple" onclick="openHistory()">🕐 السجل</button>
-      <button class="btn btn-green" onclick="openWithdrawModal()">💵 طلب سحب</button>
+    <div class="card referral-card" style="cursor:pointer;" onclick="openReferralWithdrawModal()">
+      <div class="card-header-row">
+        <span class="card-icon blue">🔗</span>
+        <div class="card-label">أرباح الإحالة الحالية</div>
+      </div>
+      <div class="card-value blue-highlight" id="referralBonusDisplay">0.00</div>
+      <span style="font-size:9px; color:#aaa; margin-top:4px;">💰 (اضغط هنا للسحب)</span>
     </div>
 
-    <div class="alert">
-      ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط. لا يوجد حد أدنى للسحوبات العادية، بينما يشترط حد أدنى 300 ج.م لأرباح الإحالة. ويجب مرور 5 ساعات بين أي طلب سحب وآخر.
+    <div class="card">
+      <div class="card-header-row">
+        <span class="card-icon yellow">⏳</span>
+        <div class="card-label">سحوبات معلقة</div>
+      </div>
+      <div class="card-value" id="pending">0.00</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row">
+        <span class="card-icon green">💵</span>
+        <div class="card-label">مسحوبة سابقاً</div>
+      </div>
+      <div class="card-value" id="withdrawn">0.00</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row">
+        <span class="card-icon orange">📦</span>
+        <div class="card-label">قيد التحضير</div>
+      </div>
+      <div class="card-value" id="preparing">0.00</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row">
+        <span class="card-icon blue">✅</span>
+        <div class="card-label">طلبات مكتملة</div>
+      </div>
+      <div class="card-value" id="delivered">0</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-row">
+        <span class="card-icon purple">🛒</span>
+        <div class="card-label">إجمالي الطلبات</div>
+      </div>
+      <div class="card-value" id="totalOrders">0</div>
     </div>
   </div>
 
-  <div class="admin-panel" id="adminPanel">
-    <h3>🔐 طلبات سحب الموردين (الأدمن)</h3>
-    <div class="admin-stats">
-      <div class="stat-card"><div class="stat-value" style="color:var(--orange);" id="pendingCount">0</div><div class="stat-label">معلق</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:var(--green);" id="approvedCount">0</div><div class="stat-label">تم</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:var(--red);" id="rejectedCount">0</div><div class="stat-label">مرفوض</div></div>
-      <div class="stat-card"><div class="stat-value" style="color:var(--blue);" id="totalCount">0</div><div class="stat-label">الإجمالي</div></div>
-    </div>
-    <div class="admin-table">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>المورد</th><th>رقم السحب</th><th>الهاتف</th><th>المبلغ</th><th>الطريقة</th><th>الملاحظات</th><th>التاريخ</th><th>الحالة</th><th>إجراء</th>
-          </tr>
-        </thead>
-        <tbody id="adminTableBody">
-          <tr><td colspan="10" class="loading-box">جاري التحميل...</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <div id="withdrawReferralModal" class="modal-demo">
+    <h4 id="referralModalTitle" style="color: var(--blue); margin-bottom: 5px;"></h4>
+    <p style="font-size:12px; color: var(--orange);">سيتم تحويل أرباح الإحالة بالكامل فوراً عند تأكيد الطلب.</p>
+    <input type="hidden" id="referral_withdrawal_type" value="">
+    <input type="hidden" id="referral_w_amount" value="">
+    <input type="hidden" id="referral_w_notes" value="">
+    <button onclick="alert('تم إرسال طلب سحب الإحالة بنجاح!')" style="margin-top:10px; background:var(--blue); border:none; padding:6px 20px; border-radius:5px; cursor:pointer; font-weight:bold; color:#000; font-family:'Tajawal';">تأكيد السحب</button>
+  </div>
+
+  <div class="btns">
+    <button class="btn btn-purple" onclick="loadDashboard()">🔄 تحديث</button>
+    <button class="btn btn-green" onclick="openWithdrawModal()">💵 طلب سحب</button>
+  </div>
+
+  <div class="alert">
+    ⚠️ السحب متاح للطلبات المكتملة والمستلمة فقط.
+  </div>
+
+  <h2>📋 تفاصيل الطلبات</h2>
+  <div class="orders-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>المنتج</th>
+          <th>السعر</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody">
+        <tr class="loading-row"><td colspan="4">جاري التحميل...</td></tr>
+      </tbody>
+    </table>
   </div>
 
 </div>
 
-<!-- ── Withdraw Modal ── -->
 <div class="modal" id="withdrawModal">
   <div class="modal-content">
     <div style="padding: 12px; text-align: center; position: relative; border-bottom: 1px solid #222;">
-      <h3 id="modalTitle" style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
+      <h3 style="color: var(--green); font-size: 16px; margin: 0;">إنشاء طلب سحب جديد</h3>
       <button type="button" onclick="closeWithdrawModal()" style="position: absolute; top: 8px; left: 15px; background: none; border: none; font-size: 24px; color: #fff; cursor: pointer;">×</button>
     </div>
-    <form id="withdrawForm" style="padding: 15px;">
-      <input type="hidden" id="withdrawal_type" value="normal">
-      <div class="bonus-text-hint" id="bonusHintText"></div>
+    <div style="padding: 15px;">
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">رقم هاتف المحفظة *</label>
-        <input type="tel" id="w_phone" required placeholder="01012345678"
-          style="width:100%; padding:8px; background:#000; border:1px solid var(--green); border-radius:8px; color:#fff; text-align:center;" maxlength="11">
+        <input type="tel" id="w_phone" placeholder="01012345678" style="width:100%; padding:8px; background:#000; border:1px solid var(--green); border-radius:8px; color:#fff; text-align:center;" maxlength="11">
       </div>
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">وسيلة الاستلام *</label>
-        <select id="w_account" required style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#fff;">
+        <select id="w_account" style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#fff;">
           <option value="">اختر الوسيلة</option>
           <option value="فودافون كاش">فودافون كاش</option>
           <option value="انستاباي">إنستا باي (InstaPay)</option>
@@ -461,396 +459,230 @@ h2 {
       </div>
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">المبلغ المراد سحبه *</label>
-        <input type="number" id="w_amount" min="0.01" step="0.01" required placeholder="أدخل القيمة ج.م"
-          style="width:100%; padding:8px; background:#000; border:1px solid var(--orange); border-radius:8px; color:var(--green); font-weight:700; text-align:center;">
+        <input type="number" id="w_amount" min="1" step="0.01" placeholder="أدخل القيمة ج.م" style="width:100%; padding:8px; background:#000; border:1px solid var(--orange); border-radius:8px; color:var(--green); font-weight:700; text-align:center;">
       </div>
       <div style="margin-bottom: 12px;">
-        <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #aaa;">الملاحظات *</label>
-        <textarea id="w_notes" rows="2" maxlength="30" placeholder="ملاحظات إضافية أو اسم الحساب..."
-          style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#fff; resize:none; font-family:'Tajawal'; font-size:12px;"></textarea>
+        <textarea id="w_notes" rows="2" maxlength="30" placeholder="ملاحظات إضافية..." style="width:100%; padding:8px; background:#000; border:1px solid #222; border-radius:8px; color:#aaa; resize:none; font-family:'Tajawal'; font-size:12px;"></textarea>
       </div>
-      <button type="submit" style="width:100%; padding:10px; background:var(--green); border:none; color:#000; font-weight:700; border-radius:8px; cursor:pointer; font-size:14px;">
-        تأكيد وإرسال الطلب
-      </button>
-    </form>
+      <button onclick="submitWithdraw()" id="submitWithdrawBtn" style="width:100%; padding:10px; background:var(--green); border:none; color:#000; font-weight:700; border-radius:8px; cursor:pointer; font-size:14px;">تأكيد وإرسال الطلب</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ============================================================
-// CONFIG
-// ============================================================
 const SUPABASE_URL = 'https://zphepebjpxrzpudncuas.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaGVwZWJqcHhyenB1ZG5jdWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzY0NzQsImV4cCI6MjA5NzI1MjQ3NH0.RUUcj74GOZDkoC41zXBj3DZlhwGgIwC-ctpNu4D5Nwk';
-const ADMIN_CODE   = 'Ahmed**##$$1';
 
-// ============================================================
-// حالات الطلبات
-// ============================================================
-const STATUS_DELIVERED = ['تم التسليم','تم التوصيل','تم','delivered','completed','done'];
-const STATUS_SHIPPING  = ['توصيل','شحن','shipping','out_for_delivery','جديد','new','pending'];
-const STATUS_PREPARING = ['تغليف','preparing','processing','قيد التحضير'];
-
-function matchStatus(raw, arr) {
-  const s = (raw || '').trim().toLowerCase();
-  return arr.some(v => v.toLowerCase() === s);
-}
-
-// ============================================================
-// تحديد المستخدم
-// ============================================================
 let currentUser = '';
-const storedUser = localStorage.getItem('username');
-const urlUser    = new URLSearchParams(window.location.search).get('user');
+let globalAvailableBalance = 0;
+let globalReferralBalance = 150; // يمكنك تغيير هذا المبلغ لـ 300 لاختبار تخطي الحد الأدنى للسحب
 
-if (storedUser && storedUser.trim() !== '') {
-  currentUser = storedUser.toLowerCase().trim();
-} else if (urlUser && urlUser.trim() !== '') {
-  currentUser = urlUser.toLowerCase().trim();
-  localStorage.setItem('username', currentUser);
-} else {
-  currentUser = 'supplier_default';
-  localStorage.setItem('username', currentUser);
+// ── الحالات المعتبرة "تم التوصيل" ──
+const DELIVERED_STATUSES = ['تم التسليم','تم التوصيل','تم','delivered','completed'];
+function isDelivered(status) {
+  return DELIVERED_STATUSES.some(s => (status||'').trim().toLowerCase() === s.toLowerCase());
 }
 
-document.getElementById('userName').textContent        = currentUser;
-document.getElementById('userNameDisplay').textContent = currentUser;
+function statusBadge(status) {
+  if (isDelivered(status)) return `<span class="badge badge-delivered">${status}</span>`;
+  if (['قيد التحضير','تغليف','pending','processing'].includes((status||'').trim()))
+    return `<span class="badge badge-pending">${status}</span>`;
+  return `<span class="badge badge-other">${status||'-'}</span>`;
+}
 
-// ============================================================
-// متغيرات عامة
-// ============================================================
-let isAdmin                      = false;
-let globalAvailableBalance       = 0;
-let globalReferralBalance        = 0;
-let currentReferralOrdersToReset = [];
-let userLastWithdrawalTime       = null;
+function initUser() {
+  const stored = localStorage.getItem('username');
+  const urlUser = new URLSearchParams(window.location.search).get('user');
+  if (stored && stored.trim()) {
+    currentUser = stored.trim();
+  } else if (urlUser && urlUser.trim()) {
+    currentUser = urlUser.trim();
+    localStorage.setItem('username', currentUser);
+  } else {
+    currentUser = 'ahmed011';
+    localStorage.setItem('username', currentUser);
+  }
+  document.getElementById('userName').textContent = currentUser;
+  document.getElementById('usernameChangeInput').value = currentUser;
+  
+  // تحديث القيمة المعروضة للإحالات عند بدء التشغيل
+  document.getElementById('referralBonusDisplay').textContent = globalReferralBalance.toFixed(2);
+}
 
-// ============================================================
-// Supabase helper
-// ============================================================
+// ── Supabase API ──
 async function supabaseApi(endpoint, options = {}) {
-  const url     = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
   const headers = {
-    'apikey'        : SUPABASE_KEY,
-    'Authorization' : `Bearer ${SUPABASE_KEY}`,
-    'Content-Type'  : 'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
     ...options.headers
   };
-  if (options.method === 'POST' || options.method === 'PATCH') {
-    headers['Prefer'] = 'return=representation';
-  }
+  if (options.method === 'POST') headers['Prefer'] = 'return=representation';
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) throw new Error(await response.text());
   const text = await response.text();
   return text ? JSON.parse(text) : {};
 }
 
-// ============================================================
-// تحميل لوحة التحكم
-// ============================================================
+// ── Load Dashboard ──
 async function loadDashboard() {
   try {
+    const lowerUser = currentUser.toLowerCase().trim();
+
+    // 1. جيب كل الأوردرات (مع عمود price من orders)
+    const allOrders = await supabaseApi('orders?select=order_id,product_id,order_status,price&limit=1000');
+
+    // 2. جيب منتجات اليوزر من products
     const myProducts = await supabaseApi(
-      `products?username=ilike.${encodeURIComponent(currentUser)}&select=product_id`
+      `products?select=product_id,base_price&username=eq.${encodeURIComponent(currentUser)}&limit=1000`
     );
-    const myProductIds = myProducts.map(p => String(p.product_id));
 
-    const allOrders = await supabaseApi(`orders?select=*`);
+    // 3. عمل Map: product_id → base_price
+    const productMap = {};
+    myProducts.forEach(p => {
+      productMap[String(p.product_id)] = parseFloat(p.base_price) || 0;
+    });
 
-    let deliveredTotal = 0, shippingTotal = 0, preparingTotal = 0, deliveredCount = 0;
+    // 4. فلتر الأوردرات اللي product_id بتاعها في منتجاتي
+    const myOrders = allOrders.filter(o =>
+      o.product_id != null && productMap.hasOwnProperty(String(o.product_id))
+    );
 
-    if (myProductIds.length > 0) {
-      allOrders.forEach(o => {
-        if (!myProductIds.includes(String(o.product_id))) return;
-        const supplierProfit = parseFloat(o.supplier_profit);
-        const fallback       = (parseFloat(o.price) || 0) * (parseInt(o.qty) || 1);
-        const earn           = isNaN(supplierProfit) ? fallback : supplierProfit;
+    // 5. حسب الأرقام
+    let deliveredTotal = 0, pendingTotal = 0, deliveredCount = 0;
 
-        if (matchStatus(o.order_status, STATUS_DELIVERED)) {
-          deliveredTotal += earn;
-          deliveredCount++;
-        } else if (matchStatus(o.order_status, STATUS_SHIPPING)) {
-          shippingTotal += earn;
-        } else if (matchStatus(o.order_status, STATUS_PREPARING)) {
-          preparingTotal += earn;
-        }
-      });
+    myOrders.forEach(o => {
+      const basePrice = productMap[String(o.product_id)] || 0;
+      const price = basePrice > 0 ? basePrice : (parseFloat(o.price) || 0);
+      if (isDelivered(o.order_status)) {
+        deliveredTotal += price;
+        deliveredCount++;
+      } else {
+        pendingTotal += price;
+      }
+    });
+
+    // 6. جيب المسحوبات
+    let withdrawnAmt = 0, pendingWithdrawAmt = 0;
+    try {
+      const withdrawals = await supabaseApi(
+        `withdrawals?select=amount,status&username=eq.${encodeURIComponent(currentUser)}&limit=1000`
+      );
+      for (const w of withdrawals) {
+        const amt = parseFloat(w.amount) || 0;
+        if (w.status === 'قيد المراجعة') pendingWithdrawAmt += amt;
+        else if (w.status === 'تم' || w.status === 'تم الدفع') withdrawnAmt += amt;
+      }
+    } catch(e) { console.warn('withdrawals:', e); }
+
+    // 7. الرصيد المتاح
+    globalAvailableBalance = Math.max(0, deliveredTotal - pendingWithdrawAmt);
+
+    // 8. اعرض
+    document.getElementById('available').textContent   = globalAvailableBalance.toFixed(2);
+    document.getElementById('pending').textContent     = pendingWithdrawAmt.toFixed(2);
+    document.getElementById('withdrawn').textContent   = withdrawnAmt.toFixed(2);
+    document.getElementById('preparing').textContent   = pendingTotal.toFixed(2);
+    document.getElementById('delivered').textContent   = deliveredCount;
+    document.getElementById('totalOrders').textContent = myOrders.length;
+
+    // 9. جدول الطلبات
+    const tbody = document.getElementById('ordersBody');
+    if (myOrders.length === 0) {
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="4">لا توجد طلبات مرتبطة بحسابك</td></tr>';
+    } else {
+      tbody.innerHTML = myOrders.map(o => {
+        const basePrice = productMap[String(o.product_id)] || 0;
+        const price = basePrice > 0 ? basePrice : (parseFloat(o.price) || 0);
+        return `<tr>
+          <td style="color:#888;font-size:12px;">${o.order_id || '-'}</td>
+          <td style="color:#aa44ff;">${o.product_id || '-'}</td>
+          <td style="font-weight:700;">${price.toFixed(2)} <span style="font-size:11px;color:#888">ج.م</span></td>
+          <td>${statusBadge(o.order_status)}</td>
+        </tr>`;
+      }).join('');
     }
 
-    // أرباح الإحالة
-    globalReferralBalance        = 0;
-    currentReferralOrdersToReset = [];
-    const processedOrders        = new Set();
-
-    allOrders.forEach(o => {
-      const referrer = (
-        o.referrer_username    ||
-        o.referrer_id          ||
-        o.referred_by_marketer ||
-        ''
-      ).toLowerCase().trim();
-      if (referrer !== currentUser) return;
-      if (!matchStatus(o.order_status, STATUS_DELIVERED)) return;
-      if (o.referral_bonus_claimed) return;
-      const cartKey = o.cart_id || o.order_id || o.id;
-      if (!processedOrders.has(cartKey)) {
-        processedOrders.add(cartKey);
-        globalReferralBalance += 5;
-      }
-      currentReferralOrdersToReset.push(o.id);
-    });
-
-    document.getElementById('referralBonusDisplay').textContent = globalReferralBalance.toFixed(2);
-
-    // السحوبات
-    const withdrawals = await supabaseApi(
-      `withdrawals?username=ilike.${encodeURIComponent(currentUser)}&select=status,amount,created_at&order=created_at.desc`
-    );
-    userLastWithdrawalTime = withdrawals.length > 0 ? withdrawals[0].created_at : null;
-
-    let pendingW = 0, withdrawnW = 0;
-    withdrawals.forEach(w => {
-      const amt = parseFloat(w.amount) || 0;
-      const st  = (w.status || '').trim();
-      if (st === 'قيد المراجعة') pendingW += amt;
-      else if (st === 'تم' || st === 'تم الدفع') withdrawnW += amt;
-    });
-
-    globalAvailableBalance = Math.max(0, deliveredTotal - (pendingW + withdrawnW));
-
-    document.getElementById('available').textContent  = globalAvailableBalance.toFixed(2);
-    document.getElementById('pending').textContent    = pendingW.toFixed(2);
-    document.getElementById('withdrawn').textContent  = withdrawnW.toFixed(2);
-    document.getElementById('preparing').textContent  = preparingTotal.toFixed(2);
-    document.getElementById('shipping').textContent   = shippingTotal.toFixed(2);
-    document.getElementById('delivered').textContent  = deliveredCount;
-
-  } catch (err) {
-    console.error('خطأ في تحميل البيانات:', err);
+  } catch(err) {
+    console.error('❌ خطأ:', err);
+    document.getElementById('ordersBody').innerHTML =
+      `<tr class="loading-row"><td colspan="4" style="color:#ff3366;">❌ خطأ: ${err.message}</td></tr>`;
   }
 }
 
-// ============================================================
-// فحص الـ 5 ساعات
-// ============================================================
-function checkWithdrawalTimeout() {
-  if (!userLastWithdrawalTime) return true;
-  const hoursPassed = (Date.now() - new Date(userLastWithdrawalTime).getTime()) / 3_600_000;
-  if (hoursPassed < 5) {
-    const minutesLeft = Math.ceil((5 - hoursPassed) * 60);
-    alert(`⚠️ يرجى الانتظار! متبقي: ${minutesLeft} دقيقة قبل السحب التالي.`);
-    return false;
-  }
-  return true;
-}
+// ── Withdraw ──
+async function submitWithdraw() {
+  const phone  = document.getElementById('w_phone').value.trim();
+  const amount = parseFloat(document.getElementById('w_amount').value) || 0;
+  const account = document.getElementById('w_account').value;
+  const notes  = document.getElementById('w_notes').value;
 
-// ============================================================
-// مودال السحب
-// ============================================================
-function openWithdrawModal() {
-  if (!checkWithdrawalTimeout()) return;
-  if (globalAvailableBalance <= 0) {
-    alert('⚠️ عذراً، ليس لديك رصيد متاح للسحب حالياً.');
-    return;
-  }
-  document.getElementById('withdrawal_type').value       = 'normal';
-  document.getElementById('bonusHintText').style.display = 'none';
-  document.getElementById('modalTitle').textContent      = 'إنشاء طلب سحب جديد';
-  document.getElementById('w_amount').value              = '';
-  document.getElementById('w_amount').readOnly           = false;
-  document.getElementById('w_notes').value               = '';
-  document.getElementById('withdrawModal').style.display = 'flex';
-}
+  if (!/^01[0125][0-9]{8}$/.test(phone)) { alert('❌ رقم هاتف غير صحيح'); return; }
+  if (!account) { alert('❌ اختر وسيلة الاستلام'); return; }
+  if (amount <= 0) { alert('❌ أدخل المبلغ'); return; }
+  if (amount > globalAvailableBalance) { alert('❌ الرصيد غير كافٍ'); return; }
 
-function openReferralWithdrawModal() {
-  if (!checkWithdrawalTimeout()) return;
-  if (globalReferralBalance < 300) {
-    alert(`⚠️ الحد الأدنى لسحب أرباح الإحالة هو 300 ج. أرباحك الحالية: ${globalReferralBalance} ج.م`);
-    return;
-  }
-  document.getElementById('withdrawal_type').value       = 'referral_bonus';
-  document.getElementById('bonusHintText').style.display = 'block';
-  document.getElementById('bonusHintText').textContent   = '⚠️ يرجى كتابة كلمة "سحب إحالة" في الملاحظات للتأكيد.';
-  document.getElementById('modalTitle').textContent      = `🔗 سحب أرباح الإحالة (${globalReferralBalance} ج.م)`;
-  document.getElementById('w_amount').value              = globalReferralBalance.toFixed(2);
-  document.getElementById('w_amount').readOnly           = true;
-  document.getElementById('w_notes').value               = 'سحب إحالة';
-  document.getElementById('withdrawModal').style.display = 'flex';
-}
-
-function closeWithdrawModal() {
-  document.getElementById('withdrawModal').style.display = 'none';
-}
-
-// ============================================================
-// إرسال طلب السحب
-// ============================================================
-document.getElementById('withdrawForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  if (!checkWithdrawalTimeout()) return;
-
-  const wType           = document.getElementById('withdrawal_type').value;
-  const phone           = document.getElementById('w_phone').value.trim();
-  const requestedAmount = parseFloat(document.getElementById('w_amount').value) || 0;
-
-  if (wType === 'referral_bonus') {
-    if (globalReferralBalance < 300) { alert('❌ لا يمكن سحب أرباح الإحالة إلا بعد الوصول إلى 300 جنيه.'); return; }
-    if (requestedAmount !== globalReferralBalance) { alert('❌ لا يمكن تعديل مبلغ سحب أرباح الإحالة.'); return; }
-  }
-
-  if (!/^01[0125][0-9]{8}$/.test(phone)) { alert('❌ رقم هاتف مصري غير صحيح'); return; }
-  if (wType === 'normal' && requestedAmount > globalAvailableBalance) {
-    alert(`❌ الرصيد المتاح غير كافٍ. الرصيد: ${globalAvailableBalance.toFixed(2)} ج.م`);
-    return;
-  }
+  const btn = document.getElementById('submitWithdrawBtn');
+  btn.disabled = true;
+  btn.textContent = 'جارٍ إرسال الطلب...';
 
   try {
-    const noteSuffix = document.getElementById('w_notes').value;
-    let noteText = `رقم تليفون تحويل المورد: ${phone} | ${noteSuffix}`;
-    let prefix   = 'SUP-WD-';
-    if (wType === 'referral_bonus') {
-      noteText = `🔗 [سحب أرباح إحالة] | رقم تليفون تحويل المورد: ${phone} | ${noteSuffix}`;
-      prefix   = 'REF-WD-';
+    const existing = await supabaseApi(
+      `withdrawals?username=eq.${encodeURIComponent(currentUser)}&status=eq.${encodeURIComponent('قيد المراجعة')}&select=id`
+    );
+    if (existing && existing.length > 0) {
+      alert('❌ لديك طلب سحب قيد المراجعة بالفعل.');
+      return;
     }
 
     await supabaseApi('withdrawals', {
       method: 'POST',
       body: JSON.stringify({
-        username  : currentUser,
-        amount    : requestedAmount,
-        account   : document.getElementById('w_account').value,
-        notes     : noteText,
-        order_id  : prefix + Math.floor(1000 + Math.random() * 9000),
-        customer  : wType === 'normal' ? 'مورد' : 'أرباح إحالة',
-        status    : 'قيد المراجعة',
-        due       : requestedAmount,
-        paid      : 0,
-        remaining : requestedAmount
+        username: currentUser,
+        amount: amount,
+        account: account,
+        notes: `رقم تليفون: ${phone} | ${notes}`,
+        order_id: 'SUP-WD-' + Math.floor(1000 + Math.random() * 9000),
+        customer: 'مورد',
+        status: 'قيد المراجعة',
+        due: amount, paid: 0, remaining: amount
       })
     });
 
-    if (wType === 'referral_bonus' && currentReferralOrdersToReset.length > 0) {
-      for (const orderId of currentReferralOrdersToReset) {
-        await supabaseApi(`orders?id=eq.${orderId}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ referral_bonus_claimed: true })
-        });
-      }
-    }
-
     alert('✅ تم إرسال طلب السحب بنجاح!');
     closeWithdrawModal();
-    document.getElementById('withdrawForm').reset();
+    document.getElementById('w_phone').value = '';
+    document.getElementById('w_amount').value = '';
+    document.getElementById('w_notes').value = '';
+    document.getElementById('w_account').value = '';
     await loadDashboard();
-    if (isAdmin) loadAdminPanel();
 
-  } catch (err) {
+  } catch(err) {
     alert('❌ خطأ: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'تأكيد وإرسال الطلب';
   }
-});
+}
 
-// ============================================================
-// كود الأدمن
-// ============================================================
-document.getElementById('searchInput').addEventListener('input', e => {
-  const val = e.target.value;
-  if (val === ADMIN_CODE && !isAdmin) {
-    isAdmin = true;
-    document.getElementById('userMode').style.display   = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    loadAdminPanel();
-    alert('✅ تم تفعيل لوحة الأدمن');
+// ── كود فحص وتشغيل سحب أرباح الإحالات ──
+function openReferralWithdrawModal() {
+  if (globalReferralBalance < 300) {
+    alert(`⚠️ الحد الأدنى لسحب أرباح الإحالة هو 300 ج. أرباحك الحالية: ${globalReferralBalance} ج.م`);
+    return;
   }
-  if (val !== ADMIN_CODE && isAdmin) {
-    isAdmin = false;
-    document.getElementById('userMode').style.display   = 'block';
-    document.getElementById('adminPanel').style.display = 'none';
-  }
-});
-
-async function loadAdminPanel() {
-  try {
-    const data  = await supabaseApi('withdrawals?select=*&order=created_at.desc');
-    const tbody = document.getElementById('adminTableBody');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10">لا توجد طلبات سحب</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map((w, i) => {
-      let displayPhone = '-', cleanNotes = w.notes || '';
-      if (cleanNotes.includes('رقم تليفون تحويل المورد:')) {
-        const parts  = cleanNotes.split('|');
-        displayPhone = parts[0].replace('رقم تليفون تحويل المورد:', '').trim();
-        cleanNotes   = (parts[1] || '').trim();
-      }
-      const idColor     = (w.order_id || '').startsWith('REF') ? 'var(--blue)' : 'var(--green)';
-      const statusColor = w.status === 'قيد المراجعة' ? 'var(--orange)'
-                        : (w.status === 'تم' || w.status === 'تم الدفع') ? 'var(--green)'
-                        : 'var(--red)';
-      return `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${w.username || '-'}</td>
-          <td style="color:${idColor};font-weight:700;">${w.order_id || '-'}</td>
-          <td style="color:var(--blue);font-weight:bold;">${displayPhone}</td>
-          <td style="color:var(--orange);font-weight:900;">${w.amount || 0}</td>
-          <td>${w.account || '-'}</td>
-          <td>${cleanNotes}</td>
-          <td>${w.created_at ? new Date(w.created_at).toLocaleDateString('ar-EG') : '-'}</td>
-          <td style="color:${statusColor};font-weight:700;">${w.status || 'قيد المراجعة'}</td>
-          <td>
-            ${w.status === 'قيد المراجعة' ? `
-              <button style="background:var(--green);color:#000;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;font-weight:bold;margin-left:4px;"
-                onclick="approveWithdrawal(${w.id},${w.amount})">دفع</button>
-              <button style="background:var(--red);color:#fff;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;font-weight:bold;"
-                onclick="rejectWithdrawal(${w.id})">رفض</button>
-            ` : '-'}
-          </td>
-        </tr>`;
-    }).join('');
-
-    document.getElementById('pendingCount').textContent  = data.filter(w => w.status === 'قيد المراجعة').length;
-    document.getElementById('approvedCount').textContent = data.filter(w => w.status === 'تم' || w.status === 'تم الدفع').length;
-    document.getElementById('rejectedCount').textContent = data.filter(w => w.status === 'مرفوض').length;
-    document.getElementById('totalCount').textContent    = data.length;
-
-  } catch (err) { console.error(err); }
+  
+  document.getElementById('referral_withdrawal_type').value = 'referral_bonus';
+  document.getElementById('referralModalTitle').textContent = `🔗 سحب أرباح الإحالة (${globalReferralBalance} ج.م)`;
+  document.getElementById('referral_w_amount').value = globalReferralBalance.toFixed(2);
+  document.getElementById('referral_w_notes').value = 'سحب إحالة';
+  document.getElementById('withdrawReferralModal').style.display = 'block';
 }
 
-async function approveWithdrawal(id, amount) {
-  if (!confirm('تأكيد الدفع؟')) return;
-  try {
-    await supabaseApi(`withdrawals?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: 'تم', paid: amount, due: 0, remaining: 0, date2: new Date().toISOString() })
-    });
-    alert('✅ تم الاعتماد');
-    loadAdminPanel();
-    loadDashboard();
-  } catch (err) { alert(err.message); }
-}
+function openWithdrawModal()  { document.getElementById('withdrawModal').style.display = 'flex'; }
+function closeWithdrawModal() { document.getElementById('withdrawModal').style.display = 'none'; }
 
-async function rejectWithdrawal(id) {
-  const reason = prompt('سبب الرفض:');
-  if (reason === null || reason.trim() === '') return;
-  try {
-    await supabaseApi(`withdrawals?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: 'مرفوض', due: 0, remaining: 0, notes: `سبب الرفض: ${reason}`, date2: new Date().toISOString() })
-    });
-    alert('❌ تم الرفض');
-    loadAdminPanel();
-    loadDashboard();
-  } catch (err) { alert(err.message); }
-}
-
-function openHistory() {
-  alert('السجل المالي يظهر للأدمن تلقائياً عند البحث بكود الإدارة.');
-}
-
-// ============================================================
-// Sidebar / Navigation
-// ============================================================
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
@@ -862,16 +694,14 @@ function goToPage(pageName) {
 }
 
 function logout() {
-  if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+  if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
     localStorage.removeItem('username');
     localStorage.removeItem('userType');
     window.location.href = 'index.html';
   }
 }
 
-// ============================================================
-// تشغيل
-// ============================================================
+initUser();
 loadDashboard();
 setInterval(loadDashboard, 15000);
 </script>
