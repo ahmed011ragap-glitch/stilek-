@@ -529,13 +529,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 </div>
 
 <div class="variants-section">
-  <h3>🎨 خصائص المنتج (مرنة)</h3>
+  <h3>🎨 خصائص المنتج (اختيارية تماماً)</h3>
   <p style="color: var(--muted); font-size: 13px; margin-bottom: 15px;">
-    أضف خاصية (زي: اللون، المقاس، الخامة) ثم أضف قيمها. النظام يولّد كل التوليفات تلقائياً.
+    يمكنك إضافة خاصية (مثل: اللون، المقاس) وقيمها إذا أردت، أو تركها فارغة تماماً للمنتجات البسيطة.
   </p>
   
   <div id="attributesContainer">
-    </div>
+  </div>
 
   <button class="add-attr-btn" onclick="addAttribute()">➕ إضافة خاصية جديدة</button>
 </div>
@@ -548,8 +548,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   <div id="combinationsContainer">
     <div class="comb-empty">
       <span class="big-icon">📦</span>
-      <div>أضف خصائص وقيم أولاً</div>
-      <div style="font-size:12px;color:#555;">بعد إضافة خصائص وقيم، ستظهر التوليفات تلقائياً</div>
+      <div>لم يتم إضافة خصائص</div>
+      <div style="font-size:12px;color:#555;">سيتم إدراج المنتج كمنتج عادي بدون خصائص ومقاسات.</div>
     </div>
   </div>
 </div>
@@ -631,16 +631,13 @@ function addAttribute(name = '', values = []) {
 }
 
 function removeAttribute(index) {
-  if (attributes.length <= 1) {
-    alert('⚠️ لا يمكن حذف الخاصية الوحيدة، أضف خاصية أخرى أولاً');
-    return;
-  }
   if (!confirm('هل أنت متأكد من حذف هذه الخاصية؟')) return;
   attributes.splice(index, 1);
   renderAttributes();
   generateCombinations();
 }
 
+// تحديث اسم الخاصية
 function updateAttrName(index, value) {
   attributes[index].name = value;
   generateCombinations();
@@ -681,8 +678,8 @@ function renderAttributes() {
     container.innerHTML = `
       <div class="comb-empty" style="background:#0a0a0a;border-radius:12px;border:1px dashed #333;">
         <span class="big-icon">➕</span>
-        <div>لا توجد خصائص</div>
-        <div style="font-size:12px;color:#555;">أضف خاصية جديدة باستخدام الزر أدناه</div>
+        <div>لا توجد خصائص مضافة حالياً</div>
+        <div style="font-size:12px;color:#555;">المنتج اختياري وبدون خصائص إجبارية. اضغط بالأسفل لإضافة خصائص إذا رغبت.</div>
       </div>
     `;
     return;
@@ -784,8 +781,8 @@ function renderCombinations() {
     container.innerHTML = `
       <div class="comb-empty">
         <span class="big-icon">📦</span>
-        <div>لا توجد توليفات</div>
-        <div style="font-size:12px;color:#555;">أضف خصائص وقيم لظهور التوليفات</div>
+        <div>لا توجد توليفات حالية</div>
+        <div style="font-size:12px;color:#555;">المنتج سيتم اعتباره بسيطاً بدون مقاسات أو ألوان إجبارية.</div>
       </div>
     `;
     return;
@@ -999,8 +996,9 @@ window.onload = async function() {
   document.getElementById('address').value = lastData.address;
   document.getElementById('supplierPhone').value = lastData.whatsapp;
   
-  addAttribute('اللون', ['أحمر', 'أزرق', 'أسود']);
-  addAttribute('المقاس', ['L', 'XL', 'XXL']);
+  // تم إزالة الخصائص التلقائية (اللون والمقاس) لتبدأ الصفحة نظيفة تماماً واختيارية بناءً على طلبك.
+  renderAttributes();
+  renderCombinations();
 };
 
 // ========= زر الإضافة =========
