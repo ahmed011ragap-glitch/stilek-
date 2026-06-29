@@ -486,7 +486,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   <input id="productName" placeholder="مثال: سويت شيرت ميلتون">
 </div>
 
-<!-- ===== حقل تصنيف المنتج ===== -->
 <div class="form-group">
   <label>📂 تصنيف المنتج <span class="required-star">*</span></label>
   <select id="category" required>
@@ -529,7 +528,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   <textarea id="productDesc" rows="3" placeholder="اكتب وصف المنتج الأساسي هنا..."></textarea>
 </div>
 
-<!-- ========= قسم الخصائص المرنة ========= -->
 <div class="variants-section">
   <h3>🎨 خصائص المنتج (مرنة)</h3>
   <p style="color: var(--muted); font-size: 13px; margin-bottom: 15px;">
@@ -537,13 +535,11 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   </p>
   
   <div id="attributesContainer">
-    <!-- سيتم إضافة الخصائص هنا ديناميكياً -->
-  </div>
+    </div>
 
   <button class="add-attr-btn" onclick="addAttribute()">➕ إضافة خاصية جديدة</button>
 </div>
 
-<!-- ========= جدول التوليفات ========= -->
 <div class="variants-section" style="border-color: var(--blue);">
   <h3>📋 التوليفات الناتجة (المخزون والأسعار)</h3>
   <p style="color: var(--muted); font-size: 13px; margin-bottom: 15px;">
@@ -563,8 +559,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   <button class="cancel" onclick="resetForm()">❌ إعادة تعيين</button>
 </div>
 
-<div id="success" class="success"></div>
 <div id="error" class="error"></div>
+<div id="success" class="success"></div>
 </div>
 
 <script>
@@ -841,25 +837,6 @@ function updateCombination(index, field, value) {
   combinations[index][field] = parseFloat(value) || 0;
 }
 
-function getColorHex(colorName) {
-  const colors = {
-    'أحمر': '#DC3545', 'احمر': '#DC3545', 'red': '#DC3545',
-    'أزرق': '#0D6EFD', 'ازرق': '#0D6EFD', 'blue': '#0D6EFD',
-    'أخضر': '#198754', 'اخضر': '#198754', 'green': '#198754',
-    'أسود': '#212529', 'اسود': '#212529', 'black': '#212529',
-    'أبيض': '#F8F9FA', 'ابيض': '#F8F9FA', 'white': '#F8F9FA',
-    'أصفر': '#FFC107', 'اصفر': '#FFC107', 'yellow': '#FFC107',
-    'برتقالي': '#FD7E14', 'برتقالى': '#FD7E14', 'orange': '#FD7E14',
-    'بنفسجي': '#6F42C1', 'بنفسجى': '#6F42C1', 'purple': '#6F42C1',
-    'وردي': '#D63384', 'وردى': '#D63384', 'pink': '#D63384',
-    'بني': '#6C4A3E', 'brown': '#6C4A3E',
-    'رمادي': '#6C757D', 'رمادى': '#6C757D', 'gray': '#6C757D',
-    'ذهبي': '#D4AF37', 'ذهبى': '#D4AF37', 'gold': '#D4AF37',
-    'فضي': '#C0C0C0', 'فضى': '#C0C0C0', 'silver': '#C0C0C0'
-  };
-  return colors[colorName?.toLowerCase()] || '#6C757D';
-}
-
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -1069,11 +1046,6 @@ document.getElementById('addBtn').onclick = async function() {
   if(!category) { errorDiv.innerHTML = '❌ اختر تصنيف المنتج'; return; }
   if(!fileInput.files || !fileInput.files[0]) { errorDiv.innerHTML = '❌ ارفع صورة الغلاف'; return; }
 
-  if (combinations.length === 0) {
-    errorDiv.innerHTML = '❌ أضف خصائص وقيم أولاً';
-    return;
-  }
-
   const btn = this;
   btn.disabled = true;
   showLoading('⏳ جاري رفع الصورة وحفظ البيانات...');
@@ -1081,26 +1053,38 @@ document.getElementById('addBtn').onclick = async function() {
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
-    const variantsData = getVariantsData(productCode, usernameValue);
+    let variantsData = [];
+    if (combinations.length > 0) {
+      variantsData = getVariantsData(productCode, usernameValue);
+    }
     
-    let variantsDescription = '\n\n📋 خصائص المنتج:';
-    const attrNames = combinations.length > 0 ? Object.keys(combinations[0].attributes) : [];
-    combinations.forEach((c, i) => {
-      const parts = attrNames.map(name => `${name}: ${c.attributes[name] || '-'}`);
-      variantsDescription += `\n${i+1}- ${parts.join(' | ')} | المخزون: ${c.stock} | السعر: ${c.price} ج.م`;
-    });
+    let variantsDescription = '';
+    if (combinations.length > 0) {
+      variantsDescription = '\n\n📋 خصائص المنتج:';
+      const attrNames = Object.keys(combinations[0].attributes);
+      combinations.forEach((c, i) => {
+        const parts = attrNames.map(name => `${name}: ${c.attributes[name] || '-'}`);
+        variantsDescription += `\n${i+1}- ${parts.join(' | ')} | المخزون: ${c.stock} | السعر: ${c.price} ج.م`;
+      });
+    }
     
     const extraDetails = `\n\n📞 واتساب: ${supplierPhone}\n🔗 معرض إضافي: ${galleryLink || 'لا يوجد'}`;
     const finalDescription = (desc || `منتج المورد: ${usernameValue}`) + variantsDescription + extraDetails;
 
-    const firstVariant = variantsData[0] || {};
-    const basePrice = parseFloat(price) || firstVariant.price || 0;
-    const baseStock = parseInt(stock) || firstVariant.stock || 0;
+    const firstVariant = variantsData.length ? variantsData[0] : null;
+    const basePrice = firstVariant
+      ? (parseFloat(price) || firstVariant.price || 0)
+      : (parseFloat(price) || 0);
 
-    const colorAttr = attributes.find(a => a.name === 'اللون' || a.name === 'لون' || a.name === 'الألوان');
-    const sizeAttr = attributes.find(a => a.name === 'المقاس' || a.name === 'مقاس' || a.name === 'المقاسات');
-    const sizes = sizeAttr ? sizeAttr.values.join(',') : '';
-    const colors = colorAttr ? colorAttr.values.join(',') : '';
+    const baseStock = firstVariant
+      ? (parseInt(stock) || firstVariant.stock || 0)
+      : (parseInt(stock) || 1);
+
+    const colorAttr = attributes.find(a => ['اللون', 'لون', 'الألوان'].includes(a.name));
+    const sizeAttr = attributes.find(a => ['المقاس', 'مقاس', 'المقاسات'].includes(a.name));
+    
+    const sizes = (sizeAttr && sizeAttr.values.length) ? sizeAttr.values.join(',') : '';
+    const colors = (colorAttr && colorAttr.values.length) ? colorAttr.values.join(',') : '';
 
     const productPayload = {
       product_id: productCode,
@@ -1125,7 +1109,7 @@ document.getElementById('addBtn').onclick = async function() {
     await saveProductWithVariants(productPayload, variantsData);
 
     hideLoading();
-    successDiv.innerHTML = `✅ تم الحفظ! تم إدراج المنتج بنجاح مع ${variantsData.length} توليفة.`;
+    successDiv.innerHTML = `✅ تم الحفظ! تم إدراج المنتج بنجاح ${variantsData.length > 0 ? `مع ${variantsData.length} توليفة.` : 'كمنتج بسيط بدون خصائص.'}`;
     resetForm();
     
   } catch(err) {
