@@ -503,11 +503,11 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 <div class="price-row">
   <div class="form-group">
-    <label>💰 سعر التكلفة الافتراضي (جنيه) - اختياري</label>
+    <label>💰 سعر التكلفة الافتراضي (جنيه) - <span style="color:var(--blue)">اختياري لو فيه خصائص</span></label>
     <input id="price" type="number" placeholder="250" min="1">
   </div>
   <div class="form-group">
-    <label>📊 المخزون الافتراضي - اختياري</label>
+    <label>📊 المخزون الافتراضي - <span style="color:var(--blue)">اختياري لو فيه خصائص</span></label>
     <input id="stock" type="number" placeholder="50" min="0" value="1">
   </div>
 </div>
@@ -529,13 +529,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 </div>
 
 <div class="variants-section">
-  <h3>🎨 خصائص المنتج (اختيارية تماماً)</h3>
+  <h3>🎨 خصائص المنتج (اختيارية)</h3>
   <p style="color: var(--muted); font-size: 13px; margin-bottom: 15px;">
-    يمكنك إضافة خاصية (مثل: اللون، المقاس) وقيمها إذا أردت، أو تركها فارغة تماماً للمنتجات البسيطة.
+    أضف قيم للخصائص بالأسفل (زي: أحمر، أزرق أو L، XL) لتوليد التوليفات تلقائيًا. أو اتركها فارغة لحفظ منتج عادي.
   </p>
   
   <div id="attributesContainer">
-  </div>
+    </div>
 
   <button class="add-attr-btn" onclick="addAttribute()">➕ إضافة خاصية جديدة</button>
 </div>
@@ -548,8 +548,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   <div id="combinationsContainer">
     <div class="comb-empty">
       <span class="big-icon">📦</span>
-      <div>لم يتم إضافة خصائص</div>
-      <div style="font-size:12px;color:#555;">سيتم إدراج المنتج كمنتج عادي بدون خصائص ومقاسات.</div>
+      <div>أضف خصائص وقيم أولاً</div>
+      <div style="font-size:12px;color:#555;">بعد إضافة خصائص وقيم، ستظهر التوليفات تلقائياً</div>
     </div>
   </div>
 </div>
@@ -559,8 +559,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   <button class="cancel" onclick="resetForm()">❌ إعادة تعيين</button>
 </div>
 
-<div id="error" class="error"></div>
 <div id="success" class="success"></div>
+<div id="error" class="error"></div>
 </div>
 
 <script>
@@ -631,13 +631,16 @@ function addAttribute(name = '', values = []) {
 }
 
 function removeAttribute(index) {
+  if (attributes.length <= 1) {
+    alert('⚠️ لا يمكن حذف الخاصية الوحيدة، أضف خاصية أخرى أولاً');
+    return;
+  }
   if (!confirm('هل أنت متأكد من حذف هذه الخاصية؟')) return;
   attributes.splice(index, 1);
   renderAttributes();
   generateCombinations();
 }
 
-// تحديث اسم الخاصية
 function updateAttrName(index, value) {
   attributes[index].name = value;
   generateCombinations();
@@ -678,8 +681,8 @@ function renderAttributes() {
     container.innerHTML = `
       <div class="comb-empty" style="background:#0a0a0a;border-radius:12px;border:1px dashed #333;">
         <span class="big-icon">➕</span>
-        <div>لا توجد خصائص مضافة حالياً</div>
-        <div style="font-size:12px;color:#555;">المنتج اختياري وبدون خصائص إجبارية. اضغط بالأسفل لإضافة خصائص إذا رغبت.</div>
+        <div>لا توجد خصائص</div>
+        <div style="font-size:12px;color:#555;">أضف خاصية جديدة باستخدام الزر أدناه</div>
       </div>
     `;
     return;
@@ -688,7 +691,7 @@ function renderAttributes() {
   let html = '';
   attributes.forEach((attr, index) => {
     const valuesHtml = attr.values.length === 0 
-      ? '<div style="color:#555;font-size:12px;">لا توجد قيم</div>'
+      ? '<div style="color:#555;font-size:12px;">لا توجد قيم (اتركها فارغة لتجاهلها)</div>'
       : attr.values.map((v, vi) => `
           <span class="attr-value-tag">
             ${v}
@@ -781,8 +784,8 @@ function renderCombinations() {
     container.innerHTML = `
       <div class="comb-empty">
         <span class="big-icon">📦</span>
-        <div>لا توجد توليفات حالية</div>
-        <div style="font-size:12px;color:#555;">المنتج سيتم اعتباره بسيطاً بدون مقاسات أو ألوان إجبارية.</div>
+        <div>لا توجد توليفات نشطة</div>
+        <div style="font-size:12px;color:#555;">سيتم حفظ المنتج كمنتج عادي بدون خصائص فرعية</div>
       </div>
     `;
     return;
@@ -834,6 +837,25 @@ function updateCombination(index, field, value) {
   combinations[index][field] = parseFloat(value) || 0;
 }
 
+function getColorHex(colorName) {
+  const colors = {
+    'أحمر': '#DC3545', 'احمر': '#DC3545', 'red': '#DC3545',
+    'أزرق': '#0D6EFD', 'ازرق': '#0D6EFD', 'blue': '#0D6EFD',
+    'أخضر': '#198754', 'اخضر': '#198754', 'green': '#198754',
+    'أسود': '#212529', 'اسود': '#212529', 'black': '#212529',
+    'أبيض': '#F8F9FA', 'ابيض': '#F8F9FA', 'white': '#F8F9FA',
+    'أصفر': '#FFC107', 'اصفر': '#FFC107', 'yellow': '#FFC107',
+    'برتقالي': '#FD7E14', 'برتقالى': '#FD7E14', 'orange': '#FD7E14',
+    'بنفسجي': '#6F42C1', 'بنفسجى': '#6F42C1', 'purple': '#6F42C1',
+    'وردي': '#D63384', 'وردى': '#D63384', 'pink': '#D63384',
+    'بني': '#6C4A3E', 'brown': '#6C4A3E',
+    'رمادي': '#6C757D', 'رمادى': '#6C757D', 'gray': '#6C757D',
+    'ذهبي': '#D4AF37', 'ذهبى': '#D4AF37', 'gold': '#D4AF37',
+    'فضي': '#C0C0C0', 'فضى': '#C0C0C0', 'silver': '#C0C0C0'
+  };
+  return colors[colorName?.toLowerCase()] || '#6C757D';
+}
+
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -843,7 +865,8 @@ function escapeHtml(text) {
 
 // ===== دالة تجميع بيانات الخصائص =====
 function getVariantsData(productId, username) {
-  const attrNames = combinations.length > 0 ? Object.keys(combinations[0].attributes) : [];
+  if (combinations.length === 0) return [];
+  const attrNames = Object.keys(combinations[0].attributes);
   
   return combinations.map((c, index) => {
     const variant = {
@@ -941,7 +964,7 @@ async function saveProductWithVariants(productData, variantsData) {
     throw new Error(`خطأ في حفظ المنتج: ${error}`);
   }
   
-  if (variantsData.length > 0) {
+  if (variantsData && variantsData.length > 0) {
     const variantsUrl = `${SUPABASE_URL}/rest/v1/product_variants`;
     const variantsResponse = await fetch(variantsUrl, {
       method: 'POST',
@@ -983,12 +1006,12 @@ function resetForm() {
   
   attributes = [];
   combinations = [];
-  renderAttributes();
-  renderCombinations();
+  addAttribute('اللون', []);
+  addAttribute('المقاس', []);
   productCode = generateCode();
 }
 
-// ===== تحميل آخر البيانات =====
+// ===== تحميل آخر البيانات وتجهيز الواجهة الخصائص =====
 window.onload = async function() {
   const lastData = await fetchLastProductData(CURRENT_USER);
   document.getElementById('governorate').value = lastData.governorate;
@@ -996,9 +1019,9 @@ window.onload = async function() {
   document.getElementById('address').value = lastData.address;
   document.getElementById('supplierPhone').value = lastData.whatsapp;
   
-  // تم إزالة الخصائص التلقائية (اللون والمقاس) لتبدأ الصفحة نظيفة تماماً واختيارية بناءً على طلبك.
-  renderAttributes();
-  renderCombinations();
+  // الخصائص تظهر هنا فارغة بدون قيم مسبقة، لتكون اختيارية بالكامل
+  addAttribute('اللون', []);
+  addAttribute('المقاس', []);
 };
 
 // ========= زر الإضافة =========
@@ -1044,6 +1067,12 @@ document.getElementById('addBtn').onclick = async function() {
   if(!category) { errorDiv.innerHTML = '❌ اختر تصنيف المنتج'; return; }
   if(!fileInput.files || !fileInput.files[0]) { errorDiv.innerHTML = '❌ ارفع صورة الغلاف'; return; }
 
+  // التحقق من وجود السعر لو المنتج عادي وبدون توليفات خصائص
+  if (combinations.length === 0 && !price) {
+    errorDiv.innerHTML = '❌ برجاء تحديد سعر التكلفة الافتراضي للمنتج، لعدم وجود خصائص فرعية له.';
+    return;
+  }
+
   const btn = this;
   btn.disabled = true;
   showLoading('⏳ جاري رفع الصورة وحفظ البيانات...');
@@ -1051,10 +1080,7 @@ document.getElementById('addBtn').onclick = async function() {
   try {
     const imageUrl = await uploadImageToSupabase(fileInput.files[0]);
 
-    let variantsData = [];
-    if (combinations.length > 0) {
-      variantsData = getVariantsData(productCode, usernameValue);
-    }
+    const variantsData = getVariantsData(productCode, usernameValue);
     
     let variantsDescription = '';
     if (combinations.length > 0) {
@@ -1069,20 +1095,14 @@ document.getElementById('addBtn').onclick = async function() {
     const extraDetails = `\n\n📞 واتساب: ${supplierPhone}\n🔗 معرض إضافي: ${galleryLink || 'لا يوجد'}`;
     const finalDescription = (desc || `منتج المورد: ${usernameValue}`) + variantsDescription + extraDetails;
 
-    const firstVariant = variantsData.length ? variantsData[0] : null;
-    const basePrice = firstVariant
-      ? (parseFloat(price) || firstVariant.price || 0)
-      : (parseFloat(price) || 0);
+    const firstVariant = variantsData[0] || {};
+    const basePrice = parseFloat(price) || firstVariant.price || 0;
+    const baseStock = parseInt(stock) || firstVariant.stock || 0;
 
-    const baseStock = firstVariant
-      ? (parseInt(stock) || firstVariant.stock || 0)
-      : (parseInt(stock) || 1);
-
-    const colorAttr = attributes.find(a => ['اللون', 'لون', 'الألوان'].includes(a.name));
-    const sizeAttr = attributes.find(a => ['المقاس', 'مقاس', 'المقاسات'].includes(a.name));
-    
-    const sizes = (sizeAttr && sizeAttr.values.length) ? sizeAttr.values.join(',') : '';
-    const colors = (colorAttr && colorAttr.values.length) ? colorAttr.values.join(',') : '';
+    const colorAttr = attributes.find(a => a.name === 'اللون' || a.name === 'لون' || a.name === 'الألوان');
+    const sizeAttr = attributes.find(a => a.name === 'المقاس' || a.name === 'مقاس' || a.name === 'المقاسات');
+    const sizes = (sizeAttr && sizeAttr.values.length > 0) ? sizeAttr.values.join(',') : '';
+    const colors = (colorAttr && colorAttr.values.length > 0) ? colorAttr.values.join(',') : '';
 
     const productPayload = {
       product_id: productCode,
@@ -1107,7 +1127,11 @@ document.getElementById('addBtn').onclick = async function() {
     await saveProductWithVariants(productPayload, variantsData);
 
     hideLoading();
-    successDiv.innerHTML = `✅ تم الحفظ! تم إدراج المنتج بنجاح ${variantsData.length > 0 ? `مع ${variantsData.length} توليفة.` : 'كمنتج بسيط بدون خصائص.'}`;
+    if(variantsData.length > 0) {
+       successDiv.innerHTML = `✅ تم الحفظ! تم إدراج المنتج بنجاح مع ${variantsData.length} توليفة خصائص.`;
+    } else {
+       successDiv.innerHTML = `✅ تم الحفظ! تم إدراج المنتج كمنتج عادي بنجاح.`;
+    }
     resetForm();
     
   } catch(err) {
