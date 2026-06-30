@@ -356,8 +356,6 @@
   </div>
 </div>
 
-
-
 <div class="products-grid" id="productsGrid">
   <div class="grid-ph"><div class="ls"><div class="spin"></div></div></div>
 </div>
@@ -768,9 +766,11 @@ function updateVariantDetails(){
   });
 
   if(matched){
-    const stock=parseInt(matched.stock)||0, price=parseFloat(matched.price)||currentProduct?.base_price||0;
+    const stock=parseInt(matched.stock)||0;
+    const basePrice=parseFloat(currentProduct?.base_price)||0;
+    const displayPrice=sellP(basePrice);
     if(sd){ sd.textContent=stock; sd.className='value '+(stock>0?'green':'red'); }
-    if(pd){ pd.textContent=price+' ج'; pd.className='value gold'; }
+    if(pd){ pd.textContent=displayPrice+' ج'; pd.className='value gold'; }
     if(st){ st.textContent=stock>0?'✅ متوفر':'❌ غير متوفر'; st.className='variant-status '+(stock>0?'in-stock':'out-stock'); }
   }else{
     if(sd){ sd.textContent='—'; sd.className='value'; }
