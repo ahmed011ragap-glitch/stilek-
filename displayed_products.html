@@ -105,6 +105,13 @@
     .filter-reset { flex:1; padding:10px; background:var(--surface); color:var(--text-2); border-radius:8px; font-weight:600; font-size:13px; border:1.5px solid var(--border); transition:.2s; }
     .filter-reset:hover { border-color:var(--green); color:var(--green); }
 
+    /* ===== DAILY NEW PRODUCTS SECTION ===== */
+    .daily-new-section { padding:12px 14px; background:var(--white); border-bottom:1px solid var(--border); }
+    .new-products-scroll { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+    .new-products-scroll::-webkit-scrollbar { display:none; }
+    .new-prod-mini-card { min-width:120px; max-width:120px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px; cursor:pointer; flex-shrink:0; display:flex; flex-direction:column; gap:4px; transition:transform .2s, border-color .2s; }
+    .new-prod-mini-card:hover { border-color:var(--green); transform:translateY(-2px); }
+
     .result-bar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:8px 14px; background:var(--surface); gap:8px; }
     .result-count { font-size:13px; color:var(--text-2); }
     .result-count strong { color:var(--green); font-size:16px; }
@@ -194,7 +201,6 @@
     .variant-group { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
     .variant-group-label { font-size:12px; color:var(--green); font-weight:700; min-width:50px; text-transform:uppercase; }
     
-    /* Text-based color buttons */
     .color-btn { 
       padding:8px 14px; 
       border-radius:8px; 
@@ -345,6 +351,14 @@
       <button class="filter-reset" onclick="resetFilters()">↺ إعادة</button>
     </div>
   </div>
+</div>
+
+<div class="daily-new-section" id="dailyNewSection" style="display:none;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <h3 style="font-size: 13px; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 6px;">✨ منتجات جديدة اليوم</h3>
+    <span style="font-size: 10px; color: var(--muted); background: var(--surface); padding: 2px 8px; border-radius: 10px;">تحدث يومياً</span>
+  </div>
+  <div class="new-products-scroll" id="newProductsScroll"></div>
 </div>
 
 <div class="result-bar">
@@ -535,8 +549,51 @@ let selectedColor='', selectedSize='';
 async function loadProducts(){
   document.getElementById('productsGrid').innerHTML='<div class="grid-ph"><div class="ls"><div class="spin"></div></div>';
   const r=await callApi('get_products');
-  if(Array.isArray(r)){ allProducts=r; if(isLoggedIn)await loadFavs(); applyFilters(); }
+  if(Array.isArray(r)){ 
+    allProducts=r; 
+    if(isLoggedIn)await loadFavs(); 
+    renderDailyNewProducts(); 
+    applyFilters(); 
+  }
   else document.getElementById('productsGrid').innerHTML='<div class="grid-ph"><div class="empty-state"><div class="big">⚠️</div><p>فشل التحميل</p></div></div>';
+}
+
+// دالة توليد وعرض المنتجات الجديدة اليومية بفلتر تاريخ حقيقي
+function renderDailyNewProducts(){
+  const container = document.getElementById('dailyNewSection');
+  const scrollWrap = document.getElementById('newProductsScroll');
+  if(!container || !scrollWrap) return;
+  
+  // الفلترة بناءً على تاريخ اليوم الفعلي المقروء من السيرفر
+  const today = new Date().toISOString().split('T')[0];
+  const newArrivals = allProducts.filter(p => 
+    p.created_at && p.created_at.startsWith(today)
+  ).slice(0, 6);
+
+  if(newArrivals.length === 0){
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.style.display = 'block';
+  scrollWrap.innerHTML = '';
+  
+  newArrivals.forEach(p => {
+    const sp = sellP(p.base_price);
+    const cn = cleanText(p.name);
+    const card = document.createElement('div');
+    card.className = 'new-prod-mini-card';
+    card.onclick = () => openProduct(p.product_id);
+    card.innerHTML = `
+      <div style="position: relative; aspect-ratio: 1/1; background: var(--white); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <img src="${iurl(p.image_url)}" onerror="this.src='https://placehold.co/150x150/242424/808080?text=🛍️'" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;">
+        <span style="position: absolute; top: 4px; right: 4px; background: var(--green); color: #000; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 4px;">NEW</span>
+      </div>
+      <div style="font-size: 11px; font-weight: 700; color: var(--text); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px;">${esc(cn)}</div>
+      <div style="font-size: 12px; font-weight: 900; color: var(--green); margin-top: auto;">${sp} <span style="font-size: 9px; font-weight: 500; color: var(--muted);">ج</span></div>
+    `;
+    scrollWrap.appendChild(card);
+  });
 }
 
 async function loadFavs(){
